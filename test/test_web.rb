@@ -10,10 +10,11 @@ class TestWeb < Minitest::Test
 
   def app = Web.app
 
-  def test_root_returns_hello_world
+  def test_root_shows_new_series_form
     get "/"
 
     assert last_response.ok?
-    assert_equal "Hello, World!", last_response.body
+    assert_includes last_response.body, '<form method="post" action="/series">'
+    assert_includes last_response.body, 'name="name"'
   end
 end

@@ -3,9 +3,11 @@
 require "roda"
 
 class Web < Roda
+  plugin :render, engine: "erb"
+
   route do |r|
     r.root do
-      "Hello, World!"
+      render("series/new")
     end
   end
 end
