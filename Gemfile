@@ -4,10 +4,10 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
+gem "phlex"
 gem "puma"
 gem "rackup"
 gem "roda"
-gem "tilt"
 gem "sequel"
 gem "sqlite3"
 

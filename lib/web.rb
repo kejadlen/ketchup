@@ -2,12 +2,12 @@
 
 require "roda"
 
-class Web < Roda
-  plugin :render, engine: "erb"
+require_relative "views/series/new"
 
+class Web < Roda
   route do |r|
     r.root do
-      render("series/new")
+      Views::Series::New.new.call
     end
   end
 end
