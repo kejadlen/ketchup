@@ -33,6 +33,7 @@ module Views
                     option(value: "day") { "day(s)" }
                     option(value: "week") { "week(s)" }
                     option(value: "month") { "month(s)" }
+                    option(value: "quarter") { "quarter(s)" }
                     option(value: "year") { "year(s)" }
                   end
                 end
