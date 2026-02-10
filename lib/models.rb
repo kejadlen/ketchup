@@ -3,15 +3,10 @@
 require_relative "db"
 
 Sequel::Model.plugin :timestamps, update_on_create: true
+Sequel::Model.plugin :sole
 
 class User < Sequel::Model
   one_to_many :series
-
-  def self.upsert(login:, name:)
-    user = find_or_create(login: login) { |u| u.name = name }
-    user.update(name: name) if user.name != name
-    user
-  end
 end
 
 class Series < Sequel::Model

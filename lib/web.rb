@@ -14,7 +14,7 @@ class Web < Roda
     return unless login
 
     name = env["HTTP_TAILSCALE_USER_NAME"]
-    User.upsert(login: login, name: name)
+    User.find_or_create(login: login) { |u| u.name = name }
   end
 
   route do |r|

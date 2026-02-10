@@ -71,13 +71,6 @@ class TestWeb < Minitest::Test
     assert_equal "Bob", user[:name]
   end
 
-  def test_root_updates_user_name
-    get "/", {}, tailscale_headers(login: "carol@example.com", name: "Carol")
-    get "/", {}, tailscale_headers(login: "carol@example.com", name: "Carol C.")
-    user = DB[:users].first(login: "carol@example.com")
-    assert_equal "Carol C.", user[:name]
-  end
-
   def test_root_requires_tailscale_user
     get "/"
     assert_equal 403, last_response.status
