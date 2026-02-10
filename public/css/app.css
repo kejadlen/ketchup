@@ -1,139 +1,11 @@
 /* -------------------- */
-/* A (more) Modern Reset */
-/* @link https://piccalil.li/blog/a-more-modern-css-reset/ */
+/* Utilities */
 /* -------------------- */
 
-/* Box sizing rules */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* Prevent font size inflation */
-html {
-  -moz-text-size-adjust: none;
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
-}
-
-/* Remove default margin in favour of better control in authored CSS */
-body, h1, h2, h3, h4, p,
-figure, blockquote, dl, dd {
-  margin-block-end: 0;
-}
-
-/* Remove list styles on ul, ol elements with a list role,
-   which suggests default styling will be removed */
-ul[role='list'],
-ol[role='list'] {
-  list-style: none;
-}
-
-/* Set core body defaults */
-body {
-  min-height: 100vh;
-  line-height: 1.5;
-}
-
-/* Set shorter line heights on headings and interactive elements */
-h1, h2, h3, h4,
-button, input, label {
-  line-height: 1.1;
-}
-
-/* Balance text wrapping on headings */
-h1, h2,
-h3, h4 {
-  text-wrap: balance;
-}
-
-/* A elements that don't have a class get default styles */
-a:not([class]) {
-  text-decoration-skip-ink: auto;
-  color: currentColor;
-}
-
-/* Make images easier to work with */
-img,
-picture {
-  max-width: 100%;
-  display: block;
-}
-
-/* Inherit fonts for inputs and buttons */
-input, button,
-textarea, select {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-/* Make sure textareas without a rows attribute are not tiny */
-textarea:not([rows]) {
-  min-height: 10em;
-}
-
-/* Anything that has been anchored to should have extra scroll margin */
-:target {
-  scroll-margin-block: 5ex;
-}
-
-/* -------------------- */
-/* Flow utility — vertical rhythm via Utopia space tokens */
+/* Flow — vertical rhythm via Utopia space tokens */
 /* @link https://piccalil.li/blog/my-favourite-3-lines-of-css/ */
-/* -------------------- */
-
 .flow > * + * {
   margin-block-start: var(--flow-space, var(--space-s));
-}
-
-/* -------------------- */
-/* Utopia fluid type scale */
-/* -------------------- */
-
-/* @link https://utopia.fyi/type/calculator?c=360,18,1.2,1240,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
-:root {
-  --step--2: clamp(0.7813rem, 0.7736rem + 0.0341vw, 0.8rem);
-  --step--1: clamp(0.9375rem, 0.9119rem + 0.1136vw, 1rem);
-  --step-0: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
-  --step-1: clamp(1.35rem, 1.2631rem + 0.3864vw, 1.5625rem);
-  --step-2: clamp(1.62rem, 1.4837rem + 0.6057vw, 1.9531rem);
-  --step-3: clamp(1.944rem, 1.7405rem + 0.9044vw, 2.4414rem);
-  --step-4: clamp(2.3328rem, 2.0387rem + 1.3072vw, 3.0518rem);
-  --step-5: clamp(2.7994rem, 2.384rem + 1.8461vw, 3.8147rem);
-}
-
-/* @link https://utopia.fyi/space/calculator?c=360,18,1.2,1240,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
-:root {
-  --space-3xs: clamp(0.3125rem, 0.3125rem + 0vw, 0.3125rem);
-  --space-2xs: clamp(0.5625rem, 0.5369rem + 0.1136vw, 0.625rem);
-  --space-xs: clamp(0.875rem, 0.8494rem + 0.1136vw, 0.9375rem);
-  --space-s: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
-  --space-m: clamp(1.6875rem, 1.6108rem + 0.3409vw, 1.875rem);
-  --space-l: clamp(2.25rem, 2.1477rem + 0.4545vw, 2.5rem);
-  --space-xl: clamp(3.375rem, 3.2216rem + 0.6818vw, 3.75rem);
-  --space-2xl: clamp(4.5rem, 4.2955rem + 0.9091vw, 5rem);
-  --space-3xl: clamp(6.75rem, 6.4432rem + 1.3636vw, 7.5rem);
-
-  /* One-up pairs */
-  --space-3xs-2xs: clamp(0.3125rem, 0.1847rem + 0.5682vw, 0.625rem);
-  --space-2xs-xs: clamp(0.5625rem, 0.4091rem + 0.6818vw, 0.9375rem);
-  --space-xs-s: clamp(0.875rem, 0.7216rem + 0.6818vw, 1.25rem);
-  --space-s-m: clamp(1.125rem, 0.8182rem + 1.3636vw, 1.875rem);
-  --space-m-l: clamp(1.6875rem, 1.3551rem + 1.4773vw, 2.5rem);
-  --space-l-xl: clamp(2.25rem, 1.6364rem + 2.7273vw, 3.75rem);
-  --space-xl-2xl: clamp(3.375rem, 2.7102rem + 2.9545vw, 5rem);
-  --space-2xl-3xl: clamp(4.5rem, 3.2727rem + 5.4545vw, 7.5rem);
-
-  /* Custom pairs */
-  --space-s-l: clamp(1.125rem, 0.5625rem + 2.5vw, 2.5rem);
-}
-
-/* @link https://utopia.fyi/grid/calculator?c=360,18,1.2,1240,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
-:root {
-  --grid-max-width: 77.50rem;
-  --grid-gutter: var(--space-s-l, clamp(1.125rem, 0.5625rem + 2.5vw, 2.5rem));
-  --grid-columns: 12;
 }
 
 .u-container {
@@ -147,7 +19,59 @@ textarea:not([rows]) {
   gap: var(--grid-gutter);
 }
 
-/* @link https://utopia.fyi/clamp/calculator?a=360,1240,16—48 */
-:root {
-  --fluid-16-48: clamp(1rem, 0.1818rem + 3.6364vw, 3rem);
+/* -------------------- */
+/* Global styles */
+/* -------------------- */
+
+body {
+  font-family: system-ui, sans-serif;
+  font-size: var(--step-0);
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+h1 { font-size: var(--step-3); }
+
+/* -------------------- */
+/* Page wrapper */
+/* -------------------- */
+
+.wrapper {
+  max-width: 32rem;
+  margin-inline: auto;
+  padding: var(--space-l) var(--grid-gutter);
+}
+
+/* -------------------- */
+/* Forms */
+/* -------------------- */
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+label {
+  font-weight: 600;
+}
+
+input {
+  padding: var(--space-3xs) var(--space-2xs);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  align-self: start;
+  padding: var(--space-3xs) var(--space-s);
+  border: none;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #333;
 }

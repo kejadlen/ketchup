@@ -9,13 +9,15 @@ module Views
     class New < Phlex::HTML
       def view_template
         render Layout.new(title: "New Series — Ketchup") do
-          h1 { "New Series" }
+          div(class: "wrapper flow") do
+            h1 { "New Series" }
 
-          form(method: "post", action: "/series") do
-            label(for: "name") { "Name" }
-            input(type: "text", id: "name", name: "name", required: true)
+            form(method: "post", action: "/series") do
+              label(for: "name") { "Name" }
+              input(type: "text", id: "name", name: "name", required: true)
 
-            button(type: "submit") { "Create" }
+              button(type: "submit") { "Create" }
+            end
           end
         end
       end
