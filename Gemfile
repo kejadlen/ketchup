@@ -16,5 +16,6 @@ group :development do
   gem "rack-test"
   gem "rake"
   gem "rbs-inline", require: false
+  gem "ruby-lsp"
   gem "steep"
 end

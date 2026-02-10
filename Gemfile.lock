@@ -77,6 +77,10 @@ GEM
       zeitwerk
     roda (3.100.0)
       rack
+    ruby-lsp (0.26.6)
+      language_server-protocol (~> 3.17.0)
+      prism (>= 1.2, < 2.0)
+      rbs (>= 3, < 5)
     securerandom (0.4.1)
     sequel (5.101.0)
       bigdecimal
@@ -140,6 +144,7 @@ DEPENDENCIES
   rake
   rbs-inline
   roda
+  ruby-lsp
   sequel
   sqlite3
   steep
@@ -189,6 +194,7 @@ CHECKSUMS
   rbs-inline (0.12.0) sha256=0b84ec69fa5b3deb89e60f08d9b47966c9e26a222c7c65b5014857a3b10c62b2
   refract (1.1.0) sha256=ee3b9627e39f7692831101e2fedd73e0d09a592ff5d5c05f171d14211fc7a9c7
   roda (3.100.0) sha256=35d36f43c68d2bd1974dc77ade8c873558265a191018e1ada88ca662f1fa8e62
+  ruby-lsp (0.26.6) sha256=1f50b21cb300586d7742190fc8446c18387f488aa0e9d276cf2bc7f3684ccda2
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   sequel (5.101.0) sha256=d2ae3fd997a7c4572e8357918e777869faf90dc19310fcd6332747122aed2b29
   sqlite3 (2.9.0-aarch64-linux-gnu) sha256=cfe1e0216f46d7483839719bf827129151e6c680317b99d7b8fc1597a3e13473

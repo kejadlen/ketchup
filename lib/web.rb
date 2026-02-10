@@ -2,7 +2,7 @@
 
 require "roda"
 
-require_relative "db"
+require_relative "models"
 require_relative "views/home"
 
 class Web < Roda
@@ -14,27 +14,14 @@ class Web < Roda
     return unless login
 
     name = env["HTTP_TAILSCALE_USER_NAME"]
-    now = Time.now
-
-    DB[:users]
-      .insert_conflict(target: :login, update: { name: name, updated_at: now })
-      .insert(login: login, name: name, created_at: now, updated_at: now)
-
-    DB[:users].first(login: login)
+    User.upsert(login: login, name: name)
   end
-
-  INTERVAL_UNITS = %w[day week month quarter year].freeze
 
   route do |r|
     r.halt 403 unless current_user
 
     r.root do
-      tasks = DB[:tasks]
-        .join(:series, id: :series_id)
-        .where(completed_at: nil, user_id: current_user[:id])
-        .order(Sequel[:tasks][:due_date])
-        .all
-
+      tasks = Task.active.for_user(current_user).by_due_date.all
       Views::Home.new(current_user:, tasks:).call
     end
 
@@ -46,7 +33,7 @@ class Web < Roda
         first_due_date = r.params["first_due_date"].to_s
 
         r.halt 422 if note.empty?
-        r.halt 422 unless INTERVAL_UNITS.include?(interval_unit)
+        r.halt 422 unless Series::INTERVAL_UNITS.include?(interval_unit)
         r.halt 422 unless interval_count >= 1
 
         begin
@@ -55,24 +42,13 @@ class Web < Roda
           r.halt 422
         end
 
-        now = Time.now
-        DB.transaction do
-          series_id = DB[:series].insert(
-            user_id: current_user[:id],
-            note: note,
-            interval_unit: interval_unit,
-            interval_count: interval_count,
-            created_at: now,
-            updated_at: now
-          )
-
-          DB[:tasks].insert(
-            series_id: series_id,
-            due_date: due_date,
-            created_at: now,
-            updated_at: now
-          )
-        end
+        Series.create_with_first_task(
+          user: current_user,
+          note: note,
+          interval_unit: interval_unit,
+          interval_count: interval_count,
+          first_due_date: due_date
+        )
 
         r.redirect "/"
       end
