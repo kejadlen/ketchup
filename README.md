@@ -11,7 +11,7 @@ A personal/family tool for tracking recurring tasks and catching up on what's ov
 
 ## Key concepts
 
-- **Tasks** are recurring, with a configurable interval (day/week/month) and interval count
+- **Tasks** are recurring, with a configurable interval (day/week/month/quarter/year) and interval count
   - Recurrence is based on interval+count from last completion (not fixed schedule — but may add fixed schedule later)
 - Each user has their own tasks
 - Tasks can also be **shared** — visible to all users, anyone can mark them done, overdue shows for everyone
@@ -23,7 +23,7 @@ A personal/family tool for tracking recurring tasks and catching up on what's ov
 ## Task fields
 
 - **Note** — free text; first line serves as the task name/title
-- **Interval unit** — day, week, or month
+- **Interval unit** — day, week, month, quarter, or year
 - **Interval count** — e.g., 2 (combined with unit: "every 2 weeks")
 - **First due date** — user picks this on creation
 - **Personal or shared**
