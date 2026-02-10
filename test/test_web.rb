@@ -44,6 +44,22 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "2026-03-01"
   end
 
+  def test_root_only_shows_own_tasks
+    post "/series", {
+      note: "Alice task", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+
+    post "/series", {
+      note: "Bob task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers(login: "bob@example.com", name: "Bob")
+
+    get "/", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
+    assert_includes last_response.body, "Alice task"
+    refute_includes last_response.body, "Bob task"
+  end
+
   def test_root_shows_current_user
     get "/", {}, tailscale_headers(name: "Alice")
     assert_includes last_response.body, "Alice"

@@ -31,16 +31,7 @@ class Web < Roda
     r.root do
       tasks = DB[:tasks]
         .join(:series, id: :series_id)
-        .where(completed_at: nil)
-        .select(
-          Sequel[:tasks][:id],
-          Sequel[:tasks][:due_date],
-          Sequel[:tasks][:completed_at],
-          Sequel[:series][:note],
-          Sequel[:series][:interval_unit],
-          Sequel[:series][:interval_count],
-          Sequel[:series][:user_id]
-        )
+        .where(completed_at: nil, user_id: current_user[:id])
         .order(Sequel[:tasks][:due_date])
         .all
 

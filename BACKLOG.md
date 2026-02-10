@@ -2,44 +2,52 @@
 
 ## Backlog
 
-### 1. Set up domain layer with Task model and persistence
+### Complete tasks
 
-**What:** Create the Task model (note, interval unit, interval count, due date, personal/shared, owner) with Sequel migration and a repository/service layer separated from the web layer.
-**Who:** Foundation for everything else.
-**Why now:** Nothing works without this.
+**What:** Mark a task as done — completes the current task, creates the next one with a due date advanced by the series interval.
+**Why now:** Core loop — without this, tasks just accumulate and the app isn't usable.
 **Done when:**
-- Sequel migration creates the tasks table
-- Task domain object exists independent of web layer
-- Can create and retrieve a task via the domain layer
-- Tests pass
+- A task can be marked done from the task list
+- Completing a task sets `completed_at` and creates a new active task with the next due date
+- Both happen atomically in a transaction
 
-### 2. Create a task via the web UI
+### Delay task due date
 
-**What:** A form to create a new task — note (textarea), interval unit, interval count, first due date, personal/shared toggle. Submitted task is saved to the DB for the current user (identified by Tailscale header).
-**Who:** You.
-**Why now:** Can't use the app without tasks.
+**What:** Push a task's due date forward without completing it.
+**Why now:** Sometimes you know you can't get to something yet and want to stop it showing as overdue.
 **Done when:**
-- Form at a route (e.g., `/tasks/new`) with all fields
-- Submitting saves the task tied to the current user
-- User is identified from the Tailscale remote user header
-- Redirects somewhere sensible after creation
+- A task's due date can be changed from the task list
+- The task remains active (not completed)
 
-### 3. View the task list (main view)
+### Colorscheme
 
-**What:** The main screen shows all tasks the current user can see (their personal tasks + all shared tasks), sorted: overdue first by relative lateness, then upcoming by due date.
-**Who:** You and your family.
-**Why now:** This is the core of the app — the "catch up" view.
+**What:** A cohesive color palette instead of ad-hoc hex values.
+**Why now:** The app is visually usable but the colors are arbitrary.
 **Done when:**
-- Main page shows tasks sorted correctly
-- Overdue tasks are visually distinct from upcoming ones
-- Task name (first line of note) is displayed
-- Personal tasks only show for their owner; shared tasks show for everyone
+- Colors are defined as CSS custom properties
+- Applied consistently across the app
+
+### Markdown rendering
+
+**What:** Render task notes as Markdown instead of plain text.
+**Why now:** Notes often contain links, lists, or formatting that would benefit from rendering.
+**Done when:**
+- Task notes render Markdown in the task list
+- The new series form still accepts plain text (rendered on display)
+
+### Calendar view
+
+**What:** A calendar visualization showing when tasks are due, giving a sense of upcoming load.
+**Why now:** The sorted list shows priority but not temporal distribution — hard to see if next week is packed.
+**Done when:**
+- A calendar view shows tasks plotted on their due dates
+- Overdue tasks are visually distinct
 
 ## Icebox
 
-- Mark a task as done (completes it, schedules next occurrence)
-- Edit a task
-- Delete a task
+- Edit a task/series
+- Delete a task/series
 - Per-completion notes
 - Fixed-schedule recurrence
+- Personal/shared toggle
 - CLI interface
