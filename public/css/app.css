@@ -63,21 +63,13 @@ h1 { font-size: var(--step-2); }
 
 .home {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-l);
+  gap: var(--space-s);
   padding: var(--space-l) var(--grid-gutter);
-  max-width: 60rem;
+  max-width: 36rem;
   margin-inline: auto;
 }
 
-@media (min-width: 48rem) {
-  .home {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .panel {
-  padding: var(--space-m);
 }
 
 /* -------------------- */
@@ -127,6 +119,37 @@ h1 { font-size: var(--step-2); }
 .empty {
   color: #888;
   font-style: italic;
+}
+
+/* -------------------- */
+/* New series (collapsible) */
+/* -------------------- */
+
+.new-series summary {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  list-style: none;
+}
+
+.new-series summary::before {
+  content: "+ ";
+}
+
+.new-series[open] summary::before {
+  content: "− ";
+}
+
+.new-series[open] summary {
+  margin-block-end: var(--space-s);
+}
+
+.new-series form {
+  padding: var(--space-m);
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff;
 }
 
 /* -------------------- */
