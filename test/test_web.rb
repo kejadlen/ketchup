@@ -16,7 +16,9 @@ class TestWeb < Minitest::Test
     get "/", {}, tailscale_headers
     assert last_response.ok?
     assert_includes last_response.body, '<form method="post" action="/series">'
-    assert_includes last_response.body, 'name="name"'
+    assert_includes last_response.body, 'name="note"'
+    assert_includes last_response.body, 'name="interval_count"'
+    assert_includes last_response.body, 'name="interval_unit"'
   end
 
   def test_root_shows_current_user

@@ -2,21 +2,14 @@
 /* Utilities */
 /* -------------------- */
 
-/* Flow — vertical rhythm via Utopia space tokens */
-/* @link https://piccalil.li/blog/my-favourite-3-lines-of-css/ */
 .flow > * + * {
-  margin-block-start: var(--flow-space, var(--space-s));
+  margin-block-start: var(--flow-space, var(--space-m));
 }
 
 .u-container {
   max-width: var(--grid-max-width);
   padding-inline: var(--grid-gutter);
   margin-inline: auto;
-}
-
-.u-grid {
-  display: grid;
-  gap: var(--grid-gutter);
 }
 
 /* -------------------- */
@@ -26,11 +19,12 @@
 body {
   font-family: system-ui, sans-serif;
   font-size: var(--step-0);
+  line-height: 1.5;
   color: #1a1a1a;
   background: #fafafa;
 }
 
-h1 { font-size: var(--step-3); }
+h1 { font-size: var(--step-2); }
 
 /* -------------------- */
 /* Site header */
@@ -58,7 +52,7 @@ h1 { font-size: var(--step-3); }
 /* -------------------- */
 
 .wrapper {
-  max-width: 32rem;
+  max-width: 28rem;
   margin-inline: auto;
   padding: var(--space-l) var(--grid-gutter);
 }
@@ -68,31 +62,70 @@ h1 { font-size: var(--step-3); }
 /* -------------------- */
 
 form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
+  display: grid;
+  gap: var(--space-m);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-3xs);
 }
 
 label {
+  font-size: var(--step--1);
   font-weight: 600;
+  color: #444;
 }
 
-input {
-  padding: var(--space-3xs) var(--space-2xs);
+input,
+textarea,
+select {
+  padding: var(--space-2xs);
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
 }
 
-button {
-  align-self: start;
-  padding: var(--space-3xs) var(--space-s);
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 1px;
+  border-color: #1a1a1a;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.interval {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--space-3xs);
+}
+
+button[type="submit"] {
+  padding: var(--space-2xs) var(--space-m);
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #1a1a1a;
   color: #fff;
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 
-button:hover {
+button[type="submit"]:hover {
   background: #333;
 }

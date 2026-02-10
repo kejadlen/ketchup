@@ -17,8 +17,26 @@ module Views
             h1 { "New Series" }
 
             form(method: "post", action: "/series") do
-              label(for: "name") { "Name" }
-              input(type: "text", id: "name", name: "name", required: true)
+              div(class: "field") do
+                label(for: "note") { "Note" }
+                textarea(id: "note", name: "note", rows: 3, required: true)
+              end
+
+              div(class: "field") do
+                label(for: "interval_count") { "Repeat every" }
+                div(class: "interval") do
+                  input(
+                    type: "number", id: "interval_count", name: "interval_count",
+                    min: 1, value: 1, required: true
+                  )
+                  select(id: "interval_unit", name: "interval_unit", required: true) do
+                    option(value: "day") { "day(s)" }
+                    option(value: "week") { "week(s)" }
+                    option(value: "month") { "month(s)" }
+                    option(value: "year") { "year(s)" }
+                  end
+                end
+              end
 
               button(type: "submit") { "Create" }
             end
