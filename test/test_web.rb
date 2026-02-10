@@ -12,7 +12,9 @@ class TestWeb < Minitest::Test
 
   def app = Web.app
 
+  # TODO Wrap tests in a transaction or something?
   def setup
+    DB[:tasks].delete
     DB[:series].delete
   end
 
@@ -49,7 +51,10 @@ class TestWeb < Minitest::Test
   end
 
   def test_create_series
-    post "/series", { note: "Call Mom", interval_unit: "week", interval_count: "2" }, tailscale_headers
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
     assert last_response.redirect?
 
     series = DB[:series].first
@@ -58,9 +63,23 @@ class TestWeb < Minitest::Test
     assert_equal 2, series[:interval_count]
   end
 
+  def test_create_series_creates_first_task
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    task = DB[:tasks].first(series_id: series[:id])
+    assert_equal Date.new(2026, 3, 1), task[:due_date]
+    assert_nil task[:completed_at]
+  end
+
   def test_create_series_belongs_to_current_user
-    post "/series", { note: "Dentist", interval_unit: "quarter", interval_count: "1" },
-      tailscale_headers(login: "dave@example.com", name: "Dave")
+    post "/series", {
+      note: "Dentist", interval_unit: "quarter", interval_count: "1",
+      first_due_date: "2026-06-01"
+    }, tailscale_headers(login: "dave@example.com", name: "Dave")
 
     series = DB[:series].first
     user = DB[:users].first(login: "dave@example.com")
@@ -68,30 +87,55 @@ class TestWeb < Minitest::Test
   end
 
   def test_create_series_strips_whitespace
-    post "/series", { note: "  Trim me  ", interval_unit: "day", interval_count: "1" }, tailscale_headers
+    post "/series", {
+      note: "  Trim me  ", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
     assert_equal "Trim me", DB[:series].first[:note]
   end
 
   def test_create_series_rejects_empty_note
-    post "/series", { note: "  ", interval_unit: "day", interval_count: "1" }, tailscale_headers
+    post "/series", {
+      note: "  ", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
   end
 
   def test_create_series_rejects_invalid_interval_unit
-    post "/series", { note: "Nope", interval_unit: "fortnight", interval_count: "1" }, tailscale_headers
+    post "/series", {
+      note: "Nope", interval_unit: "fortnight", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
   end
 
   def test_create_series_rejects_zero_interval_count
-    post "/series", { note: "Nope", interval_unit: "day", interval_count: "0" }, tailscale_headers
+    post "/series", {
+      note: "Nope", interval_unit: "day", interval_count: "0",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
   end
 
+  def test_create_series_rejects_invalid_due_date
+    post "/series", {
+      note: "Nope", interval_unit: "day", interval_count: "1",
+      first_due_date: "not-a-date"
+    }, tailscale_headers
+    assert_equal 422, last_response.status
+    assert_equal 0, DB[:series].count
+    assert_equal 0, DB[:tasks].count
+  end
+
   def test_create_series_requires_tailscale_user
-    post "/series", { note: "Nope", interval_unit: "day", interval_count: "1" }
+    post "/series", {
+      note: "Nope", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }
     assert_equal 403, last_response.status
   end
 

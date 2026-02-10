@@ -39,6 +39,15 @@ module Views
                 end
               end
 
+              # Maybe we should update this if we change the interval?
+              div(class: "field") do
+                label(for: "first_due_date") { "First due date" }
+                input(
+                  type: "date", id: "first_due_date", name: "first_due_date",
+                  value: Date.today.to_s, required: true
+                )
+              end
+
               button(type: "submit") { "Create" }
             end
           end
