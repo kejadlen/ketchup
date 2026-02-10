@@ -12,4 +12,10 @@ end
 
 task binstubs: ".direnv/.bundled"
 
+desc "Start dev server with auto-restart, served via Tailscale"
+task :dev do
+  sh "tailscale serve --bg 9292"
+  sh "fd | entr -r rackup"
+end
+
 task default: %i[ test binstubs ]
