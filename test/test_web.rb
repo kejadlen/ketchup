@@ -17,6 +17,11 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, 'name="name"'
   end
 
+  def test_root_shows_current_user
+    get "/", {}, tailscale_headers(name: "Alice")
+    assert_includes last_response.body, "Alice"
+  end
+
   def test_root_requires_tailscale_user
     get "/"
     assert_equal 403, last_response.status
@@ -24,7 +29,11 @@ class TestWeb < Minitest::Test
 
   private
 
-  def tailscale_headers(login: "alice@example.com", name: "Alice", profile_pic: "https://example.com/alice.jpg")
+  def tailscale_headers(
+    login: "alice@example.com",
+    name: "Alice",
+    profile_pic: "https://example.com/alice.jpg"
+  )
     {
       "HTTP_TAILSCALE_USER_LOGIN" => login,
       "HTTP_TAILSCALE_USER_NAME" => name,

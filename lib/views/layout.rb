@@ -4,7 +4,8 @@ require "phlex"
 
 module Views
   class Layout < Phlex::HTML
-    def initialize(title: "Ketchup")
+    def initialize(current_user:, title: "Ketchup")
+      @current_user = current_user
       @title = title
     end
 
@@ -19,7 +20,13 @@ module Views
           link(rel: "stylesheet", href: "/css/utopia.css")
           link(rel: "stylesheet", href: "/css/app.css")
         end
-        body(&)
+        body do
+          header(class: "site-header") do
+            span(class: "site-name") { "Ketchup" }
+            span(class: "user") { @current_user[:name] || @current_user[:login] }
+          end
+          yield
+        end
       end
     end
   end

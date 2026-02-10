@@ -7,8 +7,12 @@ require_relative "../layout"
 module Views
   module Series
     class New < Phlex::HTML
+      def initialize(current_user:)
+        @current_user = current_user
+      end
+
       def view_template
-        render Layout.new(title: "New Series — Ketchup") do
+        render Layout.new(current_user: @current_user, title: "New Series — Ketchup") do
           div(class: "wrapper flow") do
             h1 { "New Series" }
 

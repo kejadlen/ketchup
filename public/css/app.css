@@ -33,6 +33,27 @@ body {
 h1 { font-size: var(--step-3); }
 
 /* -------------------- */
+/* Site header */
+/* -------------------- */
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) var(--grid-gutter);
+  border-block-end: 1px solid #e0e0e0;
+}
+
+.site-name {
+  font-weight: 700;
+}
+
+.user {
+  font-size: var(--step--1);
+  color: #666;
+}
+
+/* -------------------- */
 /* Page wrapper */
 /* -------------------- */
 

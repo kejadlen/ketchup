@@ -22,7 +22,7 @@ class Web < Roda
     r.halt 403 unless current_user
 
     r.root do
-      Views::Series::New.new.call
+      Views::Series::New.new(current_user:).call
     end
   end
 end
