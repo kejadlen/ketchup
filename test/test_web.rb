@@ -12,6 +12,10 @@ class TestWeb < Minitest::Test
 
   def app = Web.app
 
+  def setup
+    DB[:series].delete
+  end
+
   def test_root_shows_new_series_form
     get "/", {}, tailscale_headers
     assert last_response.ok?
@@ -41,6 +45,53 @@ class TestWeb < Minitest::Test
 
   def test_root_requires_tailscale_user
     get "/"
+    assert_equal 403, last_response.status
+  end
+
+  def test_create_series
+    post "/series", { note: "Call Mom", interval_unit: "week", interval_count: "2" }, tailscale_headers
+    assert last_response.redirect?
+
+    series = DB[:series].first
+    assert_equal "Call Mom", series[:note]
+    assert_equal "week", series[:interval_unit]
+    assert_equal 2, series[:interval_count]
+  end
+
+  def test_create_series_belongs_to_current_user
+    post "/series", { note: "Dentist", interval_unit: "quarter", interval_count: "1" },
+      tailscale_headers(login: "dave@example.com", name: "Dave")
+
+    series = DB[:series].first
+    user = DB[:users].first(login: "dave@example.com")
+    assert_equal user[:id], series[:user_id]
+  end
+
+  def test_create_series_strips_whitespace
+    post "/series", { note: "  Trim me  ", interval_unit: "day", interval_count: "1" }, tailscale_headers
+    assert_equal "Trim me", DB[:series].first[:note]
+  end
+
+  def test_create_series_rejects_empty_note
+    post "/series", { note: "  ", interval_unit: "day", interval_count: "1" }, tailscale_headers
+    assert_equal 422, last_response.status
+    assert_equal 0, DB[:series].count
+  end
+
+  def test_create_series_rejects_invalid_interval_unit
+    post "/series", { note: "Nope", interval_unit: "fortnight", interval_count: "1" }, tailscale_headers
+    assert_equal 422, last_response.status
+    assert_equal 0, DB[:series].count
+  end
+
+  def test_create_series_rejects_zero_interval_count
+    post "/series", { note: "Nope", interval_unit: "day", interval_count: "0" }, tailscale_headers
+    assert_equal 422, last_response.status
+    assert_equal 0, DB[:series].count
+  end
+
+  def test_create_series_requires_tailscale_user
+    post "/series", { note: "Nope", interval_unit: "day", interval_count: "1" }
     assert_equal 403, last_response.status
   end
 
