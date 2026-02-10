@@ -25,6 +25,23 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, 'name="note"'
     assert_includes last_response.body, 'name="interval_count"'
     assert_includes last_response.body, 'name="interval_unit"'
+    assert_includes last_response.body, 'name="first_due_date"'
+  end
+
+  def test_root_shows_empty_state
+    get "/", {}, tailscale_headers
+    assert_includes last_response.body, "No tasks yet."
+  end
+
+  def test_root_shows_active_tasks
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    get "/", {}, tailscale_headers
+    assert_includes last_response.body, "Call Mom"
+    assert_includes last_response.body, "2026-03-01"
   end
 
   def test_root_shows_current_user

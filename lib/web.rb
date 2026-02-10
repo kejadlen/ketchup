@@ -3,7 +3,7 @@
 require "roda"
 
 require_relative "db"
-require_relative "views/series/new"
+require_relative "views/home"
 
 class Web < Roda
   plugin :halt
@@ -29,7 +29,22 @@ class Web < Roda
     r.halt 403 unless current_user
 
     r.root do
-      Views::Series::New.new(current_user:).call
+      tasks = DB[:tasks]
+        .join(:series, id: :series_id)
+        .where(completed_at: nil)
+        .select(
+          Sequel[:tasks][:id],
+          Sequel[:tasks][:due_date],
+          Sequel[:tasks][:completed_at],
+          Sequel[:series][:note],
+          Sequel[:series][:interval_unit],
+          Sequel[:series][:interval_count],
+          Sequel[:series][:user_id]
+        )
+        .order(Sequel[:tasks][:due_date])
+        .all
+
+      Views::Home.new(current_user:, tasks:).call
     end
 
     r.on "series" do

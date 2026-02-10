@@ -58,6 +58,78 @@ h1 { font-size: var(--step-2); }
 }
 
 /* -------------------- */
+/* Home layout */
+/* -------------------- */
+
+.home {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-l);
+  padding: var(--space-l) var(--grid-gutter);
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 48rem) {
+  .home {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.panel {
+  padding: var(--space-m);
+}
+
+/* -------------------- */
+/* Task list */
+/* -------------------- */
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--space-s);
+}
+
+.task-card {
+  display: grid;
+  gap: var(--space-3xs);
+  padding: var(--space-s);
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.task-card.task-overdue {
+  border-color: #c0392b;
+  background: #fdf2f2;
+}
+
+.task-name {
+  font-weight: 600;
+}
+
+.task-due {
+  font-size: var(--step--1);
+  color: #666;
+}
+
+.task-overdue .task-due {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.task-interval {
+  font-size: var(--step--1);
+  color: #888;
+}
+
+.empty {
+  color: #888;
+  font-style: italic;
+}
+
+/* -------------------- */
 /* Forms */
 /* -------------------- */
 
