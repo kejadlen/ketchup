@@ -22,13 +22,14 @@ class Web < Roda
 
     r.root do
       sort = r.params["sort"] == "date" ? :date : :urgency
-      order = if sort == :urgency
-                ->(t) { [-t.urgency, t[:due_date]] }
-              else
-                ->(t) { t[:due_date] }
-              end
-      tasks = Task.active.for_user(current_user).all.sort_by(&order)
-      Views::Home.new(current_user:, tasks:, sort:).call
+      all_tasks = Task.active.for_user(current_user).all
+      overdue, upcoming = all_tasks.partition { |t| t.urgency > 0 }
+
+      order = sort == :urgency ? ->(t) { -t.urgency } : ->(t) { t[:due_date] }
+      overdue.sort_by!(&order)
+      upcoming.sort_by! { |t| t[:due_date] }
+
+      Views::Home.new(current_user:, overdue:, upcoming:, sort:).call
     end
 
     r.on "tasks", Integer do |task_id|

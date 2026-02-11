@@ -30,7 +30,8 @@ class TestWeb < Minitest::Test
 
   def test_root_shows_empty_state
     get "/", {}, tailscale_headers
-    assert_includes last_response.body, "No tasks yet."
+    assert_includes last_response.body, "Nothing overdue."
+    assert_includes last_response.body, "Nothing upcoming."
   end
 
   def test_root_shows_active_tasks

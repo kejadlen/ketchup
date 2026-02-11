@@ -21,10 +21,15 @@ body {
   font-size: var(--step-0);
   line-height: 1.5;
   color: #1a1a1a;
-  background: #fafafa;
+  background: #fff;
+}
+
+a {
+  color: inherit;
 }
 
 h1 { font-size: var(--step-2); }
+h2 { font-size: var(--step-0); font-weight: 600; }
 
 /* -------------------- */
 /* Site header */
@@ -35,7 +40,7 @@ h1 { font-size: var(--step-2); }
   justify-content: space-between;
   align-items: center;
   padding: var(--space-xs) var(--grid-gutter);
-  border-block-end: 1px solid #e0e0e0;
+  border-block-end: 1px dotted #ccc;
 }
 
 .site-name {
@@ -44,7 +49,7 @@ h1 { font-size: var(--step-2); }
 
 .user {
   font-size: var(--step--1);
-  color: #666;
+  color: #777;
 }
 
 /* -------------------- */
@@ -63,24 +68,62 @@ h1 { font-size: var(--step-2); }
 
 .home {
   display: grid;
-  gap: var(--space-s);
-  padding: var(--space-l) var(--grid-gutter);
-  max-width: 36rem;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--space-xl);
+  padding: var(--space-m) var(--grid-gutter);
+  max-width: 72rem;
   margin-inline: auto;
 }
 
-.panel {
+.column {
+  min-width: 0;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-block-end: var(--space-xs);
+  padding-block-end: var(--space-3xs);
+  border-block-end: 1px dotted #ccc;
+}
+
+.column h2 {
+  margin-block-end: var(--space-xs);
+  padding-block-end: var(--space-3xs);
+  border-block-end: 1px dotted #ccc;
+}
+
+.column-header h2 {
+  margin-block-end: 0;
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.column-aside {
+  max-width: 16rem;
+}
+
+.aside-heading {
+  font-size: var(--step--1);
+  color: #999;
+}
+
+.column-aside form {
+  font-size: var(--step--1);
+}
+
+.column-aside label {
+  font-size: var(--step--2);
+}
+
+.column-aside button[type="submit"] {
+  font-size: var(--step--1);
 }
 
 /* -------------------- */
 /* Task list */
 /* -------------------- */
-
-.task-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
 
 .sort-toggle {
   display: flex;
@@ -89,7 +132,7 @@ h1 { font-size: var(--step-2); }
 }
 
 .sort-toggle a {
-  color: #888;
+  color: #999;
   text-decoration: none;
 }
 
@@ -104,51 +147,50 @@ h1 { font-size: var(--step-2); }
 .task-list {
   list-style: none;
   padding: 0;
-  display: grid;
-  gap: var(--space-s);
+}
+
+.task-item {
+  padding-block: var(--space-2xs);
+  border-block-end: 1px dotted #ddd;
 }
 
 .task-card {
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: var(--space-s);
-  padding: var(--space-s);
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background: #fff;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--space-2xs);
 }
 
 .task-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3xs);
+  gap: 2px;
   min-width: 0;
-}
-
-.task-card.task-overdue {
-  border-color: #c0392b;
-  background: #fdf2f2;
 }
 
 .task-name {
   font-weight: 600;
+  font-size: var(--step--1);
+}
+
+.task-overdue .task-name {
+  color: #c0392b;
 }
 
 .task-meta {
   display: flex;
   align-items: baseline;
   gap: var(--space-3xs);
-  font-size: var(--step--1);
+  font-size: var(--step--2);
+  color: #777;
 }
 
 .task-due {
-  color: #666;
+  color: #777;
 }
 
 .task-overdue .task-due {
   color: #c0392b;
-  font-weight: 600;
 }
 
 .task-meta-sep {
@@ -156,7 +198,7 @@ h1 { font-size: var(--step-2); }
 }
 
 .task-interval {
-  color: #888;
+  color: #999;
 }
 
 .task-urgency {
@@ -165,39 +207,8 @@ h1 { font-size: var(--step-2); }
 }
 
 .empty {
-  color: #888;
-  font-style: italic;
-}
-
-/* -------------------- */
-/* New series (collapsible) */
-/* -------------------- */
-
-.new-series summary {
+  color: #999;
   font-size: var(--step--1);
-  font-weight: 600;
-  color: #666;
-  cursor: pointer;
-  list-style: none;
-}
-
-.new-series summary::before {
-  content: "+ ";
-}
-
-.new-series[open] summary::before {
-  content: "− ";
-}
-
-.new-series[open] summary {
-  margin-block-end: var(--space-s);
-}
-
-.new-series form {
-  padding: var(--space-m);
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background: #fff;
 }
 
 /* -------------------- */
@@ -206,7 +217,7 @@ h1 { font-size: var(--step-2); }
 
 form {
   display: grid;
-  gap: var(--space-m);
+  gap: var(--space-s);
 }
 
 .field {
@@ -223,9 +234,9 @@ label {
 input,
 textarea,
 select {
-  padding: var(--space-2xs);
+  padding: var(--space-3xs) var(--space-2xs);
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 3px;
   font: inherit;
   background: #fff;
 }
@@ -243,9 +254,9 @@ input[type="number"]::-webkit-outer-spin-button {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 2px solid #1a1a1a;
+  outline: 1px dotted #aaa;
   outline-offset: 1px;
-  border-color: #1a1a1a;
+  border-color: #999;
 }
 
 textarea {
@@ -259,9 +270,9 @@ textarea {
 }
 
 button[type="submit"] {
-  padding: var(--space-2xs) var(--space-m);
-  border: none;
-  border-radius: 6px;
+  padding: var(--space-3xs) var(--space-s);
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
   background: #1a1a1a;
   color: #fff;
   font: inherit;
@@ -278,14 +289,15 @@ button[type="submit"]:hover {
 }
 
 .complete-form button {
-  width: 2rem;
-  height: 2rem;
+  width: 14px;
+  height: 14px;
+  translate: 0 5px;
   padding: 0;
   border: 1.5px solid #ccc;
-  border-radius: 50%;
+  border-radius: 2px;
   background: transparent;
   color: transparent;
-  font-size: 0.8rem;
+  font-size: 10px;
   line-height: 1;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
