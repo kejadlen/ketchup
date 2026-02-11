@@ -6,9 +6,10 @@ require_relative "layout"
 
 module Views
   class Home < Phlex::HTML
-    def initialize(current_user:, tasks:)
+    def initialize(current_user:, tasks:, sort:)
       @current_user = current_user
       @tasks = tasks
+      @sort = sort
     end
 
     def view_template
@@ -55,7 +56,18 @@ module Views
           end
 
           div(class: "panel flow") do
-            h2 { "Tasks" }
+            div(class: "task-header") do
+              h2 { "Tasks" }
+              nav(class: "sort-toggle") do
+                if @sort == :urgency
+                  a(href: "/?sort=date") { "Date" }
+                  span(class: "sort-active") { "Urgency" }
+                else
+                  span(class: "sort-active") { "Date" }
+                  a(href: "/?sort=urgency") { "Urgency" }
+                end
+              end
+            end
 
             if @tasks.empty?
               p(class: "empty") { "No tasks yet." }

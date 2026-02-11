@@ -41,6 +41,18 @@ end
 class Task < Sequel::Model
   many_to_one :series
 
+  INTERVAL_DAYS = {
+    "day" => 1, "week" => 7, "month" => 30, "quarter" => 91, "year" => 365
+  }.freeze
+
+  def urgency
+    days_overdue = Date.today - self[:due_date]
+    return 0 if days_overdue <= 0
+
+    interval = self[:interval_count] * INTERVAL_DAYS.fetch(self[:interval_unit])
+    days_overdue.to_f / interval
+  end
+
   def complete!
     DB.transaction do
       update(completed_at: Time.now)
@@ -80,8 +92,5 @@ class Task < Sequel::Model
         )
     end
 
-    def by_due_date
-      order(Sequel[:tasks][:due_date])
-    end
   end
 end

@@ -21,8 +21,14 @@ class Web < Roda
     r.halt 403 unless current_user
 
     r.root do
-      tasks = Task.active.for_user(current_user).by_due_date.all
-      Views::Home.new(current_user:, tasks:).call
+      sort = r.params["sort"] == "date" ? :date : :urgency
+      order = if sort == :urgency
+                ->(t) { [-t.urgency, t[:due_date]] }
+              else
+                ->(t) { t[:due_date] }
+              end
+      tasks = Task.active.for_user(current_user).all.sort_by(&order)
+      Views::Home.new(current_user:, tasks:, sort:).call
     end
 
     r.on "tasks", Integer do |task_id|
