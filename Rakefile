@@ -1,3 +1,5 @@
+$LOAD_PATH.unshift File.expand_path("lib", __dir__)
+
 require "minitest/test_task"
 
 Minitest::TestTask.create
@@ -16,6 +18,62 @@ desc "Start dev server with auto-restart, served via Tailscale"
 task :dev do
   sh "tailscale serve --bg 9292"
   sh "fd | entr -r rackup"
+end
+
+desc "Seed database with sample series and tasks"
+task :seed do
+  require "ketchup/models"
+
+  DB[:tasks].delete
+  DB[:series].delete
+
+  user = User.first || abort("No users yet — visit the app first to create one")
+
+  notes = [
+    "Call Mom",
+    "Water the plants",
+    "Clean the kitchen",
+    "Back up laptop",
+    "Review finances",
+    "Dentist appointment",
+    "Oil change",
+    "Haircut",
+    "Replace HVAC filter",
+    "Check smoke detectors",
+  ]
+
+  max_count = {
+    "day" => 14,
+    "week" => 4,
+    "month" => 6,
+    "quarter" => 2,
+    "year" => 2,
+  }
+
+  # How far back a due date can plausibly be overdue, in days
+  overdue_spread = {
+    "day" => 7,
+    "week" => 21,
+    "month" => 60,
+    "quarter" => 120,
+    "year" => 180,
+  }
+
+  notes.each do |note|
+    unit = max_count.keys.sample
+    count = rand(1..max_count.fetch(unit))
+    due_date = Date.today + rand(-overdue_spread.fetch(unit)..14)
+
+    Series.create_with_first_task(
+      user: user,
+      note: note,
+      interval_unit: unit,
+      interval_count: count,
+      first_due_date: due_date
+    )
+  end
+
+  puts "Seeded #{notes.length} series for #{user.name} (#{user.login})"
 end
 
 task default: %i[ test binstubs ]
