@@ -5,7 +5,7 @@ ENV["DATABASE_URL"] = ":memory:"
 require "minitest/autorun"
 require "rack/test"
 
-require_relative "../lib/web"
+require_relative "../lib/ketchup/web"
 
 class TestWeb < Minitest::Test
   include Rack::Test::Methods

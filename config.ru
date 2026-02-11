@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "lib/web"
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require_relative "lib/ketchup/web"
 
 run Web.freeze.app

@@ -4,7 +4,7 @@ ENV["DATABASE_URL"] = ":memory:"
 
 require "minitest/autorun"
 
-require_relative "../lib/db"
+require_relative "../lib/ketchup/db"
 
 class TestDB < Minitest::Test
   def setup
