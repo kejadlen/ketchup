@@ -25,6 +25,15 @@ class Web < Roda
       Views::Home.new(current_user:, tasks:).call
     end
 
+    r.on "tasks", Integer do |task_id|
+      r.post "complete" do
+        task = Task.active.for_user(current_user).where(Sequel[:tasks][:id] => task_id).first
+        r.halt 404 unless task
+        task.complete!
+        r.redirect "/"
+      end
+    end
+
     r.on "series" do
       r.post do
         note = r.params["note"].to_s.strip

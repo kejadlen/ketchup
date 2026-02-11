@@ -85,11 +85,20 @@ h1 { font-size: var(--step-2); }
 
 .task-card {
   display: grid;
-  gap: var(--space-3xs);
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-s);
   padding: var(--space-s);
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   background: #fff;
+}
+
+.task-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  min-width: 0;
 }
 
 .task-card.task-overdue {
@@ -101,8 +110,14 @@ h1 { font-size: var(--step-2); }
   font-weight: 600;
 }
 
-.task-due {
+.task-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3xs);
   font-size: var(--step--1);
+}
+
+.task-due {
   color: #666;
 }
 
@@ -111,8 +126,11 @@ h1 { font-size: var(--step-2); }
   font-weight: 600;
 }
 
+.task-meta-sep {
+  color: #ccc;
+}
+
 .task-interval {
-  font-size: var(--step--1);
   color: #888;
 }
 
@@ -223,4 +241,38 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background: #333;
+}
+
+.complete-form {
+  display: contents;
+}
+
+.complete-form button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1.5px solid #ccc;
+  border-radius: 50%;
+  background: transparent;
+  color: transparent;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.complete-form button:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+  background: #f0f0f0;
+}
+
+.task-overdue .complete-form button {
+  border-color: #e0a9a5;
+}
+
+.task-overdue .complete-form button:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+  background: #fce8e8;
 }

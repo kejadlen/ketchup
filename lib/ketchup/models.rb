@@ -41,6 +41,29 @@ end
 class Task < Sequel::Model
   many_to_one :series
 
+  def complete!
+    DB.transaction do
+      update(completed_at: Time.now)
+
+      today = Date.today
+      next_date = case series.interval_unit
+                  when "day"
+                    today + series.interval_count
+                  when "week"
+                    today + (7 * series.interval_count)
+                  when "month"
+                    today >> series.interval_count
+                  when "quarter"
+                    today >> (3 * series.interval_count)
+                  when "year"
+                    today >> (12 * series.interval_count)
+                  else
+                    fail
+                  end
+      Task.create(series_id: series.id, due_date: next_date)
+    end
+  end
+
   dataset_module do
     def active
       where(completed_at: nil)

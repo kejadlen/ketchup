@@ -80,14 +80,22 @@ module Views
       overdue = task[:due_date] < Date.today
 
       div(class: ["task-card", ("task-overdue" if overdue)]) do
-        span(class: "task-name") { name }
-        span(class: "task-due") do
-          plain overdue ? "Overdue — due #{task[:due_date]}" : "Due #{task[:due_date]}"
+        div(class: "task-body") do
+          span(class: "task-name") { name }
+          div(class: "task-meta") do
+            span(class: "task-due") do
+              plain overdue ? "Overdue — due #{task[:due_date]}" : "Due #{task[:due_date]}"
+            end
+            span(class: "task-meta-sep") { "\u00B7" }
+            span(class: "task-interval") do
+              count = task[:interval_count]
+              unit = task[:interval_unit]
+              plain "Every #{count} #{count == 1 ? unit : "#{unit}s"}"
+            end
+          end
         end
-        span(class: "task-interval") do
-          count = task[:interval_count]
-          unit = task[:interval_unit]
-          plain "Every #{count} #{count == 1 ? unit : "#{unit}s"}"
+        form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do
+          button(type: "submit", title: "Complete", **{ "aria-label": "Complete #{name}" }) { "✓" }
         end
       end
     end

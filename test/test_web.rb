@@ -157,6 +157,58 @@ class TestWeb < Minitest::Test
     assert_equal 0, DB[:tasks].count
   end
 
+  def test_complete_task
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    assert last_response.redirect?
+
+    old_task = DB[:tasks].first(id: task[:id])
+    refute_nil old_task[:completed_at]
+
+    new_task = DB[:tasks].where(completed_at: nil).first
+    assert_equal Date.today + 14, new_task[:due_date]
+  end
+
+  def test_complete_task_advances_by_months
+    post "/series", {
+      note: "Dentist", interval_unit: "month", interval_count: "3",
+      first_due_date: "2026-01-31"
+    }, tailscale_headers
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+
+    new_task = DB[:tasks].where(completed_at: nil).first
+    assert_equal Date.today >> 3, new_task[:due_date]
+  end
+
+  def test_complete_task_requires_own_task
+    post "/series", {
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
+    assert_equal 404, last_response.status
+  end
+
+  def test_complete_task_requires_tailscale_user
+    post "/series", {
+      note: "Call Mom", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete"
+    assert_equal 403, last_response.status
+  end
+
   def test_create_series_requires_tailscale_user
     post "/series", {
       note: "Nope", interval_unit: "day", interval_count: "1",
