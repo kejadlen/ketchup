@@ -104,6 +104,10 @@ module Views
               unit = task[:interval_unit]
               plain "Every #{count} #{count == 1 ? unit : "#{unit}s"}"
             end
+            if task.urgency > 0
+              span(class: "task-meta-sep") { "\u00B7" }
+              span(class: "task-urgency") { "#{format("%.1f", task.urgency)}x" }
+            end
           end
         end
         form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do

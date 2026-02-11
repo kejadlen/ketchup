@@ -62,7 +62,8 @@ task :seed do
   notes.each do |note|
     unit = max_count.keys.sample
     count = rand(1..max_count.fetch(unit))
-    due_date = Date.today + rand(-overdue_spread.fetch(unit)..14)
+    spread = overdue_spread.fetch(unit)
+    due_date = Date.today + rand(-spread..spread)
 
     Series.create_with_first_task(
       user: user,
