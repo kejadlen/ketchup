@@ -42,7 +42,7 @@ class TestWeb < Minitest::Test
 
     get "/", {}, tailscale_headers
     assert_includes last_response.body, "Call Mom"
-    assert_includes last_response.body, "2026-03-01"
+    assert_includes last_response.body, "Mar 1"
   end
 
   def test_root_only_shows_own_tasks

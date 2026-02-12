@@ -25,4 +25,14 @@ document.addEventListener("alpine:init", () => {
       items.forEach((li) => ul.appendChild(li))
     },
   }))
+
+  Alpine.data("upcoming", () => ({
+    showEmpty: localStorage.getItem("upcoming-show-empty") !== "false",
+
+    init() {
+      this.$watch("showEmpty", (value) => {
+        localStorage.setItem("upcoming-show-empty", value)
+      })
+    },
+  }))
 })

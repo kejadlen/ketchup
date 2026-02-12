@@ -34,9 +34,17 @@ module Views
             task_list(@overdue, empty: "Nothing overdue.", sortable: true)
           end
 
-          div(class: "column") do
-            h2 { "Upcoming" }
-            task_list(@upcoming, empty: "Nothing upcoming.")
+          div(class: "column", "x-data": "upcoming") do
+            div(class: "column-header") do
+              h2 { "Upcoming" }
+              nav(class: "sort-toggle") do
+                button(
+                  "x-on:click": "showEmpty = !showEmpty",
+                  "x-bind:class": "showEmpty && 'sort-active'"
+                ) { "Calendar" }
+              end
+            end
+            upcoming_list(@upcoming)
           end
 
           div(class: "column column-aside") do
@@ -98,6 +106,62 @@ module Views
       end
     end
 
+    def upcoming_list(tasks)
+      if tasks.empty?
+        p(class: "empty") { "Nothing upcoming." }
+      else
+        tasks_by_date = tasks.group_by { |t| t[:due_date] }
+
+        ul(class: "task-list") do
+          current_month = Date.today.month
+          horizon = Date.today + 91
+          past_horizon = false
+          last_date = [tasks.last[:due_date], horizon].max
+          (Date.today..last_date).each do |date|
+            if date.month != current_month
+              current_month = date.month
+              li(class: "calendar-month", "x-show": "showEmpty") if date <= horizon
+            end
+            day_tasks = tasks_by_date[date]
+            empty = day_tasks.nil?
+            if empty && date > horizon
+              unless past_horizon
+                past_horizon = true
+                li(class: "calendar-horizon", "x-show": "showEmpty") do
+                  span { "3 months" }
+                end
+              end
+              next
+            end
+            weekend = date.saturday? || date.sunday?
+            day_attrs = { class: ["calendar-day", ("calendar-day-empty" if empty), ("calendar-day-weekend" if weekend)] }
+            day_attrs[:"x-show"] = "showEmpty" if empty
+            li(**day_attrs) do
+              span(class: "calendar-date") { friendly_date(date) }
+            end
+            next if empty
+            day_tasks.each do |task|
+              li(class: ["task-item", ("calendar-day-weekend" if weekend)]) { task_card(task) }
+            end
+          end
+        end
+      end
+    end
+
+    def friendly_date(date)
+      today = Date.today
+      case date
+      when today then "Today"
+      when today + 1 then "Tomorrow"
+      else
+        if date < today + 7
+          date.strftime("%A")
+        else
+          date.strftime("%b %-d")
+        end
+      end
+    end
+
     def task_card(task)
       name = task[:note].lines.first&.strip || task[:note]
       overdue = task[:due_date] < Date.today
@@ -109,10 +173,6 @@ module Views
         div(class: "task-body") do
           span(class: "task-name") { name }
           div(class: "task-meta") do
-            span(class: "task-due") do
-              plain "Due #{task[:due_date]}"
-            end
-            span(class: "task-meta-sep") { "\u00B7" }
             span(class: "task-interval") do
               count = task[:interval_count]
               unit = task[:interval_unit]
