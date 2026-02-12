@@ -125,7 +125,7 @@ module Views
               attrs[:"data-urgency"] = format("%.4f", task.urgency)
               attrs[:"data-due-date"] = task[:due_date].to_s
             end
-            li(**attrs) { task_card(task) }
+            li(**attrs) { task_card(task, sortable: sortable) }
           end
         end
       end
@@ -187,7 +187,7 @@ module Views
       end
     end
 
-    def task_card(task)
+    def task_card(task, sortable: false)
       name = task[:note].lines.first&.strip || task[:note]
       overdue = task[:due_date] < Date.today
 
@@ -210,13 +210,10 @@ module Views
             **{ "aria-label": "Complete #{name}" }
           ) { "✓" }
         end
-        div(class: "task-body") do
-          span(class: "task-name") { name }
-          if overdue && task.urgency > 0
-            div(class: "task-meta") do
-              span(class: "task-urgency") { "#{format("%.1f", task.urgency)}x" }
-            end
-          end
+        span(class: "task-name") { name }
+        if sortable && overdue
+          span(class: "task-secondary task-urgency", "x-show": "sort === 'urgency'") { "#{format("%.1f", task.urgency)}x" } if task.urgency > 0
+          span(class: "task-secondary", "x-show": "sort === 'date'") { task[:due_date].to_s }
         end
       end
     end
