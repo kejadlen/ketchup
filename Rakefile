@@ -59,7 +59,7 @@ task :seed do
     "year" => 180,
   }
 
-  notes.each do |note|
+  all_series = notes.map do |note|
     unit = max_count.keys.sample
     count = rand(1..max_count.fetch(unit))
     spread = overdue_spread.fetch(unit)
@@ -72,6 +72,22 @@ task :seed do
       interval_count: count,
       first_due_date: due_date
     )
+  end
+
+  # Add completed task history to some series
+  all_series.sample(5).each do |s|
+    rand(1..4).times do |i|
+      oldest_task = s.active_task
+      oldest_task.update(completed_at: oldest_task.due_date.to_time + rand(0..3) * 86400)
+      next_date = oldest_task.due_date + case s.interval_unit
+                                         when "day" then s.interval_count
+                                         when "week" then 7 * s.interval_count
+                                         when "month" then 30 * s.interval_count
+                                         when "quarter" then 91 * s.interval_count
+                                         when "year" then 365 * s.interval_count
+                                         end
+      Task.create(series_id: s.id, due_date: next_date)
+    end
   end
 
   puts "Seeded #{notes.length} series for #{user.name} (#{user.login})"
