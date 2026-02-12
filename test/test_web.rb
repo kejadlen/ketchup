@@ -21,7 +21,7 @@ class TestWeb < Minitest::Test
   def test_root_shows_new_series_form
     get "/", {}, tailscale_headers
     assert last_response.ok?
-    assert_includes last_response.body, '<form method="post" action="/series">'
+    assert_includes last_response.body, 'method="post" action="/series"'
     assert_includes last_response.body, 'name="note"'
     assert_includes last_response.body, 'name="interval_count"'
     assert_includes last_response.body, 'name="interval_unit"'
@@ -216,6 +216,24 @@ class TestWeb < Minitest::Test
       first_due_date: "2026-03-01"
     }
     assert_equal 403, last_response.status
+  end
+
+  def test_task_card_has_data_attributes
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    get "/", {}, tailscale_headers
+    assert_includes last_response.body, 'data-task-name="Call Mom"'
+    assert_includes last_response.body, 'data-task-note="Call Mom"'
+    assert_includes last_response.body, 'data-task-interval="Every 2 weeks"'
+    assert_includes last_response.body, 'data-task-due-date="2026-03-01"'
+  end
+
+  def test_sidebar_has_new_button
+    get "/", {}, tailscale_headers
+    assert_includes last_response.body, "+ New"
   end
 
   private

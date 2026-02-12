@@ -47,9 +47,34 @@ module Views
             upcoming_list(@upcoming)
           end
 
-          div(class: "column column-aside") do
-            h2(class: "aside-heading") { "New Series" }
-            form(method: "post", action: "/series") do
+          div(class: "column column-aside", "x-data": "") do
+            div(class: "column-header") do
+              h2(class: "aside-heading") do
+                span("x-show": "$store.sidebar.mode === 'form'") { "New Series" }
+              end
+              nav(class: "sort-toggle") do
+                button(
+                  "x-on:click": "$store.sidebar.toggleForm()",
+                  "x-bind:class": "$store.sidebar.mode === 'form' && 'sort-active'"
+                ) { "+ New" }
+              end
+            end
+
+            div(class: "task-detail", "x-show": "$store.sidebar.mode === 'task'") do
+              p(class: "task-detail-note", "x-text": "$store.sidebar.taskNote")
+              dl(class: "task-detail-fields") do
+                dt { "Interval" }
+                dd("x-text": "$store.sidebar.taskInterval")
+
+                dt { "Due date" }
+                dd("x-text": "$store.sidebar.taskDueDate")
+
+                dt("x-show": "$store.sidebar.taskUrgency !== ''") { "Urgency" }
+                dd("x-show": "$store.sidebar.taskUrgency !== ''", "x-text": "$store.sidebar.taskUrgency")
+              end
+            end
+
+            form(method: "post", action: "/series", "x-show": "$store.sidebar.mode === 'form'") do
               div(class: "field") do
                 label(for: "note") { "Note" }
                 textarea(id: "note", name: "note", rows: 2, required: true)
@@ -166,25 +191,38 @@ module Views
       name = task[:note].lines.first&.strip || task[:note]
       overdue = task[:due_date] < Date.today
 
-      div(class: ["task-card", ("task-overdue" if overdue)]) do
+      div(
+        class: ["task-card", ("task-overdue" if overdue)],
+        "x-on:click": "$store.sidebar.showTask($el)",
+        "x-bind:class": "$store.sidebar.taskId == '#{task[:id]}' && 'task-selected'",
+        "data-task-id": task[:id].to_s,
+        "data-task-name": name,
+        "data-task-note": task[:note],
+        "data-task-interval": interval_text(task[:interval_count], task[:interval_unit]),
+        "data-task-due-date": task[:due_date].to_s,
+        "data-task-urgency": task.urgency > 0 ? "#{format("%.1f", task.urgency)}x" : "",
+        "data-task-overdue": overdue.to_s
+      ) do
         form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do
-          button(type: "submit", title: "Complete", **{ "aria-label": "Complete #{name}" }) { "✓" }
+          button(
+            type: "submit", title: "Complete",
+            "x-on:click.stop": "",
+            **{ "aria-label": "Complete #{name}" }
+          ) { "✓" }
         end
         div(class: "task-body") do
           span(class: "task-name") { name }
-          div(class: "task-meta") do
-            span(class: "task-interval") do
-              count = task[:interval_count]
-              unit = task[:interval_unit]
-              plain "Every #{count} #{count == 1 ? unit : "#{unit}s"}"
-            end
-            if task.urgency > 0
-              span(class: "task-meta-sep") { "\u00B7" }
+          if overdue && task.urgency > 0
+            div(class: "task-meta") do
               span(class: "task-urgency") { "#{format("%.1f", task.urgency)}x" }
             end
           end
         end
       end
+    end
+
+    def interval_text(count, unit)
+      "Every #{count} #{count == 1 ? unit : "#{unit}s"}"
     end
   end
 end

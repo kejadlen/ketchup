@@ -101,12 +101,15 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .column-aside {
-  max-width: 16rem;
+  width: 16rem;
 }
 
 .aside-heading {
-  font-size: var(--step--1);
   color: #999;
+}
+
+.aside-heading::before {
+  content: "\200b";
 }
 
 .column-aside form {
@@ -165,6 +168,17 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   grid-template-columns: auto 1fr;
   align-items: start;
   gap: var(--space-2xs);
+  cursor: pointer;
+  margin-inline: calc(-1 * var(--space-3xs));
+  padding-inline: var(--space-3xs);
+}
+
+.task-card:hover {
+  background: #f8f8f8;
+}
+
+.task-selected {
+  box-shadow: -2px 0 0 #1a1a1a;
 }
 
 .task-body {
@@ -210,6 +224,32 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .task-urgency {
   color: #c0392b;
   font-weight: 600;
+}
+
+.task-detail {
+  font-size: var(--step--1);
+}
+
+.task-detail-note {
+  color: #444;
+  white-space: pre-line;
+  margin-block-end: var(--space-s);
+}
+
+.task-detail-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3xs) var(--space-s);
+  font-size: var(--step--2);
+}
+
+.task-detail-fields dt {
+  color: #999;
+}
+
+.task-detail-fields dd {
+  margin: 0;
+  color: #444;
 }
 
 .calendar-horizon {

@@ -26,6 +26,42 @@ document.addEventListener("alpine:init", () => {
     },
   }))
 
+  Alpine.store("sidebar", {
+    mode: "",
+    taskId: null,
+    taskName: "",
+    taskNote: "",
+    taskInterval: "",
+    taskDueDate: "",
+    taskUrgency: "",
+    taskOverdue: false,
+
+    showTask(el) {
+      this.taskId = el.dataset.taskId
+      this.taskName = el.dataset.taskName
+      this.taskNote = el.dataset.taskNote
+      this.taskInterval = el.dataset.taskInterval
+      this.taskDueDate = el.dataset.taskDueDate
+      this.taskUrgency = el.dataset.taskUrgency
+      this.taskOverdue = el.dataset.taskOverdue === "true"
+      this.mode = "task"
+    },
+
+    showForm() {
+      this.mode = "form"
+      this.taskId = null
+    },
+
+    toggleForm() {
+      if (this.mode === "form") {
+        this.mode = ""
+        this.taskId = null
+      } else {
+        this.showForm()
+      }
+    },
+  })
+
   Alpine.data("upcoming", () => ({
     showEmpty: localStorage.getItem("upcoming-show-empty") !== "false",
 
