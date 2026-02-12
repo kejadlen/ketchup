@@ -166,12 +166,15 @@ class TestWeb < Minitest::Test
 
     task = DB[:tasks].first
     post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
-    assert last_response.redirect?
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    new_task = DB[:tasks].where(completed_at: nil).first
+    assert_equal new_task[:id], body["task"]["id"]
+    assert_equal (Date.today + 14).to_s, body["task"]["due_date"]
 
     old_task = DB[:tasks].first(id: task[:id])
     refute_nil old_task[:completed_at]
-
-    new_task = DB[:tasks].where(completed_at: nil).first
     assert_equal Date.today + 14, new_task[:due_date]
   end
 
@@ -234,6 +237,71 @@ class TestWeb < Minitest::Test
   def test_sidebar_has_new_button
     get "/", {}, tailscale_headers
     assert_includes last_response.body, "+ New"
+  end
+
+  def test_patch_note_saves_on_completed_task
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch "/tasks/#{completed_task[:id]}/note", { note: "Called, all good" }, tailscale_headers
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    assert_equal "Called, all good", body["note"]
+    assert_equal "Called, all good", DB[:tasks].first(id: completed_task[:id])[:note]
+  end
+
+  def test_patch_note_rejects_active_task
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    task = DB[:tasks].first
+    patch "/tasks/#{task[:id]}/note", { note: "nope" }, tailscale_headers
+    assert_equal 422, last_response.status
+  end
+
+  def test_patch_note_requires_own_task
+    post "/series", {
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch "/tasks/#{completed_task[:id]}/note", { note: "hacked" }, tailscale_headers(login: "bob@example.com", name: "Bob")
+    assert_equal 404, last_response.status
+  end
+
+  def test_completed_includes_notes
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch "/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, tailscale_headers
+
+    series = DB[:series].first
+    get "/series/#{series[:id]}/completed", {}, tailscale_headers
+    assert last_response.ok?
+
+    data = JSON.parse(last_response.body)
+    assert_equal 1, data.length
+    assert_equal "Left a message", data[0]["note"]
+    assert data[0].key?("id")
   end
 
   private

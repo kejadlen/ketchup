@@ -9,6 +9,7 @@ require_relative "views/home"
 class Web < Roda
   plugin :halt
   plugin :static, %w[ /css /js ]
+  plugin :all_verbs
 
   def current_user
     login = env["HTTP_TAILSCALE_USER_LOGIN"]
@@ -36,7 +37,26 @@ class Web < Roda
         task = Task.active.for_user(current_user).where(Sequel[:tasks][:id] => task_id).first
         r.halt 404 unless task
         task.complete!
-        r.redirect "/"
+
+        new_task = task.series.active_task
+        response["content-type"] = "application/json"
+        { series_id: task[:series_id], task: { id: new_task.id, due_date: new_task.due_date.to_s } }.to_json
+      end
+
+      r.patch "note" do
+        task = Task.join(:series, id: :series_id)
+          .where(Sequel[:series][:user_id] => current_user.id)
+          .where(Sequel[:tasks][:id] => task_id)
+          .select_all(:tasks)
+          .first
+        r.halt 404 unless task
+        r.halt 422 if task[:completed_at].nil?
+
+        note = r.params["note"].to_s.strip
+        Task.where(id: task_id).update(note: note.empty? ? nil : note)
+
+        response["content-type"] = "application/json"
+        { note: note }.to_json
       end
     end
 
@@ -48,9 +68,9 @@ class Web < Roda
         completed = series.tasks_dataset
           .exclude(completed_at: nil)
           .order(Sequel.desc(:completed_at))
-          .select(:due_date, :completed_at)
+          .select(:id, :due_date, :completed_at, :note)
           .all
-          .map { |t| { due_date: t[:due_date].to_s, completed_at: t[:completed_at].strftime("%Y-%m-%d") } }
+          .map { |t| { id: t[:id], due_date: t[:due_date].to_s, completed_at: t[:completed_at].strftime("%Y-%m-%d"), note: t[:note] } }
 
         response["content-type"] = "application/json"
         completed.to_json

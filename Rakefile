@@ -75,10 +75,22 @@ task :seed do
   end
 
   # Add completed task history to some series
+  completion_notes = [
+    "Done, no issues",
+    "Rescheduled from last week",
+    "Took longer than expected",
+    "Had to call back twice",
+    "All good",
+  ]
+
   all_series.sample(5).each do |s|
     rand(1..4).times do |i|
       oldest_task = s.active_task
-      oldest_task.update(completed_at: oldest_task.due_date.to_time + rand(0..3) * 86400)
+      note = rand < 0.5 ? completion_notes.sample : nil
+      oldest_task.update(
+        completed_at: oldest_task.due_date.to_time + rand(0..3) * 86400,
+        note: note
+      )
       next_date = oldest_task.due_date + case s.interval_unit
                                          when "day" then s.interval_count
                                          when "week" then 7 * s.interval_count

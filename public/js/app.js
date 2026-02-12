@@ -36,6 +36,17 @@ document.addEventListener("alpine:init", () => {
     taskUrgency: "",
     taskOverdue: false,
     completedTasks: [],
+    editingNoteId: null,
+    editingNoteText: "",
+
+    init() {
+      const seriesId = sessionStorage.getItem("showSeries")
+      if (seriesId) {
+        sessionStorage.removeItem("showSeries")
+        const el = document.querySelector(`[data-series-id="${seriesId}"]`)
+        if (el) this.showTask(el)
+      }
+    },
 
     showTask(el) {
       this.taskId = el.dataset.taskId
@@ -46,6 +57,8 @@ document.addEventListener("alpine:init", () => {
       this.taskUrgency = el.dataset.taskUrgency
       this.taskOverdue = el.dataset.taskOverdue === "true"
       this.completedTasks = []
+      this.editingNoteId = null
+      this.editingNoteText = ""
       this.mode = "task"
 
       fetch(`/series/${el.dataset.seriesId}/completed`)
@@ -65,6 +78,46 @@ document.addEventListener("alpine:init", () => {
       } else {
         this.showForm()
       }
+    },
+
+    editNote(taskId, currentNote) {
+      if (this.editingNoteId === taskId) {
+        this.editingNoteId = null
+        this.editingNoteText = ""
+        return
+      }
+      this.editingNoteId = taskId
+      this.editingNoteText = currentNote
+    },
+
+    saveNote(taskId) {
+      const note = this.editingNoteText.trim()
+      fetch(`/tasks/${taskId}/note`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `note=${encodeURIComponent(note)}`,
+      })
+        .then((r) => r.json())
+        .then(() => {
+          const ct = this.completedTasks.find((t) => t.id === taskId)
+          if (ct) ct.note = note || null
+          this.editingNoteId = null
+          this.editingNoteText = ""
+        })
+    },
+
+    cancelNote() {
+      this.editingNoteId = null
+      this.editingNoteText = ""
+    },
+
+    completeTask(taskId, seriesId) {
+      fetch(`/tasks/${taskId}/complete`, { method: "POST" })
+        .then((r) => {
+          if (!r.ok) throw new Error()
+          sessionStorage.setItem("showSeries", seriesId)
+          window.location.reload()
+        })
     },
   })
 

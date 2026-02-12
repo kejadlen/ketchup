@@ -246,17 +246,82 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   padding: 0;
 }
 
-.task-history li {
+.task-history-item {
+  padding-block: var(--space-3xs);
+  cursor: pointer;
+}
+
+.task-history-item:hover,
+.task-history-item:has(.task-history-edit) {
+  background: #f8f8f8;
+  margin-inline: calc(-1 * var(--space-3xs));
+  padding-inline: var(--space-3xs);
+}
+
+.task-history-row {
   display: flex;
   align-items: center;
   gap: var(--space-3xs);
   font-size: var(--step--2);
   color: #444;
-  padding-block: 2px;
 }
 
 .task-history-check {
   color: #999;
+}
+
+.task-history-note {
+  font-size: var(--step--2);
+  color: #999;
+  margin: 2px 0 0 calc(14px + var(--space-3xs));
+  white-space: pre-line;
+}
+
+.task-history-placeholder {
+  font-size: var(--step--2);
+  color: #ccc;
+  margin-left: auto;
+  display: none;
+}
+
+.task-history-item:hover .task-history-placeholder {
+  display: inline;
+}
+
+.task-history-edit {
+  margin-top: var(--space-3xs);
+}
+
+.task-history-edit textarea {
+  width: 100%;
+  font-size: var(--step--2);
+  padding: var(--space-3xs);
+  box-sizing: border-box;
+}
+
+.task-history-edit-actions {
+  display: flex;
+  gap: var(--space-3xs);
+  margin-top: var(--space-3xs);
+}
+
+.task-history-edit-actions button {
+  font-size: var(--step--2);
+  padding: 2px var(--space-2xs);
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.task-history-edit-actions button:first-child {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+
+.btn-cancel {
+  color: #777;
 }
 
 .calendar-horizon {
@@ -383,11 +448,7 @@ button[type="submit"]:hover {
   background: #333;
 }
 
-.complete-form {
-  display: contents;
-}
-
-.complete-form button {
+.complete-btn {
   width: 14px;
   height: 14px;
   padding: 0;
@@ -401,17 +462,17 @@ button[type="submit"]:hover {
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.complete-form button:hover {
+.complete-btn:hover {
   border-color: #1a1a1a;
   color: #1a1a1a;
   background: #f0f0f0;
 }
 
-.task-overdue .complete-form button {
+.task-overdue .complete-btn {
   border-color: #e0a9a5;
 }
 
-.task-overdue .complete-form button:hover {
+.task-overdue .complete-btn:hover {
   border-color: #c0392b;
   color: #c0392b;
   background: #fce8e8;

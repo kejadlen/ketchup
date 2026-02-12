@@ -78,9 +78,32 @@ module Views
                   h3 { "History" }
                   ul do
                     template("x-for": "ct in $store.sidebar.completedTasks") do
-                      li do
-                        span(class: "task-history-check") { "✓" }
-                        span(class: "task-history-date", "x-text": "ct.completed_at")
+                      li(class: "task-history-item", "x-on:click": "$store.sidebar.editNote(ct.id, ct.note || '')") do
+                        div(class: "task-history-row") do
+                          span(class: "task-history-check") { "✓" }
+                          span(class: "task-history-date", "x-text": "ct.completed_at")
+                          template("x-if": "$store.sidebar.editingNoteId !== ct.id") do
+                            span(class: "task-history-placeholder") do
+                              span("x-text": "ct.note ? 'edit' : 'add a note...'")
+                            end
+                          end
+                        end
+                        template("x-if": "ct.note && $store.sidebar.editingNoteId !== ct.id") do
+                          p(class: "task-history-note", "x-text": "ct.note")
+                        end
+                        template("x-if": "$store.sidebar.editingNoteId === ct.id") do
+                          div(class: "task-history-edit", "x-on:click.stop": "") do
+                            textarea(
+                              rows: 2,
+                              "x-model": "$store.sidebar.editingNoteText",
+                              "x-ref": "noteInput"
+                            )
+                            div(class: "task-history-edit-actions") do
+                              button(type: "button", "x-on:click.stop": "$store.sidebar.saveNote(ct.id)") { "Save" }
+                              button(type: "button", class: "btn-cancel", "x-on:click.stop": "$store.sidebar.cancelNote()") { "Cancel" }
+                            end
+                          end
+                        end
                       end
                     end
                   end
@@ -218,13 +241,12 @@ module Views
         "data-task-urgency": task.urgency > 0 ? "#{format("%.1f", task.urgency)}x" : "",
         "data-task-overdue": overdue.to_s
       ) do
-        form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do
-          button(
-            type: "submit", title: "Complete",
-            "x-on:click.stop": "",
-            **{ "aria-label": "Complete #{name}" }
-          ) { "✓" }
-        end
+        button(
+          type: "button", title: "Complete",
+          class: "complete-btn",
+          "x-on:click.stop": "$store.sidebar.completeTask(#{task[:id]}, #{task[:series_id]})",
+          **{ "aria-label": "Complete #{name}" }
+        ) { "✓" }
         span(class: "task-name") { name }
         if sortable && overdue
           span(class: "task-secondary task-urgency", "x-show": "sort === 'urgency'") { "#{format("%.1f", task.urgency)}x" } if task.urgency > 0
