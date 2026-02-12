@@ -36,9 +36,7 @@ document.addEventListener("alpine:init", () => {
     taskUrgency: "",
     taskOverdue: false,
     completedTasks: [],
-    editingNoteId: null,
-    editingNoteText: "",
-    _noteEditor: null,
+    addingNoteId: null,
 
     init() {
       const seriesId = sessionStorage.getItem("showSeries")
@@ -58,8 +56,7 @@ document.addEventListener("alpine:init", () => {
       this.taskUrgency = el.dataset.taskUrgency
       this.taskOverdue = el.dataset.taskOverdue === "true"
       this.completedTasks = []
-      this.editingNoteId = null
-      this.editingNoteText = ""
+      this.addingNoteId = null
       this.mode = "task"
 
       fetch(`/series/${el.dataset.seriesId}/completed`)
@@ -81,49 +78,54 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    editNote(taskId, currentNote) {
-      if (this.editingNoteId === taskId) {
-        this.editingNoteId = null
-        this.editingNoteText = ""
-        return
-      }
-      this.editingNoteId = taskId
-      this.editingNoteText = currentNote
-    },
-
-    saveNote(taskId) {
-      if (this._noteEditor) {
-        this.editingNoteText = this._noteEditor.getValue()
-      }
-      const note = this.editingNoteText.trim()
-      fetch(`/tasks/${taskId}/note`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `note=${encodeURIComponent(note)}`,
-      })
-        .then((r) => r.json())
-        .then(() => {
-          const ct = this.completedTasks.find((t) => t.id === taskId)
-          if (ct) ct.note = note || null
-          this._noteEditor = null
-          this.editingNoteId = null
-          this.editingNoteText = ""
-        })
-    },
-
-    initNoteEditor(el) {
+    initNoteEditor(el, taskId, initialNote) {
       if (!el) return
       const [editor] = new OverType(el, {
-        value: this.editingNoteText,
+        value: initialNote,
         placeholder: "Add a note...",
+        autoResize: true,
+        minHeight: 14,
+        fontSize: "11px",
+        padding: "0 4px",
       })
-      this._noteEditor = editor
-    },
 
-    cancelNote() {
-      this._noteEditor = null
-      this.editingNoteId = null
-      this.editingNoteText = ""
+      // OverType's wrapper has min-height: 60px !important and its auto-resize
+      // runs during init — before we can intervene — locking in an inflated
+      // height. The global textarea styles (padding, border) also inflate
+      // scrollHeight. Fix: override those styles, then re-measure in the next
+      // frame once the overrides have taken effect.
+      const wrapper = el.querySelector(".overtype-wrapper")
+      const textarea = el.querySelector("textarea")
+      const preview = el.querySelector(".overtype-preview")
+      if (wrapper && textarea) {
+        wrapper.style.setProperty("min-height", "0", "important")
+        textarea.style.setProperty("padding", "0 4px", "important")
+        textarea.style.setProperty("border", "none", "important")
+        const resize = () => {
+          textarea.style.setProperty("height", "0", "important")
+          const h = textarea.scrollHeight + "px"
+          textarea.style.setProperty("height", h, "important")
+          wrapper.style.setProperty("height", h, "important")
+          if (preview) preview.style.setProperty("height", h, "important")
+        }
+        requestAnimationFrame(resize)
+        // OverType's auto-resize also fires on input, re-inflating the height.
+        textarea.addEventListener("input", () => requestAnimationFrame(resize))
+        if (this.addingNoteId === taskId) textarea.focus()
+        textarea.addEventListener("blur", () => {
+          const note = editor.getValue().trim()
+          const ct = this.completedTasks.find((t) => t.id === taskId)
+          if (this.addingNoteId === taskId) this.addingNoteId = null
+          if (!ct || (note || null) === (ct.note || null)) return
+
+          ct.note = note || null
+          fetch(`/tasks/${taskId}/note`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `note=${encodeURIComponent(note)}`,
+          })
+        })
+      }
     },
 
     completeTask(taskId, seriesId) {
@@ -139,6 +141,7 @@ document.addEventListener("alpine:init", () => {
   new OverType("#series-note-editor", {
     placeholder: "What needs doing...",
     textareaProps: { name: "note", required: true },
+    autoResize: true,
   })
 
   Alpine.data("upcoming", () => ({

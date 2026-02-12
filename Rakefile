@@ -83,25 +83,26 @@ task :seed do
     "All good\n\n- Changed filter\n- Reset thermostat",
   ]
 
-  overdue, upcoming = all_series.partition { |s| s.active_task.due_date < Date.today }
-  with_history = overdue.sample([3, overdue.length].min) + upcoming.sample([3, upcoming.length].min)
+  all_series.sample(6).each do |s|
+    interval_days = case s.interval_unit
+                    when "day" then s.interval_count
+                    when "week" then 7 * s.interval_count
+                    when "month" then 30 * s.interval_count
+                    when "quarter" then 91 * s.interval_count
+                    when "year" then 365 * s.interval_count
+                    end
 
-  with_history.each do |s|
-    rand(1..4).times do |i|
-      oldest_task = s.active_task
+    active = s.active_task
+    prev_date = active.due_date
+    rand(1..4).times do
+      prev_date -= interval_days
       note = rand < 0.5 ? completion_notes.sample : nil
-      oldest_task.update(
-        completed_at: oldest_task.due_date.to_time + rand(0..3) * 86400,
+      Task.create(
+        series_id: s.id,
+        due_date: prev_date,
+        completed_at: prev_date.to_time + rand(0..3) * 86400,
         note: note
       )
-      next_date = oldest_task.due_date + case s.interval_unit
-                                         when "day" then s.interval_count
-                                         when "week" then 7 * s.interval_count
-                                         when "month" then 30 * s.interval_count
-                                         when "quarter" then 91 * s.interval_count
-                                         when "year" then 365 * s.interval_count
-                                         end
-      Task.create(series_id: s.id, due_date: next_date)
     end
   end
 

@@ -78,31 +78,22 @@ module Views
                   h3 { "History" }
                   ul do
                     template("x-for": "ct in $store.sidebar.completedTasks") do
-                      li(class: "task-history-item", "x-on:click": "$store.sidebar.editNote(ct.id, ct.note || '')") do
+                      li(class: "task-history-item") do
                         div(class: "task-history-row") do
                           span(class: "task-history-check") { "✓" }
                           span(class: "task-history-date", "x-text": "ct.completed_at")
-                          template("x-if": "$store.sidebar.editingNoteId !== ct.id") do
-                            span(class: "task-history-placeholder") do
-                              span("x-text": "ct.note ? 'edit' : 'add a note...'")
-                            end
+                          template("x-if": "!ct.note && $store.sidebar.addingNoteId !== ct.id") do
+                            span(
+                              class: "task-history-add-note",
+                              "x-on:click": "$store.sidebar.addingNoteId = ct.id"
+                            ) { "add a note..." }
                           end
                         end
-                        template("x-if": "ct.note && $store.sidebar.editingNoteId !== ct.id") do
-                          p(class: "task-history-note", "x-text": "ct.note")
-                        end
-                        template("x-if": "$store.sidebar.editingNoteId === ct.id") do
+                        template("x-if": "ct.note || $store.sidebar.addingNoteId === ct.id") do
                           div(
-                            class: "task-history-edit",
-                            "x-on:click.stop": "",
-                            "x-init": "$store.sidebar.initNoteEditor($el.querySelector('.note-editor'))"
-                          ) do
-                            div(class: "note-editor overtype-wrap")
-                            div(class: "task-history-edit-actions") do
-                              button(type: "button", "x-on:click.stop": "$store.sidebar.saveNote(ct.id)") { "Save" }
-                              button(type: "button", class: "btn-cancel", "x-on:click.stop": "$store.sidebar.cancelNote()") { "Cancel" }
-                            end
-                          end
+                            class: "task-history-note-editor",
+                            "x-init": "$store.sidebar.initNoteEditor($el, ct.id, ct.note || '')"
+                          )
                         end
                       end
                     end
@@ -114,7 +105,7 @@ module Views
             form(method: "post", action: "/series", "x-show": "$store.sidebar.mode === 'form'") do
               div(class: "field") do
                 label(for: "note") { "Note" }
-                div(id: "series-note-editor", class: "overtype-wrap")
+                div(id: "series-note-editor")
               end
 
               div(class: "field") do
