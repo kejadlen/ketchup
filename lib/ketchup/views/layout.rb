@@ -19,6 +19,8 @@ module Views
           link(rel: "stylesheet", href: "/css/reset.css")
           link(rel: "stylesheet", href: "/css/utopia.css")
           link(rel: "stylesheet", href: "/css/app.css")
+          script(src: "/js/app.js", defer: true)
+          script(src: "https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js", defer: true)
         end
         body do
           header(class: "site-header") do

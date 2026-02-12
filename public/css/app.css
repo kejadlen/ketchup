@@ -131,13 +131,20 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   font-size: var(--step--1);
 }
 
-.sort-toggle a {
+.sort-toggle button {
+  all: unset;
   color: #999;
-  text-decoration: none;
+  cursor: pointer;
 }
 
-.sort-toggle a:hover {
+.sort-toggle button:hover {
   color: #1a1a1a;
+}
+
+.sort-toggle button.sort-active {
+  color: #1a1a1a;
+  font-weight: 600;
+  cursor: default;
 }
 
 .sort-active {

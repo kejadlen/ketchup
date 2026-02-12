@@ -6,30 +6,32 @@ require_relative "layout"
 
 module Views
   class Home < Phlex::HTML
-    def initialize(current_user:, overdue:, upcoming:, sort:)
+    def initialize(current_user:, overdue:, upcoming:)
       @current_user = current_user
       @overdue = overdue
       @upcoming = upcoming
-      @sort = sort
     end
 
     def view_template
       render Layout.new(current_user: @current_user) do
         div(class: "home") do
-          div(class: "column") do
+          div(class: "column", "x-data": "sortable") do
             div(class: "column-header") do
               h2 { "Overdue" }
               nav(class: "sort-toggle") do
-                if @sort == :urgency
-                  a(href: "/?sort=date") { "Date" }
-                  span(class: "sort-active") { "Urgency" }
-                else
-                  span(class: "sort-active") { "Date" }
-                  a(href: "/?sort=urgency") { "Urgency" }
-                end
+                button(
+                  "x-on:click": "sort = 'date'",
+                  "x-bind:class": "sort === 'date' && 'sort-active'",
+                  "x-bind:disabled": "sort === 'date'"
+                ) { "Date" }
+                button(
+                  "x-on:click": "sort = 'urgency'",
+                  "x-bind:class": "sort === 'urgency' && 'sort-active'",
+                  "x-bind:disabled": "sort === 'urgency'"
+                ) { "Urgency" }
               end
             end
-            task_list(@overdue, empty: "Nothing overdue.")
+            task_list(@overdue, empty: "Nothing overdue.", sortable: true)
           end
 
           div(class: "column") do
@@ -79,13 +81,18 @@ module Views
 
     private
 
-    def task_list(tasks, empty:)
+    def task_list(tasks, empty:, sortable: false)
       if tasks.empty?
         p(class: "empty") { empty }
       else
         ul(class: "task-list") do
           tasks.each do |task|
-            li(class: "task-item") { task_card(task) }
+            attrs = { class: "task-item" }
+            if sortable
+              attrs[:"data-urgency"] = format("%.4f", task.urgency)
+              attrs[:"data-due-date"] = task[:due_date].to_s
+            end
+            li(**attrs) { task_card(task) }
           end
         end
       end
