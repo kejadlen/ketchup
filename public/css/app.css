@@ -292,11 +292,8 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   margin-top: var(--space-3xs);
 }
 
-.task-history-edit textarea {
-  width: 100%;
+.overtype-wrap {
   font-size: var(--step--2);
-  padding: var(--space-3xs);
-  box-sizing: border-box;
 }
 
 .task-history-edit-actions {

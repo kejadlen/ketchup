@@ -38,6 +38,7 @@ document.addEventListener("alpine:init", () => {
     completedTasks: [],
     editingNoteId: null,
     editingNoteText: "",
+    _noteEditor: null,
 
     init() {
       const seriesId = sessionStorage.getItem("showSeries")
@@ -91,6 +92,9 @@ document.addEventListener("alpine:init", () => {
     },
 
     saveNote(taskId) {
+      if (this._noteEditor) {
+        this.editingNoteText = this._noteEditor.getValue()
+      }
       const note = this.editingNoteText.trim()
       fetch(`/tasks/${taskId}/note`, {
         method: "PATCH",
@@ -101,12 +105,23 @@ document.addEventListener("alpine:init", () => {
         .then(() => {
           const ct = this.completedTasks.find((t) => t.id === taskId)
           if (ct) ct.note = note || null
+          this._noteEditor = null
           this.editingNoteId = null
           this.editingNoteText = ""
         })
     },
 
+    initNoteEditor(el) {
+      if (!el) return
+      const [editor] = new OverType(el, {
+        value: this.editingNoteText,
+        placeholder: "Add a note...",
+      })
+      this._noteEditor = editor
+    },
+
     cancelNote() {
+      this._noteEditor = null
       this.editingNoteId = null
       this.editingNoteText = ""
     },
@@ -119,6 +134,11 @@ document.addEventListener("alpine:init", () => {
           window.location.reload()
         })
     },
+  })
+
+  new OverType("#series-note-editor", {
+    placeholder: "What needs doing...",
+    textareaProps: { name: "note", required: true },
   })
 
   Alpine.data("upcoming", () => ({

@@ -22,7 +22,7 @@ class TestWeb < Minitest::Test
     get "/", {}, tailscale_headers
     assert last_response.ok?
     assert_includes last_response.body, 'method="post" action="/series"'
-    assert_includes last_response.body, 'name="note"'
+    assert_includes last_response.body, 'id="series-note-editor"'
     assert_includes last_response.body, 'name="interval_count"'
     assert_includes last_response.body, 'name="interval_unit"'
     assert_includes last_response.body, 'name="first_due_date"'

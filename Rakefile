@@ -77,13 +77,16 @@ task :seed do
   # Add completed task history to some series
   completion_notes = [
     "Done, no issues",
-    "Rescheduled from last week",
-    "Took longer than expected",
-    "Had to call back twice",
-    "All good",
+    "Rescheduled from **last week**",
+    "Took longer than expected — **2 hours** instead of 1",
+    "Had to call back *twice*",
+    "All good\n\n- Changed filter\n- Reset thermostat",
   ]
 
-  all_series.sample(5).each do |s|
+  overdue, upcoming = all_series.partition { |s| s.active_task.due_date < Date.today }
+  with_history = overdue.sample([3, overdue.length].min) + upcoming.sample([3, upcoming.length].min)
+
+  with_history.each do |s|
     rand(1..4).times do |i|
       oldest_task = s.active_task
       note = rand < 0.5 ? completion_notes.sample : nil

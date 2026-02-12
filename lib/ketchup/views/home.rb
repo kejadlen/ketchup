@@ -92,12 +92,12 @@ module Views
                           p(class: "task-history-note", "x-text": "ct.note")
                         end
                         template("x-if": "$store.sidebar.editingNoteId === ct.id") do
-                          div(class: "task-history-edit", "x-on:click.stop": "") do
-                            textarea(
-                              rows: 2,
-                              "x-model": "$store.sidebar.editingNoteText",
-                              "x-ref": "noteInput"
-                            )
+                          div(
+                            class: "task-history-edit",
+                            "x-on:click.stop": "",
+                            "x-init": "$store.sidebar.initNoteEditor($el.querySelector('.note-editor'))"
+                          ) do
+                            div(class: "note-editor overtype-wrap")
                             div(class: "task-history-edit-actions") do
                               button(type: "button", "x-on:click.stop": "$store.sidebar.saveNote(ct.id)") { "Save" }
                               button(type: "button", class: "btn-cancel", "x-on:click.stop": "$store.sidebar.cancelNote()") { "Cancel" }
@@ -114,7 +114,7 @@ module Views
             form(method: "post", action: "/series", "x-show": "$store.sidebar.mode === 'form'") do
               div(class: "field") do
                 label(for: "note") { "Note" }
-                textarea(id: "note", name: "note", rows: 2, required: true)
+                div(id: "series-note-editor", class: "overtype-wrap")
               end
 
               div(class: "field") do
