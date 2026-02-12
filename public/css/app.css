@@ -210,7 +210,6 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .task-detail-note {
   color: #444;
-  white-space: pre-line;
   margin-block-end: var(--space-s);
 }
 

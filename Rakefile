@@ -31,14 +31,14 @@ task :seed do
 
   notes = [
     "Call Mom",
-    "Water the plants\n\nCheck soil moisture first",
+    "Water the plants\n\nCheck soil moisture *before* watering",
     "Clean the kitchen",
-    "Back up laptop\n\nTime Machine to external drive\nAlso sync cloud photos",
+    "Back up laptop\n\n- Time Machine to external drive\n- Sync cloud photos\n- Verify **offsite** backup",
     "Review finances",
-    "Dentist appointment\n\nDr. Chen, 10am\n555-0142 to reschedule",
+    "Dentist appointment\n\n**Dr. Chen**, 10am\n555-0142 to reschedule",
     "Oil change",
     "Haircut",
-    "Replace HVAC filter\n\nSize: 20x25x1",
+    "Replace HVAC filter\n\nSize: **20x25x1**",
     "Check smoke detectors",
   ]
 

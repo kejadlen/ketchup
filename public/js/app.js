@@ -59,6 +59,12 @@ document.addEventListener("alpine:init", () => {
       this.addingNoteId = null
       this.mode = "task"
 
+      const noteEl = document.getElementById("series-note-preview")
+      if (noteEl) {
+        noteEl.innerHTML = ""
+        noteEl.innerHTML = OverType.MarkdownParser.parse(this.taskNote)
+      }
+
       fetch(`/series/${el.dataset.seriesId}/completed`)
         .then((r) => r.json())
         .then((data) => (this.completedTasks = data))

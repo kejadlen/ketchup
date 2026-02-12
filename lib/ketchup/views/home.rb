@@ -61,7 +61,7 @@ module Views
             end
 
             div(class: "task-detail", "x-show": "$store.sidebar.mode === 'task'") do
-              p(class: "task-detail-note", "x-text": "$store.sidebar.taskNote")
+              div(id: "series-note-preview", class: "task-detail-note")
               dl(class: "task-detail-fields") do
                 dt { "Interval" }
                 dd("x-text": "$store.sidebar.taskInterval")
