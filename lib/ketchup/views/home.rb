@@ -72,6 +72,20 @@ module Views
                 dt("x-show": "$store.sidebar.taskUrgency !== ''") { "Urgency" }
                 dd("x-show": "$store.sidebar.taskUrgency !== ''", "x-text": "$store.sidebar.taskUrgency")
               end
+
+              template("x-if": "$store.sidebar.completedTasks.length > 0") do
+                div(class: "task-history") do
+                  h3 { "History" }
+                  ul do
+                    template("x-for": "ct in $store.sidebar.completedTasks") do
+                      li do
+                        span(class: "task-history-check") { "✓" }
+                        span(class: "task-history-date", "x-text": "ct.completed_at")
+                      end
+                    end
+                  end
+                end
+              end
             end
 
             form(method: "post", action: "/series", "x-show": "$store.sidebar.mode === 'form'") do
@@ -196,6 +210,7 @@ module Views
         "x-on:click": "$store.sidebar.showTask($el)",
         "x-bind:class": "$store.sidebar.taskId == '#{task[:id]}' && 'task-selected'",
         "data-task-id": task[:id].to_s,
+        "data-series-id": task[:series_id].to_s,
         "data-task-name": name,
         "data-task-note": task[:note],
         "data-task-interval": interval_text(task[:interval_count], task[:interval_unit]),

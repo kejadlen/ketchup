@@ -230,6 +230,35 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #444;
 }
 
+.task-history {
+  margin-block-start: var(--space-s);
+}
+
+.task-history h3 {
+  font-size: var(--step--2);
+  font-weight: 600;
+  color: #999;
+  margin-block-end: var(--space-3xs);
+}
+
+.task-history ul {
+  list-style: none;
+  padding: 0;
+}
+
+.task-history li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  font-size: var(--step--2);
+  color: #444;
+  padding-block: 2px;
+}
+
+.task-history-check {
+  color: #999;
+}
+
 .calendar-horizon {
   padding-block: var(--space-s) var(--space-2xs);
   border-block-end: 1px solid #ccc;

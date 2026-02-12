@@ -35,6 +35,7 @@ document.addEventListener("alpine:init", () => {
     taskDueDate: "",
     taskUrgency: "",
     taskOverdue: false,
+    completedTasks: [],
 
     showTask(el) {
       this.taskId = el.dataset.taskId
@@ -44,7 +45,12 @@ document.addEventListener("alpine:init", () => {
       this.taskDueDate = el.dataset.taskDueDate
       this.taskUrgency = el.dataset.taskUrgency
       this.taskOverdue = el.dataset.taskOverdue === "true"
+      this.completedTasks = []
       this.mode = "task"
+
+      fetch(`/series/${el.dataset.seriesId}/completed`)
+        .then((r) => r.json())
+        .then((data) => (this.completedTasks = data))
     },
 
     showForm() {

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "roda"
 
 require_relative "models"
@@ -36,6 +37,23 @@ class Web < Roda
         r.halt 404 unless task
         task.complete!
         r.redirect "/"
+      end
+    end
+
+    r.on "series", Integer do |series_id|
+      series = Series.where(id: series_id, user_id: current_user.id).first
+      r.halt 404 unless series
+
+      r.get "completed" do
+        completed = series.tasks_dataset
+          .exclude(completed_at: nil)
+          .order(Sequel.desc(:completed_at))
+          .select(:due_date, :completed_at)
+          .all
+          .map { |t| { due_date: t[:due_date].to_s, completed_at: t[:completed_at].strftime("%Y-%m-%d") } }
+
+        response["content-type"] = "application/json"
+        completed.to_json
       end
     end
 
