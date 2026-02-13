@@ -136,6 +136,20 @@ document.addEventListener("alpine:init", () => {
         if (!initialNote) textarea.focus()
         textarea.addEventListener("blur", () => {
           const note = editor.getValue().trim()
+
+          if (!note) {
+            if (initialNote) {
+              fetch(`/tasks/${taskId}/note`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `note=`,
+              })
+            }
+            el.style.display = "none"
+            window.dispatchEvent(new Event(`reset-note-${taskId}`))
+            return
+          }
+
           if (note === (initialNote || "").trim()) return
 
           el.dataset.value = note

@@ -154,7 +154,8 @@ module Views
                           class: "task-history-add-note",
                           "x-data": "{ adding: false }",
                           "x-show": "!adding",
-                          "x-on:click": "adding = true; $dispatch('add-note-#{ct[:id]}')"
+                          "x-on:click": "adding = true; $dispatch('add-note-#{ct[:id]}')",
+                          "x-on:reset-note-#{ct[:id]}.window": "adding = false"
                         ) { "add a note..." }
                       end
                     end
