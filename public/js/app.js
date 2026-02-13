@@ -93,6 +93,7 @@ document.addEventListener("alpine:init", () => {
     addingNoteId: null,
     _seriesNoteEditor: null,
     _resizeSeriesNote: null,
+    _noteEditors: [],
 
     init() {
       const seriesId = sessionStorage.getItem("showSeries")
@@ -114,6 +115,8 @@ document.addEventListener("alpine:init", () => {
       this.taskDueDate = el.dataset.taskDueDate
       this.taskUrgency = el.dataset.taskUrgency
       this.taskOverdue = el.dataset.taskOverdue === "true"
+      this._noteEditors.forEach((e) => e.destroy())
+      this._noteEditors = []
       this.completedTasks = []
       this.addingNoteId = null
       this.editing = false
@@ -173,6 +176,7 @@ document.addEventListener("alpine:init", () => {
         padding: "0 4px",
       })
 
+      this._noteEditors.push(editor)
       compactOverType(el)
 
       const textarea = el.querySelector("textarea")
