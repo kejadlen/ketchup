@@ -253,14 +253,16 @@ module Views
           current_month = Date.today.month
           horizon = Date.today + 91
           past_horizon = false
-          last_date = [tasks.last[:due_date], horizon].max
+          last_date = tasks.last[:due_date]
+          last_task_in_window = tasks_by_date.keys.select { |d| d <= horizon }.max || (Date.today - 1)
           (Date.today..last_date).each do |date|
+            day_tasks = tasks_by_date[date]
+            empty = day_tasks.nil?
+            next if empty && date > last_task_in_window && date <= horizon
             if date.month != current_month
               current_month = date.month
               li(class: "calendar-month", "x-show": "showEmpty") if date <= horizon
             end
-            day_tasks = tasks_by_date[date]
-            empty = day_tasks.nil?
             if empty && date > horizon
               unless past_horizon
                 past_horizon = true
