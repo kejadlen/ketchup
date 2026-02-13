@@ -247,7 +247,7 @@ class TestWeb < Minitest::Test
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, tailscale_headers
     assert last_response.ok?
-    assert_includes last_response.body, "Every 2 weeks"
+    assert_includes last_response.body, "2 weeks"
     assert_includes last_response.body, "2026-03-01"
     assert_includes last_response.body, "task-selected"
   end

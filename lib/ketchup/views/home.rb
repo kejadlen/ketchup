@@ -120,7 +120,10 @@ module Views
 
             if @selected_task
               dt { "Due date" }
-              dd("x-show": "!editing") { @selected_task[:due_date].to_s }
+              dd(
+                "x-show": "!editing",
+                "x-text": "new Date('#{@selected_task[:due_date]}T00:00').toLocaleDateString()"
+              ) { @selected_task[:due_date].to_s }
               dd(
                 "x-show": "editing",
                 "x-cloak": true,
@@ -318,7 +321,7 @@ module Views
     end
 
     def interval_text(count, unit)
-      "Every #{count} #{count == 1 ? unit : "#{unit}s"}"
+      "#{count} #{count == 1 ? unit : "#{unit}s"}"
     end
   end
 end
