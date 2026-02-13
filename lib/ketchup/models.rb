@@ -19,6 +19,14 @@ class Series < Sequel::Model
     tasks_dataset.where(completed_at: nil).first
   end
 
+  def completed_tasks
+    tasks_dataset
+      .exclude(completed_at: nil)
+      .order(Sequel.desc(:completed_at))
+      .select(:id, :due_date, :completed_at, :note)
+      .all
+  end
+
   def self.create_with_first_task(user:, note:, interval_unit:, interval_count:, first_due_date:)
     DB.transaction do
       series = create(

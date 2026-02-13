@@ -7,12 +7,11 @@ require_relative "layout"
 module Views
   class Dashboard < Phlex::HTML
     def initialize(current_user:, overdue:, upcoming:,
-                   selected_series: nil, completed_tasks: [])
+                   selected_series: nil)
       @current_user = current_user
       @overdue = overdue
       @upcoming = upcoming
       @selected_series = selected_series
-      @completed_tasks = completed_tasks
     end
 
     def view_template
@@ -144,11 +143,11 @@ module Views
             end
           end
 
-          unless @completed_tasks.empty?
+          unless @selected_series.completed_tasks.empty?
             div(class: "task-history") do
               h3 { "History" }
               ul do
-                @completed_tasks.each do |ct|
+                @selected_series.completed_tasks.each do |ct|
                   li(class: "task-history-item") do
                     div(class: "task-history-row") do
                       span(class: "task-history-check") { "✓" }

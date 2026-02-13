@@ -27,14 +27,6 @@ class Web < Roda
     [overdue, upcoming]
   end
 
-  def completed_tasks_for(series)
-    series.tasks_dataset
-      .exclude(completed_at: nil)
-      .order(Sequel.desc(:completed_at))
-      .select(:id, :due_date, :completed_at, :note)
-      .all
-  end
-
   route do |r|
     r.halt 403 unless current_user
 
@@ -78,8 +70,7 @@ class Web < Roda
 
         Views::Dashboard.new(
           current_user:, overdue:, upcoming:,
-          selected_series: series,
-          completed_tasks: completed_tasks_for(series)
+          selected_series: series
         ).call
       end
 
