@@ -35,9 +35,10 @@ Always returns an array of instances, even for a single element.
   fontFamily: "monospace",
   padding: "16px",
 
-  // Theme: "solar", "cave", or custom object
+  // Theme: "solar", "cave", or custom { name, colors } object
   theme: "solar",
-  colors: { h1: "#e63946", ... },
+  // Per-instance color overrides (merged into active theme):
+  colors: { text: "#1a1a1a" },
 
   // Auto-resize
   autoResize: false,
@@ -96,7 +97,7 @@ OverType.init(target, options)        // Same as constructor
 OverType.initFromData(".editor", {})  // Config via data-ot-* attributes
 OverType.getInstance(element)
 OverType.destroyAll()
-OverType.setTheme("cave")
+OverType.setTheme("cave")            // or custom { name, colors } object
 OverType.setCodeHighlighter(fn)
 OverType.setCustomSyntax(fn)          // Must maintain 1:1 char alignment
 
@@ -137,6 +138,21 @@ parseInt(minHeight))`, and sets `height` with `!important` on the wrapper,
 textarea, and preview.
 
 ## Known Issues in This Project
+
+### Theme text color
+
+The default "solar" theme uses `#0d3b66` (dark blue) for text. This project
+overrides it globally before any instances are created:
+
+```javascript
+OverType.setTheme({ name: "ketchup", colors: { text: "#1a1a1a" } })
+```
+
+`setTheme` accepts a string (built-in name) or an object with `name` and
+`colors`. Partial `colors` objects merge into the base solar theme. The
+per-instance `colors` config option does not work reliably.
+
+### Sizing
 
 Three OverType behaviors compound to inflate small editors:
 

@@ -56,6 +56,8 @@ function saveSeriesField(seriesId, field, value) {
   })
 }
 
+OverType.setTheme({ name: "ketchup", colors: { text: "#1a1a1a" } })
+
 document.addEventListener("alpine:init", () => {
   Alpine.data("sortable", () => ({
     sort: localStorage.getItem("sort") || "urgency",
