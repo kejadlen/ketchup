@@ -7,6 +7,18 @@ Sequel::Model.plugin :sole
 
 class User < Sequel::Model
   one_to_many :series
+
+  def active_tasks
+    Task.active.for_user(self)
+  end
+
+  def overdue_tasks
+    active_tasks.where { due_date < Date.today }
+  end
+
+  def upcoming_tasks
+    active_tasks.where { due_date >= Date.today }.order(:due_date)
+  end
 end
 
 class Series < Sequel::Model

@@ -6,12 +6,9 @@ require_relative "layout"
 
 module Views
   class Dashboard < Phlex::HTML
-    def initialize(current_user:, overdue:, upcoming:,
-                   selected_series: nil)
+    def initialize(current_user:, series: nil)
       @current_user = current_user
-      @overdue = overdue
-      @upcoming = upcoming
-      @selected_series = selected_series
+      @series = series
     end
 
     def view_template
@@ -33,7 +30,7 @@ module Views
                 ) { "Urgency" }
               end
             end
-            task_list(@overdue, empty: "Nothing overdue.", sortable: true)
+            task_list(@current_user.overdue_tasks.all.sort_by { |t| -t.urgency }, empty: "Nothing overdue.", sortable: true)
           end
 
           div(class: "column", "x-data": "upcoming") do
@@ -46,10 +43,10 @@ module Views
                 ) { "Calendar" }
               end
             end
-            upcoming_list(@upcoming)
+            upcoming_list(@current_user.upcoming_tasks.all)
           end
 
-          if @selected_series
+          if @series
             series_detail_sidebar
           else
             new_series_sidebar
@@ -61,7 +58,7 @@ module Views
     private
 
     def series_detail_sidebar
-      active_task = @selected_series.active_task
+      active_task = @series.active_task
       div(class: "column column-aside", "x-data": "{ editing: false }") do
         div(class: "column-header") do
           h2(class: "aside-heading") do
@@ -83,19 +80,19 @@ module Views
           div(
             id: "series-note-detail",
             class: "task-detail-note",
-            "data-value": @selected_series.note || "",
-            "data-series-id": @selected_series.id.to_s
+            "data-value": @series.note || "",
+            "data-series-id": @series.id.to_s
           )
           dl(class: "task-detail-fields") do
             dt { "Repeat every" }
             dd("x-show": "!editing") do
-              plain interval_text(@selected_series.interval_count, @selected_series.interval_unit)
+              plain interval_text(@series.interval_count, @series.interval_unit)
             end
             dd(
               class: "detail-edit-interval",
               "x-show": "editing",
               "x-cloak": true,
-              "x-data": "intervalEditor(#{@selected_series.id}, #{@selected_series.interval_count}, '#{@selected_series.interval_unit}')",
+              "x-data": "intervalEditor(#{@series.id}, #{@series.interval_count}, '#{@series.interval_unit}')",
             ) do
               input(
                 type: "number",
@@ -126,7 +123,7 @@ module Views
               dd(
                 "x-show": "editing",
                 "x-cloak": true,
-                "x-data": "dueDateEditor(#{@selected_series.id}, '#{active_task[:due_date]}')"
+                "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')"
               ) do
                 input(
                   type: "date",
@@ -143,11 +140,11 @@ module Views
             end
           end
 
-          unless @selected_series.completed_tasks.empty?
+          unless @series.completed_tasks.empty?
             div(class: "task-history") do
               h3 { "History" }
               ul do
-                @selected_series.completed_tasks.each do |ct|
+                @series.completed_tasks.each do |ct|
                   li(class: "task-history-item") do
                     div(class: "task-history-row") do
                       span(class: "task-history-check") { "✓" }
@@ -303,7 +300,7 @@ module Views
     def task_card(task, sortable: false)
       name = task[:note].lines.first&.strip || task[:note]
       overdue = task[:due_date] < Date.today
-      selected = @selected_series && @selected_series.id == task[:series_id]
+      selected = @series && @series.id == task[:series_id]
 
       div(class: ["task-card", ("task-overdue" if overdue), ("task-selected" if selected)]) do
         form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do

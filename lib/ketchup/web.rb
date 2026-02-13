@@ -19,20 +19,11 @@ class Web < Roda
     User.find_or_create(login: login) { |u| u.name = name }
   end
 
-  def active_tasks_for(user)
-    all_tasks = Task.active.for_user(user).all
-    overdue, upcoming = all_tasks.partition { |t| t.urgency > 0 }
-    overdue.sort_by! { |t| -t.urgency }
-    upcoming.sort_by! { |t| t[:due_date] }
-    [overdue, upcoming]
-  end
-
   route do |r|
     r.halt 403 unless current_user
 
     r.root do
-      overdue, upcoming = active_tasks_for(current_user)
-      Views::Dashboard.new(current_user:, overdue:, upcoming:).call
+      Views::Dashboard.new(current_user:).call
     end
 
     r.on "tasks", Integer do |task_id|
@@ -66,12 +57,7 @@ class Web < Roda
       r.halt 404 unless series
 
       r.get do
-        overdue, upcoming = active_tasks_for(current_user)
-
-        Views::Dashboard.new(
-          current_user:, overdue:, upcoming:,
-          selected_series: series
-        ).call
+        Views::Dashboard.new(current_user:, series:).call
       end
 
       r.patch do
