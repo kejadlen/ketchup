@@ -8,6 +8,7 @@ gem "phlex"
 gem "puma"
 gem "rackup"
 gem "roda"
+gem "sentry-ruby"
 gem "sequel"
 gem "sqlite3"
 

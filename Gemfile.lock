@@ -82,6 +82,10 @@ GEM
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
     securerandom (0.4.1)
+    sentry-ruby (6.3.1)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      logger
     sequel (5.101.0)
       bigdecimal
     sqlite3 (2.9.0-aarch64-linux-gnu)
@@ -145,6 +149,7 @@ DEPENDENCIES
   rbs-inline
   roda
   ruby-lsp
+  sentry-ruby
   sequel
   sqlite3
   steep
@@ -196,6 +201,7 @@ CHECKSUMS
   roda (3.100.0) sha256=35d36f43c68d2bd1974dc77ade8c873558265a191018e1ada88ca662f1fa8e62
   ruby-lsp (0.26.6) sha256=1f50b21cb300586d7742190fc8446c18387f488aa0e9d276cf2bc7f3684ccda2
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
+  sentry-ruby (6.3.1) sha256=b2de4e9bada1053a36f4224d75617a2b44d33157e9030b20b86a791358c2e154
   sequel (5.101.0) sha256=d2ae3fd997a7c4572e8357918e777869faf90dc19310fcd6332747122aed2b29
   sqlite3 (2.9.0-aarch64-linux-gnu) sha256=cfe1e0216f46d7483839719bf827129151e6c680317b99d7b8fc1597a3e13473
   sqlite3 (2.9.0-aarch64-linux-musl) sha256=56a35cb2d70779afc2ac191baf2c2148242285ecfed72f9b021218c5c4917913
