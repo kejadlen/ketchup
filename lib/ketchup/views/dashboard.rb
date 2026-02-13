@@ -163,7 +163,7 @@ module Views
                       "data-task-id": ct[:id].to_s,
                       "data-value": ct[:note] || "",
                       "x-data": "historyNoteEditor",
-                      "x-init": "init()"
+                      "x-init": "activate()"
                     ) if ct[:note]
                     div(
                       class: "task-history-note-editor",
@@ -171,7 +171,7 @@ module Views
                       "data-value": "",
                       "x-data": "historyNoteEditor",
                       style: "display: none",
-                      "x-on:add-note-#{ct[:id]}.window": "show($el); init()"
+                      "x-on:add-note-#{ct[:id]}.window": "show($el); activate()"
                     ) if ct[:note].nil?
                   end
                 end

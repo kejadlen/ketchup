@@ -112,7 +112,7 @@ document.addEventListener("alpine:init", () => {
       el.style.display = ""
     },
 
-    init() {
+    activate() {
       const el = this.$el
       const taskId = el.dataset.taskId
       const initialNote = el.dataset.value || ""
