@@ -20,29 +20,26 @@ class Web < Roda
   end
 
   route do |r|
-    r.halt 403 unless current_user
+    @user = current_user
+    r.halt 403 unless @user
 
     r.root do
-      Views::Dashboard.new(current_user:).call
+      Views::Dashboard.new(current_user: @user).call
     end
 
     r.on "tasks", Integer do |task_id|
-      r.post "complete" do
-        task = Task.active.for_user(current_user).where(Sequel[:tasks][:id] => task_id).first
-        r.halt 404 unless task
-        task.complete!
+      @task = @user.tasks_dataset.first(Sequel[:tasks][:id] => task_id)
+      r.halt 404 unless @task
 
-        r.redirect "/series/#{task[:series_id]}"
+      r.post "complete" do
+        r.halt 422 unless @task[:completed_at].nil?
+        @task.complete!
+
+        r.redirect "/series/#{@task[:series_id]}"
       end
 
       r.patch "note" do
-        task = Task.join(:series, id: :series_id)
-          .where(Sequel[:series][:user_id] => current_user.id)
-          .where(Sequel[:tasks][:id] => task_id)
-          .select_all(:tasks)
-          .first
-        r.halt 404 unless task
-        r.halt 422 if task[:completed_at].nil?
+        r.halt 422 if @task[:completed_at].nil?
 
         note = r.params["note"].to_s.strip
         Task.where(id: task_id).update(note: note.empty? ? nil : note)
@@ -53,11 +50,11 @@ class Web < Roda
     end
 
     r.on "series", Integer do |series_id|
-      series = Series.where(id: series_id, user_id: current_user.id).first
+      series = @user.series_dataset[series_id]
       r.halt 404 unless series
 
       r.get do
-        Views::Dashboard.new(current_user:, series:).call
+        Views::Dashboard.new(current_user: @user, series:).call
       end
 
       r.patch do
@@ -120,7 +117,7 @@ class Web < Roda
         end
 
         series = Series.create_with_first_task(
-          user: current_user,
+          user: @user,
           note: note,
           interval_unit: interval_unit,
           interval_count: interval_count,

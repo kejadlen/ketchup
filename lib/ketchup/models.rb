@@ -4,9 +4,11 @@ require_relative "db"
 
 Sequel::Model.plugin :timestamps, update_on_create: true
 Sequel::Model.plugin :sole
+Sequel::Model.plugin :many_through_many
 
 class User < Sequel::Model
   one_to_many :series
+  many_through_many :tasks, [[:series, :user_id, :id]], right_primary_key: :series_id
 
   def active_tasks
     Task.active.for_user(self)
