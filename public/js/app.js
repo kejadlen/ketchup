@@ -48,6 +48,14 @@ function compactOverType(el) {
   return resize
 }
 
+function saveSeriesField(seriesId, field, value) {
+  return fetch(`/series/${seriesId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `${encodeURIComponent(field)}=${encodeURIComponent(value)}`,
+  })
+}
+
 document.addEventListener("alpine:init", () => {
   Alpine.data("sortable", () => ({
     sort: localStorage.getItem("sort") || "urgency",
@@ -76,97 +84,41 @@ document.addEventListener("alpine:init", () => {
     },
   }))
 
-  Alpine.store("sidebar", {
-    mode: "",
-    taskId: null,
-    seriesId: null,
-    taskName: "",
-    taskNote: "",
-    taskInterval: "",
-    intervalCount: 1,
-    intervalUnit: "day",
-    taskDueDate: "",
-    taskUrgency: "",
-    taskOverdue: false,
-    completedTasks: [],
-    editing: false,
-    addingNoteId: null,
-    _seriesNoteEditor: null,
-    _resizeSeriesNote: null,
-    _noteEditors: [],
+  Alpine.data("intervalEditor", (seriesId, initialCount, initialUnit) => ({
+    count: initialCount,
+    unit: initialUnit,
+
+    save() {
+      fetch(`/series/${seriesId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `interval_count=${encodeURIComponent(this.count)}&interval_unit=${encodeURIComponent(this.unit)}`,
+      })
+    },
+  }))
+
+  Alpine.data("dueDateEditor", (seriesId, initialDate) => ({
+    dueDate: initialDate,
+
+    save() {
+      saveSeriesField(seriesId, "due_date", this.dueDate)
+    },
+  }))
+
+  Alpine.data("historyNoteEditor", () => ({
+    _editor: null,
+
+    show(el) {
+      el.style.display = ""
+    },
 
     init() {
-      const seriesId = sessionStorage.getItem("showSeries")
-      if (seriesId) {
-        sessionStorage.removeItem("showSeries")
-        const el = document.querySelector(`[data-series-id="${seriesId}"]`)
-        if (el) this.showTask(el)
-      }
-    },
+      const el = this.$el
+      const taskId = el.dataset.taskId
+      const initialNote = el.dataset.value || ""
 
-    showTask(el) {
-      this.taskId = el.dataset.taskId
-      this.seriesId = el.dataset.seriesId
-      this.taskName = el.dataset.taskName
-      this.taskNote = el.dataset.taskNote
-      this.taskInterval = el.dataset.taskInterval
-      this.intervalCount = parseInt(el.dataset.intervalCount, 10) || 1
-      this.intervalUnit = el.dataset.intervalUnit || "day"
-      this.taskDueDate = el.dataset.taskDueDate
-      this.taskUrgency = el.dataset.taskUrgency
-      this.taskOverdue = el.dataset.taskOverdue === "true"
-      this._noteEditors.forEach((e) => e.destroy())
-      this._noteEditors = []
-      this.completedTasks = []
-      this.addingNoteId = null
-      this.editing = false
-      this.mode = "task"
+      if (this._editor) return
 
-      requestAnimationFrame(() => this._initSeriesNote())
-
-      fetch(`/series/${el.dataset.seriesId}/completed`)
-        .then((r) => r.json())
-        .then((data) => (this.completedTasks = data))
-    },
-
-    showForm() {
-      this.mode = "form"
-      this.taskId = null
-    },
-
-    toggleForm() {
-      if (this.mode === "form") {
-        this.mode = ""
-        this.taskId = null
-      } else {
-        this.showForm()
-      }
-    },
-
-    startEditing() {
-      this.editing = true
-      const ta = document.querySelector("#series-note-detail textarea")
-      if (ta) {
-        ta.style.pointerEvents = ""
-        ta.readOnly = false
-        ta.focus()
-      }
-      if (this._resizeSeriesNote) requestAnimationFrame(this._resizeSeriesNote)
-    },
-
-    stopEditing() {
-      this._saveSeriesNote()
-      const ta = document.querySelector("#series-note-detail textarea")
-      if (ta) {
-        ta.style.pointerEvents = "none"
-        ta.readOnly = true
-      }
-      this.editing = false
-      if (this._resizeSeriesNote) requestAnimationFrame(this._resizeSeriesNote)
-    },
-
-    initNoteEditor(el, taskId, initialNote) {
-      if (!el) return
       const [editor] = new OverType(el, {
         value: initialNote,
         placeholder: "Add a note...",
@@ -176,19 +128,17 @@ document.addEventListener("alpine:init", () => {
         padding: "0 4px",
       })
 
-      this._noteEditors.push(editor)
+      this._editor = editor
       compactOverType(el)
 
       const textarea = el.querySelector("textarea")
       if (textarea) {
-        if (this.addingNoteId === taskId) textarea.focus()
+        if (!initialNote) textarea.focus()
         textarea.addEventListener("blur", () => {
           const note = editor.getValue().trim()
-          const ct = this.completedTasks.find((t) => t.id === taskId)
-          if (this.addingNoteId === taskId) this.addingNoteId = null
-          if (!ct || (note || null) === (ct.note || null)) return
+          if (note === (initialNote || "").trim()) return
 
-          ct.note = note || null
+          el.dataset.value = note
           fetch(`/tasks/${taskId}/note`, {
             method: "PATCH",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -197,98 +147,63 @@ document.addEventListener("alpine:init", () => {
         })
       }
     },
+  }))
 
-    _initSeriesNote() {
-      const el = document.getElementById("series-note-detail")
-      if (!el) return
+  // Series note detail editor — initialized when a series is selected
+  const noteDetail = document.getElementById("series-note-detail")
+  if (noteDetail) {
+    const seriesId = noteDetail.dataset.seriesId
+    const initialNote = noteDetail.dataset.value || ""
 
-      if (this._seriesNoteEditor) {
-        this._seriesNoteEditor.destroy()
-        this._seriesNoteEditor = null
-      }
-      el.innerHTML = ""
+    const [editor] = new OverType(noteDetail, {
+      value: initialNote,
+      placeholder: "Series note...",
+      autoResize: true,
+      minHeight: 14,
+      padding: "0 4px",
+    })
 
-      const [editor] = new OverType(el, {
-        value: this.taskNote || "",
-        placeholder: "Series note...",
-        autoResize: true,
-        minHeight: 14,
-        padding: "0 4px",
+    const resizeNote = compactOverType(noteDetail)
+
+    const ta = noteDetail.querySelector("textarea")
+    if (ta) {
+      ta.style.pointerEvents = "none"
+      ta.readOnly = true
+
+      ta.addEventListener("blur", () => {
+        const note = editor.getValue().trim()
+        if (note === (initialNote || "").trim()) return
+        saveSeriesField(seriesId, "note", note)
       })
-      this._seriesNoteEditor = editor
 
-      // Store resize so startEditing/stopEditing can re-measure after
-      // toggling pointer-events and readOnly.
-      this._resizeSeriesNote = compactOverType(el)
+      document.addEventListener("start-editing", () => {
+        ta.style.pointerEvents = ""
+        ta.readOnly = false
+        ta.focus()
+        if (resizeNote) requestAnimationFrame(resizeNote)
+      })
 
-      const ta = el.querySelector("textarea")
-      if (ta) {
+      document.addEventListener("stop-editing", () => {
+        const note = editor.getValue().trim()
+        if (note !== (initialNote || "").trim()) {
+          saveSeriesField(seriesId, "note", note)
+        }
         ta.style.pointerEvents = "none"
         ta.readOnly = true
-        ta.addEventListener("blur", () => this._saveSeriesNote())
-      }
-    },
-
-    _saveSeriesNote() {
-      if (!this._seriesNoteEditor) return
-      const note = this._seriesNoteEditor.getValue().trim()
-      if (note === (this.taskNote || "").trim()) return
-
-      this.taskNote = note
-      this.saveSeriesField("note", note)
-      const card = document.querySelector(`[data-series-id="${this.seriesId}"]`)
-      if (card) {
-        card.dataset.taskNote = note
-        card.dataset.taskName = note.split("\n")[0]?.trim() || note
-        const nameEl = card.querySelector(".task-name")
-        if (nameEl) nameEl.textContent = card.dataset.taskName
-      }
-    },
-
-    saveSeriesField(field, value) {
-      if (!this.seriesId) return
-      fetch(`/series/${this.seriesId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `${encodeURIComponent(field)}=${encodeURIComponent(value)}`,
+        if (resizeNote) requestAnimationFrame(resizeNote)
       })
-    },
+    }
+  }
 
-    saveInterval() {
-      if (!this.seriesId) return
-      const count = this.intervalCount
-      const unit = this.intervalUnit
-      fetch(`/series/${this.seriesId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `interval_count=${encodeURIComponent(count)}&interval_unit=${encodeURIComponent(unit)}`,
-      }).then(() => {
-        const label = `Every ${count} ${count === 1 ? unit : unit + "s"}`
-        this.taskInterval = label
-        const card = document.querySelector(`[data-series-id="${this.seriesId}"]`)
-        if (card) {
-          card.dataset.taskInterval = label
-          card.dataset.intervalCount = count
-          card.dataset.intervalUnit = unit
-        }
-      })
-    },
-
-    completeTask(taskId, seriesId) {
-      fetch(`/tasks/${taskId}/complete`, { method: "POST" })
-        .then((r) => {
-          if (!r.ok) throw new Error()
-          sessionStorage.setItem("showSeries", seriesId)
-          window.location.reload()
-        })
-    },
-  })
-
-  new OverType("#series-note-editor", {
-    placeholder: "What needs doing...",
-    textareaProps: { name: "note", required: true },
-    autoResize: true,
-  })
+  // New series form editor
+  const newNoteEl = document.getElementById("series-note-editor")
+  if (newNoteEl) {
+    new OverType("#series-note-editor", {
+      placeholder: "What needs doing...",
+      textareaProps: { name: "note", required: true },
+      autoResize: true,
+    })
+  }
 
   Alpine.data("upcoming", () => ({
     showEmpty: localStorage.getItem("upcoming-show-empty") !== "false",

@@ -6,10 +6,14 @@ require_relative "layout"
 
 module Views
   class Home < Phlex::HTML
-    def initialize(current_user:, overdue:, upcoming:)
+    def initialize(current_user:, overdue:, upcoming:,
+                   selected_series: nil, selected_task: nil, completed_tasks: [])
       @current_user = current_user
       @overdue = overdue
       @upcoming = upcoming
+      @selected_series = selected_series
+      @selected_task = selected_task
+      @completed_tasks = completed_tasks
     end
 
     def view_template
@@ -47,137 +51,181 @@ module Views
             upcoming_list(@upcoming)
           end
 
-          div(class: "column column-aside", "x-data": "") do
-            div(class: "column-header") do
-              h2(class: "aside-heading") do
-                span("x-show": "$store.sidebar.mode === 'form'") { "New Series" }
-                span(
-                  "x-show": "$store.sidebar.mode !== 'form'",
-                  class: "aside-heading-action",
-                  "x-on:click": "$store.sidebar.toggleForm()"
-                ) { "+ New" }
-              end
-              nav(class: "sort-toggle") do
-                button(
-                  "x-show": "$store.sidebar.mode === 'task' && !$store.sidebar.editing",
-                  "x-on:click": "$store.sidebar.startEditing()"
-                ) { "Edit" }
-                button(
-                  "x-show": "$store.sidebar.mode === 'task' && $store.sidebar.editing",
-                  "x-on:click": "$store.sidebar.stopEditing()"
-                ) { "Done" }
-              end
-            end
-
-            div(class: "task-detail", "x-show": "$store.sidebar.mode === 'task'") do
-              div(id: "series-note-detail", class: "task-detail-note")
-              dl(class: "task-detail-fields") do
-                dt { "Interval" }
-                dd("x-show": "!$store.sidebar.editing", "x-text": "$store.sidebar.taskInterval")
-                dd(class: "detail-edit-interval", "x-show": "$store.sidebar.editing", "x-cloak": true) do
-                  input(
-                    type: "number",
-                    class: "detail-input detail-input-count",
-                    min: 1,
-                    "x-model.number": "$store.sidebar.intervalCount",
-                    "x-on:change": "$store.sidebar.saveInterval()"
-                  )
-                  select(
-                    class: "detail-input detail-input-unit",
-                    "x-model": "$store.sidebar.intervalUnit",
-                    "x-on:change": "$store.sidebar.saveInterval()"
-                  ) do
-                    option(value: "day") { "day(s)" }
-                    option(value: "week") { "week(s)" }
-                    option(value: "month") { "month(s)" }
-                    option(value: "quarter") { "quarter(s)" }
-                    option(value: "year") { "year(s)" }
-                  end
-                end
-
-                dt { "Due date" }
-                dd("x-show": "!$store.sidebar.editing", "x-text": "$store.sidebar.taskDueDate")
-                dd("x-show": "$store.sidebar.editing", "x-cloak": true) do
-                  input(
-                    type: "date",
-                    class: "detail-input detail-input-date",
-                    "x-model": "$store.sidebar.taskDueDate",
-                    "x-on:change": "$store.sidebar.saveSeriesField('due_date', $store.sidebar.taskDueDate)"
-                  )
-                end
-
-                dt("x-show": "$store.sidebar.taskUrgency !== '' && !$store.sidebar.editing") { "Urgency" }
-                dd("x-show": "$store.sidebar.taskUrgency !== '' && !$store.sidebar.editing", "x-text": "$store.sidebar.taskUrgency")
-              end
-
-              template("x-if": "$store.sidebar.completedTasks.length > 0") do
-                div(class: "task-history") do
-                  h3 { "History" }
-                  ul do
-                    template("x-for": "ct in $store.sidebar.completedTasks") do
-                      li(class: "task-history-item") do
-                        div(class: "task-history-row") do
-                          span(class: "task-history-check") { "✓" }
-                          span(class: "task-history-date", "x-text": "ct.completed_at")
-                          template("x-if": "!ct.note && $store.sidebar.addingNoteId !== ct.id") do
-                            span(
-                              class: "task-history-add-note",
-                              "x-on:click": "$store.sidebar.addingNoteId = ct.id"
-                            ) { "add a note..." }
-                          end
-                        end
-                        template("x-if": "ct.note || $store.sidebar.addingNoteId === ct.id") do
-                          div(
-                            class: "task-history-note-editor",
-                            "x-init": "$store.sidebar.initNoteEditor($el, ct.id, ct.note || '')"
-                          )
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
-
-            form(method: "post", action: "/series", "x-show": "$store.sidebar.mode === 'form'") do
-              div(class: "field") do
-                label(for: "note") { "Note" }
-                div(id: "series-note-editor")
-              end
-
-              div(class: "field") do
-                label(for: "interval_count") { "Repeat every" }
-                div(class: "interval") do
-                  input(
-                    type: "number", id: "interval_count", name: "interval_count",
-                    min: 1, value: 1, required: true
-                  )
-                  select(id: "interval_unit", name: "interval_unit", required: true) do
-                    option(value: "day") { "day(s)" }
-                    option(value: "week") { "week(s)" }
-                    option(value: "month") { "month(s)" }
-                    option(value: "quarter") { "quarter(s)" }
-                    option(value: "year") { "year(s)" }
-                  end
-                end
-              end
-
-              div(class: "field") do
-                label(for: "first_due_date") { "First due date" }
-                input(
-                  type: "date", id: "first_due_date", name: "first_due_date",
-                  value: Date.today.to_s, required: true
-                )
-              end
-
-              button(type: "submit") { "Create" }
-            end
+          if @selected_series
+            series_detail_sidebar
+          else
+            new_series_sidebar
           end
         end
       end
     end
 
     private
+
+    def series_detail_sidebar
+      div(class: "column column-aside", "x-data": "{ editing: false }") do
+        div(class: "column-header") do
+          h2(class: "aside-heading") do
+            a(href: "/", class: "aside-heading-action") { "+ New" }
+          end
+          nav(class: "sort-toggle") do
+            button(
+              "x-show": "!editing",
+              "x-on:click": "editing = true; $dispatch('start-editing')"
+            ) { "Edit" }
+            button(
+              "x-show": "editing",
+              "x-on:click": "editing = false; $dispatch('stop-editing')"
+            ) { "Done" }
+          end
+        end
+
+        div(class: "task-detail") do
+          div(
+            id: "series-note-detail",
+            class: "task-detail-note",
+            "data-value": @selected_series.note || "",
+            "data-series-id": @selected_series.id.to_s
+          )
+          dl(class: "task-detail-fields") do
+            dt { "Interval" }
+            dd("x-show": "!editing") do
+              plain interval_text(@selected_series.interval_count, @selected_series.interval_unit)
+            end
+            dd(
+              class: "detail-edit-interval",
+              "x-show": "editing",
+              "x-cloak": true,
+              "x-data": "intervalEditor(#{@selected_series.id}, #{@selected_series.interval_count}, '#{@selected_series.interval_unit}')",
+            ) do
+              input(
+                type: "number",
+                class: "detail-input detail-input-count",
+                min: 1,
+                "x-model.number": "count",
+                "x-on:change": "save()"
+              )
+              select(
+                class: "detail-input detail-input-unit",
+                "x-model": "unit",
+                "x-on:change": "save()"
+              ) do
+                option(value: "day") { "day(s)" }
+                option(value: "week") { "week(s)" }
+                option(value: "month") { "month(s)" }
+                option(value: "quarter") { "quarter(s)" }
+                option(value: "year") { "year(s)" }
+              end
+            end
+
+            if @selected_task
+              dt { "Due date" }
+              dd("x-show": "!editing") { @selected_task[:due_date].to_s }
+              dd(
+                "x-show": "editing",
+                "x-cloak": true,
+                "x-data": "dueDateEditor(#{@selected_series.id}, '#{@selected_task[:due_date]}')"
+              ) do
+                input(
+                  type: "date",
+                  class: "detail-input detail-input-date",
+                  "x-model": "dueDate",
+                  "x-on:change": "save()"
+                )
+              end
+
+              if @selected_task.urgency > 0
+                dt("x-show": "!editing") { "Urgency" }
+                dd("x-show": "!editing") { "#{format("%.1f", @selected_task.urgency)}x" }
+              end
+            end
+          end
+
+          unless @completed_tasks.empty?
+            div(class: "task-history") do
+              h3 { "History" }
+              ul do
+                @completed_tasks.each do |ct|
+                  li(class: "task-history-item") do
+                    div(class: "task-history-row") do
+                      span(class: "task-history-check") { "✓" }
+                      span(class: "task-history-date") { ct[:completed_at].strftime("%Y-%m-%d") }
+                      if ct[:note].nil?
+                        span(
+                          class: "task-history-add-note",
+                          "x-data": "{ adding: false }",
+                          "x-show": "!adding",
+                          "x-on:click": "adding = true; $dispatch('add-note-#{ct[:id]}')"
+                        ) { "add a note..." }
+                      end
+                    end
+                    div(
+                      class: "task-history-note-editor",
+                      "data-task-id": ct[:id].to_s,
+                      "data-value": ct[:note] || "",
+                      "x-data": "historyNoteEditor",
+                      "x-init": "init()"
+                    ) if ct[:note]
+                    div(
+                      class: "task-history-note-editor",
+                      "data-task-id": ct[:id].to_s,
+                      "data-value": "",
+                      "x-data": "historyNoteEditor",
+                      style: "display: none",
+                      "x-on:add-note-#{ct[:id]}.window": "show($el); init()"
+                    ) if ct[:note].nil?
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def new_series_sidebar
+      div(class: "column column-aside") do
+        div(class: "column-header") do
+          h2(class: "aside-heading") do
+            span { "New Series" }
+          end
+        end
+
+        form(method: "post", action: "/series") do
+          div(class: "field") do
+            label(for: "note") { "Note" }
+            div(id: "series-note-editor")
+          end
+
+          div(class: "field") do
+            label(for: "interval_count") { "Repeat every" }
+            div(class: "interval") do
+              input(
+                type: "number", id: "interval_count", name: "interval_count",
+                min: 1, value: 1, required: true
+              )
+              select(id: "interval_unit", name: "interval_unit", required: true) do
+                option(value: "day") { "day(s)" }
+                option(value: "week") { "week(s)" }
+                option(value: "month") { "month(s)" }
+                option(value: "quarter") { "quarter(s)" }
+                option(value: "year") { "year(s)" }
+              end
+            end
+          end
+
+          div(class: "field") do
+            label(for: "first_due_date") { "First due date" }
+            input(
+              type: "date", id: "first_due_date", name: "first_due_date",
+              value: Date.today.to_s, required: true
+            )
+          end
+
+          button(type: "submit") { "Create" }
+        end
+      end
+    end
 
     def task_list(tasks, empty:, sortable: false)
       if tasks.empty?
@@ -255,29 +303,17 @@ module Views
     def task_card(task, sortable: false)
       name = task[:note].lines.first&.strip || task[:note]
       overdue = task[:due_date] < Date.today
+      selected = @selected_series && @selected_series.id == task[:series_id]
 
-      div(
-        class: ["task-card", ("task-overdue" if overdue)],
-        "x-on:click": "$store.sidebar.showTask($el)",
-        "x-bind:class": "$store.sidebar.taskId == '#{task[:id]}' && 'task-selected'",
-        "data-task-id": task[:id].to_s,
-        "data-series-id": task[:series_id].to_s,
-        "data-task-name": name,
-        "data-task-note": task[:note],
-        "data-task-interval": interval_text(task[:interval_count], task[:interval_unit]),
-        "data-interval-count": task[:interval_count].to_s,
-        "data-interval-unit": task[:interval_unit],
-        "data-task-due-date": task[:due_date].to_s,
-        "data-task-urgency": task.urgency > 0 ? "#{format("%.1f", task.urgency)}x" : "",
-        "data-task-overdue": overdue.to_s
-      ) do
-        button(
-          type: "button", title: "Complete",
-          class: "complete-btn",
-          "x-on:click.stop": "$store.sidebar.completeTask(#{task[:id]}, #{task[:series_id]})",
-          **{ "aria-label": "Complete #{name}" }
-        ) { "✓" }
-        span(class: "task-name") { name }
+      div(class: ["task-card", ("task-overdue" if overdue), ("task-selected" if selected)]) do
+        form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do
+          button(
+            type: "submit", title: "Complete",
+            class: "complete-btn",
+            **{ "aria-label": "Complete #{name}" }
+          ) { "✓" }
+        end
+        a(href: "/series/#{task[:series_id]}", class: "task-name") { name }
         if sortable && overdue
           span(class: "task-secondary task-urgency", "x-show": "sort === 'urgency'") { "#{format("%.1f", task.urgency)}x" } if task.urgency > 0
           span(class: "task-secondary", "x-show": "sort === 'date'") { task[:due_date].to_s }

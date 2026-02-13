@@ -21,11 +21,8 @@ class TestWeb < Minitest::Test
   def test_root_shows_new_series_form
     get "/", {}, tailscale_headers
     assert last_response.ok?
-    assert_includes last_response.body, 'method="post" action="/series"'
-    assert_includes last_response.body, 'id="series-note-editor"'
-    assert_includes last_response.body, 'name="interval_count"'
-    assert_includes last_response.body, 'name="interval_unit"'
-    assert_includes last_response.body, 'name="first_due_date"'
+    assert_includes last_response.body, "New Series"
+    assert_includes last_response.body, 'action="/series"'
   end
 
   def test_root_shows_empty_state
@@ -35,10 +32,7 @@ class TestWeb < Minitest::Test
   end
 
   def test_root_shows_active_tasks
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", first_due_date: "2026-03-01", interval_unit: "week", interval_count: "2")
 
     get "/", {}, tailscale_headers
     assert_includes last_response.body, "Call Mom"
@@ -88,6 +82,7 @@ class TestWeb < Minitest::Test
     assert_equal "Call Mom", series[:note]
     assert_equal "week", series[:interval_unit]
     assert_equal 2, series[:interval_count]
+    assert_includes last_response["Location"], "/series/#{series[:id]}"
   end
 
   def test_create_series_creates_first_task
@@ -159,30 +154,26 @@ class TestWeb < Minitest::Test
   end
 
   def test_complete_task
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
     post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
-    assert last_response.ok?
+    assert last_response.redirect?
 
-    body = JSON.parse(last_response.body)
-    new_task = DB[:tasks].where(completed_at: nil).first
-    assert_equal new_task[:id], body["task"]["id"]
-    assert_equal (Date.today + 14).to_s, body["task"]["due_date"]
+    series = DB[:series].first
+    assert_includes last_response["Location"], "/series/#{series[:id]}"
 
     old_task = DB[:tasks].first(id: task[:id])
     refute_nil old_task[:completed_at]
+
+    new_task = DB[:tasks].where(completed_at: nil).first
     assert_equal Date.today + 14, new_task[:due_date]
   end
 
   def test_complete_task_advances_by_months
-    post "/series", {
-      note: "Dentist", interval_unit: "month", interval_count: "3",
-      first_due_date: "2026-01-31"
-    }, tailscale_headers
+    create_series(note: "Dentist", interval_unit: "month", interval_count: "3",
+                  first_due_date: "2026-01-31")
 
     task = DB[:tasks].first
     post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
@@ -203,10 +194,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_complete_task_requires_tailscale_user
-    post "/series", {
-      note: "Call Mom", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "day", interval_count: "1",
+                  first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
     post "/tasks/#{task[:id]}/complete"
@@ -221,29 +210,84 @@ class TestWeb < Minitest::Test
     assert_equal 403, last_response.status
   end
 
-  def test_task_card_has_data_attributes
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+  def test_task_card_links_to_series
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
+    series = DB[:series].first
     get "/", {}, tailscale_headers
-    assert_includes last_response.body, 'data-task-name="Call Mom"'
-    assert_includes last_response.body, 'data-task-note="Call Mom"'
-    assert_includes last_response.body, 'data-task-interval="Every 2 weeks"'
-    assert_includes last_response.body, 'data-task-due-date="2026-03-01"'
+    assert_includes last_response.body, "href=\"/series/#{series[:id]}\""
+    assert_includes last_response.body, "Call Mom"
   end
 
-  def test_sidebar_has_new_button
+  def test_task_card_has_complete_form
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    task = DB[:tasks].first
     get "/", {}, tailscale_headers
+    assert_includes last_response.body, "action=\"/tasks/#{task[:id]}/complete\""
+  end
+
+
+  def test_series_sidebar_has_new_link
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = DB[:series].first
+    get "/series/#{series[:id]}", {}, tailscale_headers
     assert_includes last_response.body, "+ New"
+    assert_includes last_response.body, 'href="/"'
+  end
+
+  def test_get_series_shows_sidebar
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = DB[:series].first
+    get "/series/#{series[:id]}", {}, tailscale_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "Every 2 weeks"
+    assert_includes last_response.body, "2026-03-01"
+    assert_includes last_response.body, "task-selected"
+  end
+
+  def test_get_series_shows_completed_history
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: "2026-03-01")
+
+    task = DB[:tasks].first
+    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch "/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, tailscale_headers
+
+    series = DB[:series].first
+    get "/series/#{series[:id]}", {}, tailscale_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "Left a message"
+    assert_includes last_response.body, "task-history"
+  end
+
+  def test_get_series_requires_own_series
+    post "/series", {
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+
+    series = DB[:series].first
+    get "/series/#{series[:id]}", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
+    assert_equal 404, last_response.status
+  end
+
+  def test_get_series_404_for_nonexistent
+    get "/series/999999", {}, tailscale_headers
+    assert_equal 404, last_response.status
   end
 
   def test_patch_note_saves_on_completed_task
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
     post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
@@ -258,10 +302,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_note_rejects_active_task
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
     patch "/tasks/#{task[:id]}/note", { note: "nope" }, tailscale_headers
@@ -283,10 +325,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_updates_note
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     series = DB[:series].first
     patch "/series/#{series[:id]}", { note: "Call Dad" }, tailscale_headers
@@ -298,10 +338,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_updates_interval
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     series = DB[:series].first
     patch "/series/#{series[:id]}", { interval_count: "3", interval_unit: "month" }, tailscale_headers
@@ -317,10 +355,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_updates_due_date
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     series = DB[:series].first
     task = DB[:tasks].first(series_id: series[:id])
@@ -333,10 +369,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_rejects_invalid_interval_unit
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     series = DB[:series].first
     patch "/series/#{series[:id]}", { interval_unit: "fortnight" }, tailscale_headers
@@ -344,10 +378,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_rejects_zero_interval_count
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     series = DB[:series].first
     patch "/series/#{series[:id]}", { interval_count: "0" }, tailscale_headers
@@ -366,10 +398,8 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_ignores_fields_not_provided
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
 
     series = DB[:series].first
     patch "/series/#{series[:id]}", { note: "Call Dad" }, tailscale_headers
@@ -384,29 +414,14 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
-  def test_completed_includes_notes
-    post "/series", {
-      note: "Call Mom", interval_unit: "week", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers
-
-    task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
-
-    completed_task = DB[:tasks].first(id: task[:id])
-    patch "/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, tailscale_headers
-
-    series = DB[:series].first
-    get "/series/#{series[:id]}/completed", {}, tailscale_headers
-    assert last_response.ok?
-
-    data = JSON.parse(last_response.body)
-    assert_equal 1, data.length
-    assert_equal "Left a message", data[0]["note"]
-    assert data[0].key?("id")
-  end
-
   private
+
+  def create_series(note:, interval_unit:, interval_count:, first_due_date:)
+    post "/series", {
+      note: note, interval_unit: interval_unit, interval_count: interval_count,
+      first_due_date: first_due_date
+    }, tailscale_headers
+  end
 
   def tailscale_headers(
     login: "alice@example.com",

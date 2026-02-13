@@ -19,16 +19,27 @@ class Web < Roda
     User.find_or_create(login: login) { |u| u.name = name }
   end
 
+  def active_tasks_for(user)
+    all_tasks = Task.active.for_user(user).all
+    overdue, upcoming = all_tasks.partition { |t| t.urgency > 0 }
+    overdue.sort_by! { |t| -t.urgency }
+    upcoming.sort_by! { |t| t[:due_date] }
+    [overdue, upcoming]
+  end
+
+  def completed_tasks_for(series)
+    series.tasks_dataset
+      .exclude(completed_at: nil)
+      .order(Sequel.desc(:completed_at))
+      .select(:id, :due_date, :completed_at, :note)
+      .all
+  end
+
   route do |r|
     r.halt 403 unless current_user
 
     r.root do
-      all_tasks = Task.active.for_user(current_user).all
-      overdue, upcoming = all_tasks.partition { |t| t.urgency > 0 }
-
-      overdue.sort_by! { |t| -t.urgency }
-      upcoming.sort_by! { |t| t[:due_date] }
-
+      overdue, upcoming = active_tasks_for(current_user)
       Views::Home.new(current_user:, overdue:, upcoming:).call
     end
 
@@ -38,9 +49,7 @@ class Web < Roda
         r.halt 404 unless task
         task.complete!
 
-        new_task = task.series.active_task
-        response["content-type"] = "application/json"
-        { series_id: task[:series_id], task: { id: new_task.id, due_date: new_task.due_date.to_s } }.to_json
+        r.redirect "/series/#{task[:series_id]}"
       end
 
       r.patch "note" do
@@ -63,6 +72,17 @@ class Web < Roda
     r.on "series", Integer do |series_id|
       series = Series.where(id: series_id, user_id: current_user.id).first
       r.halt 404 unless series
+
+      r.get true do
+        overdue, upcoming = active_tasks_for(current_user)
+
+        Views::Home.new(
+          current_user:, overdue:, upcoming:,
+          selected_series: series,
+          selected_task: series.active_task,
+          completed_tasks: completed_tasks_for(series)
+        ).call
+      end
 
       r.patch do
         updates = {}
@@ -104,17 +124,6 @@ class Web < Roda
         result.to_json
       end
 
-      r.get "completed" do
-        completed = series.tasks_dataset
-          .exclude(completed_at: nil)
-          .order(Sequel.desc(:completed_at))
-          .select(:id, :due_date, :completed_at, :note)
-          .all
-          .map { |t| { id: t[:id], due_date: t[:due_date].to_s, completed_at: t[:completed_at].strftime("%Y-%m-%d"), note: t[:note] } }
-
-        response["content-type"] = "application/json"
-        completed.to_json
-      end
     end
 
     r.on "series" do
@@ -134,7 +143,7 @@ class Web < Roda
           r.halt 422
         end
 
-        Series.create_with_first_task(
+        series = Series.create_with_first_task(
           user: current_user,
           note: note,
           interval_unit: interval_unit,
@@ -142,7 +151,7 @@ class Web < Roda
           first_due_date: due_date
         )
 
-        r.redirect "/"
+        r.redirect "/series/#{series.id}"
       end
     end
   end

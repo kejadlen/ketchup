@@ -130,6 +130,15 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   font-size: var(--step--1);
 }
 
+#series-note-editor {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+#series-note-editor:focus-within {
+  border-color: #999;
+}
+
 /* -------------------- */
 /* Task list */
 /* -------------------- */
@@ -222,7 +231,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-detail-note:hover {
-  border-color: #ddd;
+  border-color: transparent;
 }
 
 .task-detail-note:focus-within {
@@ -470,7 +479,7 @@ textarea {
   gap: var(--space-3xs);
 }
 
-button[type="submit"] {
+button[type="submit"]:not(.complete-btn) {
   padding: var(--space-3xs) var(--space-s);
   border: 1px solid #1a1a1a;
   border-radius: 3px;
@@ -481,8 +490,12 @@ button[type="submit"] {
   cursor: pointer;
 }
 
-button[type="submit"]:hover {
+button[type="submit"]:not(.complete-btn):hover {
   background: #333;
+}
+
+.complete-form {
+  display: contents;
 }
 
 .complete-btn {
