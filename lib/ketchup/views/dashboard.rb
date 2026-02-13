@@ -145,35 +145,25 @@ module Views
               h3 { "History" }
               ul do
                 @series.completed_tasks.each do |ct|
-                  li(class: "task-history-item") do
+                  li(
+                    class: "task-history-item",
+                    "x-data": "historyNote(#{ct[:id]}, #{ct[:note] ? "true" : "false"})"
+                  ) do
                     div(class: "task-history-row") do
                       span(class: "task-history-check") { "✓" }
                       span(class: "task-history-date") { ct[:completed_at].strftime("%Y-%m-%d") }
-                      if ct[:note].nil?
-                        span(
-                          class: "task-history-add-note",
-                          "x-data": "{ adding: false }",
-                          "x-show": "!adding",
-                          "x-on:click": "adding = true; $dispatch('add-note-#{ct[:id]}')",
-                          "x-on:reset-note-#{ct[:id]}.window": "adding = false"
-                        ) { "add a note..." }
-                      end
+                      span(
+                        class: "task-history-add-note",
+                        "x-show": "!hasNote && !editing",
+                        "x-on:click": "edit()"
+                      ) { "add a note..." }
                     end
                     div(
                       class: "task-history-note-editor",
-                      "data-task-id": ct[:id].to_s,
                       "data-value": ct[:note] || "",
-                      "x-data": "historyNoteEditor",
-                      "x-init": "activate()"
-                    ) if ct[:note]
-                    div(
-                      class: "task-history-note-editor",
-                      "data-task-id": ct[:id].to_s,
-                      "data-value": "",
-                      "x-data": "historyNoteEditor",
-                      style: "display: none",
-                      "x-on:add-note-#{ct[:id]}.window": "show($el); activate()"
-                    ) if ct[:note].nil?
+                      "x-show": "hasNote || editing",
+                      "x-ref": "editor"
+                    )
                   end
                 end
               end

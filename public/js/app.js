@@ -105,20 +105,25 @@ document.addEventListener("alpine:init", () => {
     },
   }))
 
-  Alpine.data("historyNoteEditor", () => ({
+  Alpine.data("historyNote", (taskId, hasNote) => ({
+    hasNote,
+    editing: false,
     _editor: null,
 
-    show(el) {
-      el.style.display = ""
+    init() {
+      if (this.hasNote) this._initEditor()
     },
 
-    activate() {
-      const el = this.$el
-      const taskId = el.dataset.taskId
+    edit() {
+      this.editing = true
+      this.$nextTick(() => this._initEditor())
+    },
+
+    _initEditor() {
+      const el = this.$refs.editor
+      if (!el || this._editor) return
+
       const initialNote = el.dataset.value || ""
-
-      if (this._editor) return
-
       const [editor] = new OverType(el, {
         value: initialNote,
         placeholder: "Add a note...",
@@ -136,28 +141,19 @@ document.addEventListener("alpine:init", () => {
         if (!initialNote) textarea.focus()
         textarea.addEventListener("blur", () => {
           const note = editor.getValue().trim()
-
-          if (!note) {
-            if (initialNote) {
-              fetch(`/tasks/${taskId}/note`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `note=`,
-              })
-            }
-            el.style.display = "none"
-            window.dispatchEvent(new Event(`reset-note-${taskId}`))
+          if (note === initialNote.trim()) {
+            if (!note) this.editing = false
             return
           }
 
-          if (note === (initialNote || "").trim()) return
-
-          el.dataset.value = note
           fetch(`/tasks/${taskId}/note`, {
             method: "PATCH",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `note=${encodeURIComponent(note)}`,
           })
+          el.dataset.value = note
+          this.hasNote = !!note
+          this.editing = false
         })
       }
     },
