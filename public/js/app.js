@@ -92,7 +92,7 @@ document.addEventListener("alpine:init", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `interval_count=${encodeURIComponent(this.count)}&interval_unit=${encodeURIComponent(this.unit)}`,
-      })
+      }).then(() => location.reload())
     },
   }))
 
@@ -173,7 +173,7 @@ document.addEventListener("alpine:init", () => {
       ta.addEventListener("blur", () => {
         const note = editor.getValue().trim()
         if (note === (initialNote || "").trim()) return
-        saveSeriesField(seriesId, "note", note)
+        saveSeriesField(seriesId, "note", note).then(() => location.reload())
       })
 
       document.addEventListener("start-editing", () => {
@@ -186,7 +186,8 @@ document.addEventListener("alpine:init", () => {
       document.addEventListener("stop-editing", () => {
         const note = editor.getValue().trim()
         if (note !== (initialNote || "").trim()) {
-          saveSeriesField(seriesId, "note", note)
+          saveSeriesField(seriesId, "note", note).then(() => location.reload())
+          return
         }
         ta.style.pointerEvents = "none"
         ta.readOnly = true
