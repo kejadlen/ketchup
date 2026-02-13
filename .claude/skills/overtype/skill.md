@@ -138,55 +138,47 @@ textarea, and preview.
 
 ## Known Issues in This Project
 
-### Wrapper min-height inflates small editors
+Three OverType behaviors compound to inflate small editors:
 
-The wrapper's `min-height: 60px !important` makes single-line editors too tall.
-The `minHeight` config only floors the auto-resize calculation; it does not
-override the CSS min-height.
+1. The wrapper's `min-height: 60px !important` makes single-line editors too
+   tall. The `minHeight` config only floors the auto-resize calculation; it
+   does not override the CSS rule.
+2. The app's global `textarea { padding; border }` applies to OverType's
+   internal textarea, inflating the `scrollHeight` that auto-resize reads.
+3. OverType's auto-resize fires on every keystroke, re-applying the inflated
+   height and undoing any corrections.
 
-Fix: override via inline style after init (inline `!important` beats stylesheet
-`!important`), then re-measure scrollHeight.
+### `compactOverType(el)` in `public/js/app.js`
 
-### Global textarea styles inflate scrollHeight
-
-The app's global `textarea { padding; border }` applies to OverType's internal
-textarea, inflating the `scrollHeight` that auto-resize measures. Override with
-inline styles on the textarea, then re-trigger sizing.
-
-### Auto-resize re-inflates on input
-
-OverType's auto-resize fires on every keystroke, undoing any height corrections.
-Listen for `input` on the textarea and re-apply the fix each time.
-
-### Pattern for compact OverType editors
+A helper at the top of `app.js` fixes all three. Call it on the container
+element after `new OverType(el, ...)`:
 
 ```javascript
 const [editor] = new OverType(el, {
   value: text,
   autoResize: true,
   minHeight: 14,
-  fontSize: "11px",
   padding: "0 4px",
 })
-
-const wrapper = el.querySelector(".overtype-wrapper")
-const textarea = el.querySelector("textarea")
-const preview = el.querySelector(".overtype-preview")
-if (wrapper && textarea) {
-  wrapper.style.setProperty("min-height", "0", "important")
-  textarea.style.setProperty("padding", "0 4px", "important")
-  textarea.style.setProperty("border", "none", "important")
-  const resize = () => {
-    textarea.style.setProperty("height", "0", "important")
-    const h = textarea.scrollHeight + "px"
-    textarea.style.setProperty("height", h, "important")
-    wrapper.style.setProperty("height", h, "important")
-    if (preview) preview.style.setProperty("height", h, "important")
-  }
-  requestAnimationFrame(resize)
-  textarea.addEventListener("input", () => requestAnimationFrame(resize))
-}
+const resize = compactOverType(el)
 ```
+
+It zeros the wrapper min-height, strips textarea padding and border, measures
+true `scrollHeight` on the next frame, and hooks `input` to re-measure after
+each keystroke. Returns a resize function for manual re-measurement (e.g.
+after toggling `readOnly`), or `null` if the expected DOM nodes aren't found.
+
+The element must be visible when the next animation frame fires, or
+`scrollHeight` reads as 0. If the container is hidden behind an `x-show` that
+hasn't toggled yet, defer the call:
+
+```javascript
+requestAnimationFrame(() => compactOverType(el))
+```
+
+Pass `padding: "0 4px"` in the OverType config to match the inline override on
+the textarea — otherwise the preview layer keeps OverType's default padding
+and the two layers render at different offsets.
 
 ## View Modes
 

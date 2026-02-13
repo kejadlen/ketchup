@@ -1,3 +1,53 @@
+// OverType hardcodes `min-height: 60px !important` on `.overtype-wrapper`
+// and runs auto-resize during construction — before callers can intervene —
+// locking in an inflated height. The app's global textarea styles (padding,
+// border) further inflate `scrollHeight`, which auto-resize reads.
+//
+// This function corrects both problems after `new OverType(el, ...)`:
+//
+//  1. Zeros the wrapper's min-height (inline `!important` beats the
+//     stylesheet's `!important` at equal specificity).
+//  2. Strips the textarea padding and border that inflate scrollHeight.
+//  3. On the next frame — once the style overrides have taken effect —
+//     collapses the textarea to height 0, reads scrollHeight for the true
+//     content height, and sets that height on the wrapper, textarea, and
+//     preview so all three layers agree.
+//  4. Hooks the textarea's `input` event to repeat step 3, because
+//     OverType's own auto-resize fires on every keystroke and re-inflates
+//     the height.
+//
+// The element must be visible (participating in layout) by the time the
+// next animation frame fires, or scrollHeight will read as 0. If the
+// container is hidden at creation time — for example behind an Alpine
+// x-show that hasn't toggled yet — defer the call with
+// requestAnimationFrame so the browser lays it out first.
+//
+// Returns a resize function for manual re-measurement (e.g. after toggling
+// readOnly or pointer-events), or null if the expected DOM isn't found.
+function compactOverType(el) {
+  const wrapper = el.querySelector(".overtype-wrapper")
+  const textarea = el.querySelector("textarea")
+  const preview = el.querySelector(".overtype-preview")
+  if (!wrapper || !textarea) return null
+
+  wrapper.style.setProperty("min-height", "0", "important")
+  textarea.style.setProperty("padding", "0 4px", "important")
+  textarea.style.setProperty("border", "none", "important")
+
+  const resize = () => {
+    textarea.style.setProperty("height", "0", "important")
+    const h = textarea.scrollHeight + "px"
+    textarea.style.setProperty("height", h, "important")
+    wrapper.style.setProperty("height", h, "important")
+    if (preview) preview.style.setProperty("height", h, "important")
+  }
+
+  requestAnimationFrame(resize)
+  textarea.addEventListener("input", () => requestAnimationFrame(resize))
+
+  return resize
+}
+
 document.addEventListener("alpine:init", () => {
   Alpine.data("sortable", () => ({
     sort: localStorage.getItem("sort") || "urgency",
@@ -123,28 +173,10 @@ document.addEventListener("alpine:init", () => {
         padding: "0 4px",
       })
 
-      // OverType's wrapper has min-height: 60px !important and its auto-resize
-      // runs during init — before we can intervene — locking in an inflated
-      // height. The global textarea styles (padding, border) also inflate
-      // scrollHeight. Fix: override those styles, then re-measure in the next
-      // frame once the overrides have taken effect.
-      const wrapper = el.querySelector(".overtype-wrapper")
+      compactOverType(el)
+
       const textarea = el.querySelector("textarea")
-      const preview = el.querySelector(".overtype-preview")
-      if (wrapper && textarea) {
-        wrapper.style.setProperty("min-height", "0", "important")
-        textarea.style.setProperty("padding", "0 4px", "important")
-        textarea.style.setProperty("border", "none", "important")
-        const resize = () => {
-          textarea.style.setProperty("height", "0", "important")
-          const h = textarea.scrollHeight + "px"
-          textarea.style.setProperty("height", h, "important")
-          wrapper.style.setProperty("height", h, "important")
-          if (preview) preview.style.setProperty("height", h, "important")
-        }
-        requestAnimationFrame(resize)
-        // OverType's auto-resize also fires on input, re-inflating the height.
-        textarea.addEventListener("input", () => requestAnimationFrame(resize))
+      if (textarea) {
         if (this.addingNoteId === taskId) textarea.focus()
         textarea.addEventListener("blur", () => {
           const note = editor.getValue().trim()
@@ -181,25 +213,12 @@ document.addEventListener("alpine:init", () => {
       })
       this._seriesNoteEditor = editor
 
-      const wrapper = el.querySelector(".overtype-wrapper")
-      const ta = el.querySelector("textarea")
-      const preview = el.querySelector(".overtype-preview")
-      if (wrapper && ta) {
-        wrapper.style.setProperty("min-height", "0", "important")
-        ta.style.setProperty("padding", "0 4px", "important")
-        ta.style.setProperty("border", "none", "important")
-        // Store resize so startEditing/stopEditing can re-measure after
-        // toggling pointer-events and readOnly, which can shift the textarea.
-        this._resizeSeriesNote = () => {
-          ta.style.setProperty("height", "0", "important")
-          const h = ta.scrollHeight + "px"
-          ta.style.setProperty("height", h, "important")
-          wrapper.style.setProperty("height", h, "important")
-          if (preview) preview.style.setProperty("height", h, "important")
-        }
-        requestAnimationFrame(this._resizeSeriesNote)
-        ta.addEventListener("input", () => requestAnimationFrame(this._resizeSeriesNote))
+      // Store resize so startEditing/stopEditing can re-measure after
+      // toggling pointer-events and readOnly.
+      this._resizeSeriesNote = compactOverType(el)
 
+      const ta = el.querySelector("textarea")
+      if (ta) {
         ta.style.pointerEvents = "none"
         ta.readOnly = true
         ta.addEventListener("blur", () => this._saveSeriesNote())
