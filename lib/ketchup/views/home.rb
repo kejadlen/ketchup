@@ -51,26 +51,63 @@ module Views
             div(class: "column-header") do
               h2(class: "aside-heading") do
                 span("x-show": "$store.sidebar.mode === 'form'") { "New Series" }
+                span(
+                  "x-show": "$store.sidebar.mode !== 'form'",
+                  class: "aside-heading-action",
+                  "x-on:click": "$store.sidebar.toggleForm()"
+                ) { "+ New" }
               end
               nav(class: "sort-toggle") do
                 button(
-                  "x-on:click": "$store.sidebar.toggleForm()",
-                  "x-bind:class": "$store.sidebar.mode === 'form' && 'sort-active'"
-                ) { "+ New" }
+                  "x-show": "$store.sidebar.mode === 'task' && !$store.sidebar.editing",
+                  "x-on:click": "$store.sidebar.startEditing()"
+                ) { "Edit" }
+                button(
+                  "x-show": "$store.sidebar.mode === 'task' && $store.sidebar.editing",
+                  "x-on:click": "$store.sidebar.stopEditing()"
+                ) { "Done" }
               end
             end
 
             div(class: "task-detail", "x-show": "$store.sidebar.mode === 'task'") do
-              div(id: "series-note-preview", class: "task-detail-note")
+              div(id: "series-note-detail", class: "task-detail-note")
               dl(class: "task-detail-fields") do
                 dt { "Interval" }
-                dd("x-text": "$store.sidebar.taskInterval")
+                dd("x-show": "!$store.sidebar.editing", "x-text": "$store.sidebar.taskInterval")
+                dd(class: "detail-edit-interval", "x-show": "$store.sidebar.editing", "x-cloak": true) do
+                  input(
+                    type: "number",
+                    class: "detail-input detail-input-count",
+                    min: 1,
+                    "x-model.number": "$store.sidebar.intervalCount",
+                    "x-on:change": "$store.sidebar.saveInterval()"
+                  )
+                  select(
+                    class: "detail-input detail-input-unit",
+                    "x-model": "$store.sidebar.intervalUnit",
+                    "x-on:change": "$store.sidebar.saveInterval()"
+                  ) do
+                    option(value: "day") { "day(s)" }
+                    option(value: "week") { "week(s)" }
+                    option(value: "month") { "month(s)" }
+                    option(value: "quarter") { "quarter(s)" }
+                    option(value: "year") { "year(s)" }
+                  end
+                end
 
                 dt { "Due date" }
-                dd("x-text": "$store.sidebar.taskDueDate")
+                dd("x-show": "!$store.sidebar.editing", "x-text": "$store.sidebar.taskDueDate")
+                dd("x-show": "$store.sidebar.editing", "x-cloak": true) do
+                  input(
+                    type: "date",
+                    class: "detail-input detail-input-date",
+                    "x-model": "$store.sidebar.taskDueDate",
+                    "x-on:change": "$store.sidebar.saveSeriesField('due_date', $store.sidebar.taskDueDate)"
+                  )
+                end
 
-                dt("x-show": "$store.sidebar.taskUrgency !== ''") { "Urgency" }
-                dd("x-show": "$store.sidebar.taskUrgency !== ''", "x-text": "$store.sidebar.taskUrgency")
+                dt("x-show": "$store.sidebar.taskUrgency !== '' && !$store.sidebar.editing") { "Urgency" }
+                dd("x-show": "$store.sidebar.taskUrgency !== '' && !$store.sidebar.editing", "x-text": "$store.sidebar.taskUrgency")
               end
 
               template("x-if": "$store.sidebar.completedTasks.length > 0") do
@@ -228,6 +265,8 @@ module Views
         "data-task-name": name,
         "data-task-note": task[:note],
         "data-task-interval": interval_text(task[:interval_count], task[:interval_unit]),
+        "data-interval-count": task[:interval_count].to_s,
+        "data-interval-unit": task[:interval_unit],
         "data-task-due-date": task[:due_date].to_s,
         "data-task-urgency": task.urgency > 0 ? "#{format("%.1f", task.urgency)}x" : "",
         "data-task-overdue": overdue.to_s

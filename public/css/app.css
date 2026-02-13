@@ -112,6 +112,12 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   content: "\200b";
 }
 
+.aside-heading-action {
+  font-size: var(--step--1);
+  font-weight: 400;
+  cursor: default;
+}
+
 .column-aside form {
   font-size: var(--step--1);
 }
@@ -137,7 +143,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .sort-toggle button {
   all: unset;
   color: #999;
-  cursor: pointer;
+  cursor: default;
 }
 
 .sort-toggle button:hover {
@@ -147,7 +153,6 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .sort-toggle button.sort-active {
   color: #1a1a1a;
   font-weight: 600;
-  cursor: default;
 }
 
 .sort-active {
@@ -211,7 +216,19 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .task-detail-note {
   color: #444;
   margin-block-end: var(--space-s);
+  line-height: 1.3;
+  border: 1px solid transparent;
+  border-radius: 3px;
 }
+
+.task-detail-note:hover {
+  border-color: #ddd;
+}
+
+.task-detail-note:focus-within {
+  border-color: #999;
+}
+
 
 .task-detail-fields {
   display: grid;
@@ -227,6 +244,51 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .task-detail-fields dd {
   margin: 0;
   color: #444;
+}
+
+.detail-input {
+  font-size: var(--step--2);
+  padding: 1px 4px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #444;
+  font-family: inherit;
+}
+
+.detail-input:hover {
+  border-color: #ddd;
+}
+
+.detail-input:focus {
+  border-color: #999;
+  outline: none;
+  background: #fff;
+}
+
+.detail-edit-interval {
+  display: flex;
+  gap: 4px;
+}
+
+.detail-input-count {
+  width: 3.5em;
+  -moz-appearance: textfield;
+}
+
+.detail-input-count::-webkit-inner-spin-button,
+.detail-input-count::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.detail-input-unit {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-input-date {
+  width: 100%;
 }
 
 .task-history {

@@ -282,6 +282,108 @@ class TestWeb < Minitest::Test
     assert_equal 404, last_response.status
   end
 
+  def test_patch_series_updates_note
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    patch "/series/#{series[:id]}", { note: "Call Dad" }, tailscale_headers
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    assert_equal "Call Dad", body["note"]
+    assert_equal "Call Dad", DB[:series].first(id: series[:id])[:note]
+  end
+
+  def test_patch_series_updates_interval
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    patch "/series/#{series[:id]}", { interval_count: "3", interval_unit: "month" }, tailscale_headers
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    assert_equal 3, body["interval_count"]
+    assert_equal "month", body["interval_unit"]
+
+    updated = DB[:series].first(id: series[:id])
+    assert_equal 3, updated[:interval_count]
+    assert_equal "month", updated[:interval_unit]
+  end
+
+  def test_patch_series_updates_due_date
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    task = DB[:tasks].first(series_id: series[:id])
+    patch "/series/#{series[:id]}", { due_date: "2026-04-15" }, tailscale_headers
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    assert_equal "2026-04-15", body["due_date"]
+    assert_equal Date.new(2026, 4, 15), DB[:tasks].first(id: task[:id])[:due_date]
+  end
+
+  def test_patch_series_rejects_invalid_interval_unit
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    patch "/series/#{series[:id]}", { interval_unit: "fortnight" }, tailscale_headers
+    assert_equal 422, last_response.status
+  end
+
+  def test_patch_series_rejects_zero_interval_count
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    patch "/series/#{series[:id]}", { interval_count: "0" }, tailscale_headers
+    assert_equal 422, last_response.status
+  end
+
+  def test_patch_series_requires_own_series
+    post "/series", {
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+
+    series = DB[:series].first
+    patch "/series/#{series[:id]}", { note: "hacked" }, tailscale_headers(login: "bob@example.com", name: "Bob")
+    assert_equal 404, last_response.status
+  end
+
+  def test_patch_series_ignores_fields_not_provided
+    post "/series", {
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+
+    series = DB[:series].first
+    patch "/series/#{series[:id]}", { note: "Call Dad" }, tailscale_headers
+    assert last_response.ok?
+
+    updated = DB[:series].first(id: series[:id])
+    assert_equal "Call Dad", updated[:note]
+    assert_equal "week", updated[:interval_unit]
+    assert_equal 2, updated[:interval_count]
+
+    task = DB[:tasks].first(series_id: series[:id])
+    assert_equal Date.new(2026, 3, 1), task[:due_date]
+  end
+
   def test_completed_includes_notes
     post "/series", {
       note: "Call Mom", interval_unit: "week", interval_count: "1",
