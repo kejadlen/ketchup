@@ -4,7 +4,7 @@ require "json"
 require "roda"
 
 require_relative "models"
-require_relative "views/home"
+require_relative "views/dashboard"
 
 class Web < Roda
   plugin :halt
@@ -40,7 +40,7 @@ class Web < Roda
 
     r.root do
       overdue, upcoming = active_tasks_for(current_user)
-      Views::Home.new(current_user:, overdue:, upcoming:).call
+      Views::Dashboard.new(current_user:, overdue:, upcoming:).call
     end
 
     r.on "tasks", Integer do |task_id|
@@ -73,10 +73,10 @@ class Web < Roda
       series = Series.where(id: series_id, user_id: current_user.id).first
       r.halt 404 unless series
 
-      r.get true do
+      r.get do
         overdue, upcoming = active_tasks_for(current_user)
 
-        Views::Home.new(
+        Views::Dashboard.new(
           current_user:, overdue:, upcoming:,
           selected_series: series,
           selected_task: series.active_task,

@@ -5,7 +5,7 @@ require "phlex"
 require_relative "layout"
 
 module Views
-  class Home < Phlex::HTML
+  class Dashboard < Phlex::HTML
     def initialize(current_user:, overdue:, upcoming:,
                    selected_series: nil, selected_task: nil, completed_tasks: [])
       @current_user = current_user
