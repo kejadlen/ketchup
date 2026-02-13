@@ -79,7 +79,6 @@ class Web < Roda
         Views::Dashboard.new(
           current_user:, overdue:, upcoming:,
           selected_series: series,
-          selected_task: series.active_task,
           completed_tasks: completed_tasks_for(series)
         ).call
       end

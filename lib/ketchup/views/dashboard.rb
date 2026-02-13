@@ -7,12 +7,11 @@ require_relative "layout"
 module Views
   class Dashboard < Phlex::HTML
     def initialize(current_user:, overdue:, upcoming:,
-                   selected_series: nil, selected_task: nil, completed_tasks: [])
+                   selected_series: nil, completed_tasks: [])
       @current_user = current_user
       @overdue = overdue
       @upcoming = upcoming
       @selected_series = selected_series
-      @selected_task = selected_task
       @completed_tasks = completed_tasks
     end
 
@@ -63,6 +62,7 @@ module Views
     private
 
     def series_detail_sidebar
+      active_task = @selected_series.active_task
       div(class: "column column-aside", "x-data": "{ editing: false }") do
         div(class: "column-header") do
           h2(class: "aside-heading") do
@@ -118,16 +118,16 @@ module Views
               end
             end
 
-            if @selected_task
+            if active_task
               dt { "Due date" }
               dd(
                 "x-show": "!editing",
-                "x-text": "new Date('#{@selected_task[:due_date]}T00:00').toLocaleDateString()"
-              ) { @selected_task[:due_date].to_s }
+                "x-text": "new Date('#{active_task[:due_date]}T00:00').toLocaleDateString()"
+              ) { active_task[:due_date].to_s }
               dd(
                 "x-show": "editing",
                 "x-cloak": true,
-                "x-data": "dueDateEditor(#{@selected_series.id}, '#{@selected_task[:due_date]}')"
+                "x-data": "dueDateEditor(#{@selected_series.id}, '#{active_task[:due_date]}')"
               ) do
                 input(
                   type: "date",
@@ -137,9 +137,9 @@ module Views
                 )
               end
 
-              if @selected_task.urgency > 0
+              if active_task.urgency > 0
                 dt { "Urgency" }
-                dd { "#{format("%.1f", @selected_task.urgency)}x" }
+                dd { "#{format("%.1f", active_task.urgency)}x" }
               end
             end
           end
