@@ -198,11 +198,17 @@ document.addEventListener("alpine:init", () => {
   // New series form editor
   const newNoteEl = document.getElementById("series-note-editor")
   if (newNoteEl) {
-    new OverType("#series-note-editor", {
+    const editor = new OverType("#series-note-editor", {
       placeholder: "What needs doing...",
       textareaProps: { name: "note", required: true },
       autoResize: true,
     })
+    const createBtn = document.getElementById("create-series-btn")
+    if (createBtn) {
+      newNoteEl.addEventListener("input", () => {
+        createBtn.disabled = !editor.value.trim()
+      })
+    }
   }
 
   Alpine.data("upcoming", () => ({

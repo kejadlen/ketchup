@@ -51,3 +51,4 @@
 - Fixed-schedule recurrence
 - Personal/shared toggle
 - CLI interface
+- Sentry

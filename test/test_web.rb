@@ -236,7 +236,7 @@ class TestWeb < Minitest::Test
 
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, tailscale_headers
-    assert_includes last_response.body, "+ New"
+    assert_includes last_response.body, "New"
     assert_includes last_response.body, 'href="/"'
   end
 

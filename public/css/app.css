@@ -83,6 +83,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: var(--space-2xs);
   margin-block-end: var(--space-xs);
   padding-block-end: var(--space-3xs);
   border-block-end: 1px dotted #ccc;
@@ -105,6 +106,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .aside-heading {
+  flex: 1;
   color: #999;
 }
 
@@ -113,21 +115,20 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .aside-heading-action {
+  all: unset;
   font-size: var(--step--1);
   font-weight: 400;
+  color: #999;
   cursor: default;
 }
 
-.column-aside form {
-  font-size: var(--step--1);
+.aside-heading-action:hover {
+  color: #1a1a1a;
 }
 
-.column-aside label {
-  font-size: var(--step--2);
-}
-
-.column-aside button[type="submit"] {
-  font-size: var(--step--1);
+.aside-heading-action:disabled {
+  color: #ccc;
+  cursor: default;
 }
 
 #series-note-editor {
@@ -137,6 +138,14 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 #series-note-editor:focus-within {
   border-color: #999;
+}
+
+.column-aside form {
+  font-size: var(--step--1);
+}
+
+.column-aside button[type="submit"] {
+  font-size: var(--step--1);
 }
 
 /* -------------------- */
@@ -230,6 +239,15 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   border-radius: 3px;
 }
 
+#series-note-editor {
+  margin-block-end: 0;
+  border-color: #ccc;
+}
+
+#series-note-editor:focus-within {
+  border-color: #999;
+}
+
 .task-detail-note:hover {
   border-color: transparent;
 }
@@ -258,6 +276,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .detail-input {
   font-size: var(--step--2);
   padding: 1px 4px;
+  margin: -2px -5px;
   border: 1px solid transparent;
   border-radius: 3px;
   background: transparent;
@@ -479,7 +498,7 @@ textarea {
   gap: var(--space-3xs);
 }
 
-button[type="submit"]:not(.complete-btn) {
+button[type="submit"]:not(.complete-btn):not(.aside-heading-action) {
   padding: var(--space-3xs) var(--space-s);
   border: 1px solid #1a1a1a;
   border-radius: 3px;
@@ -490,7 +509,7 @@ button[type="submit"]:not(.complete-btn) {
   cursor: pointer;
 }
 
-button[type="submit"]:not(.complete-btn):hover {
+button[type="submit"]:not(.complete-btn):not(.aside-heading-action):hover {
   background: #333;
 }
 

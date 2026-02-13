@@ -25,7 +25,7 @@ module Views
         end
         body do
           header(class: "site-header") do
-            span(class: "site-name") { "Ketchup" }
+            a(href: "/", class: "site-name") { "Ketchup" }
             span(class: "user") { @current_user[:name] || @current_user[:login] }
           end
           yield

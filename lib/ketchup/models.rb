@@ -49,7 +49,9 @@ class Task < Sequel::Model
     days_overdue = Date.today - self[:due_date]
     return 0 if days_overdue <= 0
 
-    interval = self[:interval_count] * INTERVAL_DAYS.fetch(self[:interval_unit])
+    count = self[:interval_count] || series.interval_count
+    unit = self[:interval_unit] || series.interval_unit
+    interval = count * INTERVAL_DAYS.fetch(unit)
     days_overdue.to_f / interval
   end
 

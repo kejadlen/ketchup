@@ -66,18 +66,18 @@ module Views
       div(class: "column column-aside", "x-data": "{ editing: false }") do
         div(class: "column-header") do
           h2(class: "aside-heading") do
-            a(href: "/", class: "aside-heading-action") { "+ New" }
+            a(href: "/", class: "aside-heading-action") { "New" }
           end
-          nav(class: "sort-toggle") do
-            button(
-              "x-show": "!editing",
-              "x-on:click": "editing = true; $dispatch('start-editing')"
-            ) { "Edit" }
-            button(
-              "x-show": "editing",
-              "x-on:click": "editing = false; $dispatch('stop-editing')"
-            ) { "Done" }
-          end
+          button(
+            class: "aside-heading-action",
+            "x-show": "!editing",
+            "x-on:click": "editing = true; $dispatch('start-editing')"
+          ) { "Edit" }
+          button(
+            class: "aside-heading-action",
+            "x-show": "editing",
+            "x-on:click": "editing = false; $dispatch('stop-editing')"
+          ) { "Done" }
         end
 
         div(class: "task-detail") do
@@ -88,7 +88,7 @@ module Views
             "data-series-id": @selected_series.id.to_s
           )
           dl(class: "task-detail-fields") do
-            dt { "Interval" }
+            dt { "Repeat every" }
             dd("x-show": "!editing") do
               plain interval_text(@selected_series.interval_count, @selected_series.interval_unit)
             end
@@ -135,8 +135,8 @@ module Views
               end
 
               if @selected_task.urgency > 0
-                dt("x-show": "!editing") { "Urgency" }
-                dd("x-show": "!editing") { "#{format("%.1f", @selected_task.urgency)}x" }
+                dt { "Urgency" }
+                dd { "#{format("%.1f", @selected_task.urgency)}x" }
               end
             end
           end
@@ -186,43 +186,39 @@ module Views
     def new_series_sidebar
       div(class: "column column-aside") do
         div(class: "column-header") do
-          h2(class: "aside-heading") do
-            span { "New Series" }
-          end
+          h2 { "New Series" }
+          button(type: "submit", form: "new-series-form", id: "create-series-btn", class: "aside-heading-action", disabled: true) { "Create" }
         end
 
-        form(method: "post", action: "/series") do
-          div(class: "field") do
-            label(for: "note") { "Note" }
-            div(id: "series-note-editor")
-          end
+        form(method: "post", action: "/series", id: "new-series-form", class: "task-detail") do
+          div(id: "series-note-editor", class: "task-detail-note")
 
-          div(class: "field") do
-            label(for: "interval_count") { "Repeat every" }
-            div(class: "interval") do
+          dl(class: "task-detail-fields") do
+            dt { "Repeat every" }
+            dd(class: "detail-edit-interval") do
               input(
-                type: "number", id: "interval_count", name: "interval_count",
+                type: "number", name: "interval_count",
+                class: "detail-input detail-input-count",
                 min: 1, value: 1, required: true
               )
-              select(id: "interval_unit", name: "interval_unit", required: true) do
-                option(value: "day") { "day(s)" }
+              select(name: "interval_unit", class: "detail-input detail-input-unit", required: true) do
+                option(value: "day", selected: true) { "day(s)" }
                 option(value: "week") { "week(s)" }
                 option(value: "month") { "month(s)" }
                 option(value: "quarter") { "quarter(s)" }
                 option(value: "year") { "year(s)" }
               end
             end
-          end
 
-          div(class: "field") do
-            label(for: "first_due_date") { "First due date" }
-            input(
-              type: "date", id: "first_due_date", name: "first_due_date",
-              value: Date.today.to_s, required: true
-            )
+            dt { "First due date" }
+            dd do
+              input(
+                type: "date", name: "first_due_date",
+                class: "detail-input detail-input-date",
+                value: Date.today.to_s, required: true
+              )
+            end
           end
-
-          button(type: "submit") { "Create" }
         end
       end
     end
