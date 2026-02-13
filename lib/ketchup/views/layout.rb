@@ -21,6 +21,7 @@ module Views
           link(rel: "stylesheet", href: "/css/app.css")
           script(src: "https://unpkg.com/overtype/dist/overtype.min.js")
           script(src: "/js/app.js", defer: true)
+          script(src: "https://cdn.jsdelivr.net/npm/@alpinejs/persist@3/dist/cdn.min.js", defer: true)
           script(src: "https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js", defer: true)
         end
         body do

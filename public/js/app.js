@@ -60,13 +60,10 @@ OverType.setTheme({ name: "ketchup", colors: { text: "#1a1a1a" } })
 
 document.addEventListener("alpine:init", () => {
   Alpine.data("sortable", () => ({
-    sort: localStorage.getItem("sort") || "urgency",
+    sort: Alpine.$persist("urgency"),
 
     init() {
-      this.$watch("sort", (value) => {
-        localStorage.setItem("sort", value)
-        this.reorder()
-      })
+      this.$watch("sort", () => this.reorder())
       if (this.sort !== "urgency") {
         this.$nextTick(() => this.reorder())
       }
@@ -215,12 +212,6 @@ document.addEventListener("alpine:init", () => {
   }
 
   Alpine.data("upcoming", () => ({
-    showEmpty: localStorage.getItem("upcoming-show-empty") !== "false",
-
-    init() {
-      this.$watch("showEmpty", (value) => {
-        localStorage.setItem("upcoming-show-empty", value)
-      })
-    },
+    showEmpty: Alpine.$persist(true),
   }))
 })
