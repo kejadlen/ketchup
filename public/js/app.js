@@ -104,6 +104,7 @@ document.addEventListener("alpine:init", () => {
 
     save() {
       saveSeriesField(seriesId, "due_date", this.dueDate)
+        .then(() => location.reload())
     },
   }))
 
@@ -200,7 +201,7 @@ document.addEventListener("alpine:init", () => {
   // New series form editor
   const newNoteEl = document.getElementById("series-note-editor")
   if (newNoteEl) {
-    const editor = new OverType("#series-note-editor", {
+    const [editor] = new OverType("#series-note-editor", {
       placeholder: "What needs doing...",
       textareaProps: { name: "note", required: true },
       autoResize: true,
@@ -208,7 +209,7 @@ document.addEventListener("alpine:init", () => {
     const createBtn = document.getElementById("create-series-btn")
     if (createBtn) {
       newNoteEl.addEventListener("input", () => {
-        createBtn.disabled = !editor.value.trim()
+        createBtn.disabled = !editor.getValue().trim()
       })
     }
   }
