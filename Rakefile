@@ -96,4 +96,75 @@ task :seed do
   puts "Seeded #{notes.length} series for #{user.name} (#{user.login})"
 end
 
+namespace :snapshots do
+  desc "Capture screenshots of the app in key states"
+  task :capture do
+    ENV["DATABASE_URL"] = ":memory:"
+    require "ketchup/web"
+    require "ketchup/seed"
+    require "ketchup/snapshots"
+    require "puma"
+    require "puma/configuration"
+
+    output_dir = File.join(Snapshots.cache_dir, "current")
+
+    config = Puma::Configuration.new do |c|
+      c.app Web.freeze.app
+      c.bind "tcp://127.0.0.1:0"
+      c.log_requests false
+      c.quiet
+    end
+
+    launcher = Puma::Launcher.new(config)
+    thread = Thread.new { launcher.run }
+    sleep 1 until launcher.connected_ports.any?
+
+    port = launcher.connected_ports.first
+    Snapshots.capture(output_dir: output_dir, port: port)
+    launcher.stop
+    thread.join
+
+    puts "Screenshots saved to #{output_dir}"
+  end
+
+  desc "Compare current screenshots against baseline from latest release"
+  task :diff do
+    require "ketchup/snapshots"
+
+    base_dir = Snapshots.cache_dir
+    baseline_dir = File.join(base_dir, "baseline")
+    current_dir = File.join(base_dir, "current")
+
+    FileUtils.rm_rf(baseline_dir)
+    FileUtils.mkdir_p(baseline_dir)
+
+    tarball = File.join(base_dir, "baseline.tar.gz")
+    system("gh", "release", "download", "--pattern", "snapshots.tar.gz", "--output", tarball, "--clobber", exception: false)
+
+    if File.exist?(tarball)
+      system("tar", "xzf", tarball, "-C", baseline_dir, exception: true)
+      File.delete(tarball)
+      puts "Downloaded baseline from latest release"
+    else
+      puts "No baseline found — showing current screenshots only"
+    end
+
+    Rake::Task["snapshots:capture"].invoke
+
+    output_path = File.join(base_dir, "diff.html")
+    Snapshots.generate_diff_html(
+      baseline_dir: baseline_dir,
+      current_dir: current_dir,
+      output_path: output_path
+    )
+    puts "Diff viewer: #{output_path}"
+  end
+
+  desc "Capture, diff, and open the viewer"
+  task :review do
+    Rake::Task["snapshots:diff"].invoke
+    system("open", File.join(Snapshots.cache_dir, "diff.html"))
+  end
+end
+
 task default: %i[ test binstubs ]
