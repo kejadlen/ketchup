@@ -1,44 +1,33 @@
-# ketchup
+# Ketchup
 
-A personal/family tool for tracking recurring tasks and catching up on what's overdue.
+A personal tool for tracking recurring tasks and catching up on what's overdue.
 
 ## Overview
 
 - **Users:** Me and my family
-- **Auth:** Handled via Tailscale — rely on remote user header (no in-app auth)
-- **Interface:** Web app (Roda), architected so a CLI can be added later
-- **Stack:** Ruby, Roda, Sequel, SQLite3
+- **Auth:** Tailscale headers (no in-app auth)
+- **Stack:** Ruby, Roda, Sequel, SQLite, Phlex, Alpine.js, OverType
 
-## Key concepts
+## Domain model
 
-- **Tasks** are recurring, with a configurable interval (day/week/month/quarter/year) and interval count
-  - Recurrence is based on interval+count from last completion (not fixed schedule — but may add fixed schedule later)
-- Each user has their own tasks
-- Tasks can also be **shared** — visible to all users, anyone can mark them done, overdue shows for everyone
-- One-off tasks are out of scope for now
-- No task assignment — shared tasks are not assigned to a specific person
-- Each task has a **note** (free text) — the first line is the task name
-  - Per-completion notes may be added later
+A **Series** defines a recurring obligation — "Call Mom every 2 weeks." It holds the note, interval unit (day/week/month/quarter/year), and interval count. The note's first line serves as the display name.
 
-## Task fields
+Each Series has one active **Task** at a time. Completing a task creates the next one, with a due date advanced by the interval from today. Tasks also hold optional per-completion notes.
 
-- **Note** — free text; first line serves as the task name/title
-- **Interval unit** — day, week, month, quarter, or year
-- **Interval count** — e.g., 2 (combined with unit: "every 2 weeks")
-- **First due date** — user picks this on creation
-- **Personal or shared**
-
-## Primary use case
-
-Catching up with friends and family — some weekly, some quarterly, some yearly, etc.
+A **User** owns Series (and, transitively, Tasks). The `many_through_many` association on User provides direct task access for ownership scoping.
 
 ## Main view
 
-A single list of tasks in priority order, automatically sorted:
+The dashboard has three columns:
 
-1. **Overdue tasks first** — ordered by how late they are *relative to their interval* (most proportionally overdue at top)
-2. **Upcoming tasks after** — ordered by due date (soonest first)
+1. **Overdue** — tasks past due, sorted by urgency (how late relative to interval)
+2. **Upcoming** — a calendar showing tasks by due date, with empty days as context
+3. **Sidebar** — either a new series form or the selected series detail (note, interval, due date, completion history with per-completion notes)
 
-## Architecture
+## Primary use case
 
-Domain logic should be separated from the web layer so a CLI can be added later.
+Catching up with friends and family — some weekly, some quarterly, some yearly.
+
+## Development
+
+Largely vibe-coded with Claude Code. I steer direction and make design calls; Claude writes most of the code.
