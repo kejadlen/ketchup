@@ -10,6 +10,12 @@ class Web < Roda
   plugin :halt
   plugin :static, %w[ /css /js ]
   plugin :all_verbs
+  plugin :error_handler do |e|
+    raise e unless e.is_a?(Sequel::NoMatchingRow)
+
+    response.status = 404
+    ""
+  end
 
   def current_user
     login = env["HTTP_TAILSCALE_USER_LOGIN"]
@@ -28,8 +34,7 @@ class Web < Roda
     end
 
     r.on "tasks", Integer do |task_id|
-      @task = @user.tasks_dataset.first(Sequel[:tasks][:id] => task_id)
-      r.halt 404 unless @task
+      @task = @user.tasks_dataset.where(Sequel[:tasks][:id] => task_id).sole
 
       r.post "complete" do
         r.halt 422 unless @task[:completed_at].nil?
@@ -50,8 +55,7 @@ class Web < Roda
     end
 
     r.on "series", Integer do |series_id|
-      series = @user.series_dataset[series_id]
-      r.halt 404 unless series
+      series = @user.series_dataset.where(id: series_id).sole
 
       r.get do
         Views::Dashboard.new(current_user: @user, series:).call
