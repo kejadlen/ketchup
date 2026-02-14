@@ -103,8 +103,7 @@ class Web < Roda
 
     end
 
-    r.on "series" do
-      r.post do
+    r.post "series" do
         note = r.params["note"].to_s.strip
         interval_unit = r.params["interval_unit"].to_s
         interval_count = r.params["interval_count"].to_i
@@ -129,7 +128,6 @@ class Web < Roda
         )
 
         r.redirect "/series/#{series.id}"
-      end
     end
   end
 end
