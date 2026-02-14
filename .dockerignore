@@ -1,0 +1,7 @@
+.git
+.github
+.claude
+.direnv
+.envrc
+db/*.db
+test
