@@ -22,7 +22,7 @@ end
 
 desc "Seed database with sample series and tasks"
 task :seed do
-  require "ketchup/models"
+  require "ketchup/seed"
 
   DB[:tasks].delete
   DB[:series].delete
@@ -43,38 +43,11 @@ task :seed do
   ]
 
   max_count = {
-    "day" => 14,
-    "week" => 4,
-    "month" => 6,
-    "quarter" => 2,
-    "year" => 2,
+    "day" => 14, "week" => 4, "month" => 6, "quarter" => 2, "year" => 2
   }
-
-  # How far back a due date can plausibly be overdue, in days
   overdue_spread = {
-    "day" => 7,
-    "week" => 21,
-    "month" => 60,
-    "quarter" => 120,
-    "year" => 180,
+    "day" => 7, "week" => 21, "month" => 60, "quarter" => 120, "year" => 180
   }
-
-  all_series = notes.map do |note|
-    unit = max_count.keys.sample
-    count = rand(1..max_count.fetch(unit))
-    spread = overdue_spread.fetch(unit)
-    due_date = Date.today + rand(-spread..spread)
-
-    Series.create_with_first_task(
-      user: user,
-      note: note,
-      interval_unit: unit,
-      interval_count: count,
-      first_due_date: due_date
-    )
-  end
-
-  # Add completed task history to some series
   completion_notes = [
     "Done, no issues",
     "Rescheduled from **last week**",
@@ -83,29 +56,43 @@ task :seed do
     "All good\n\n- Changed filter\n- Reset thermostat",
   ]
 
-  all_series.sample(6).each do |s|
-    interval_days = case s.interval_unit
-                    when "day" then s.interval_count
-                    when "week" then 7 * s.interval_count
-                    when "month" then 30 * s.interval_count
-                    when "quarter" then 91 * s.interval_count
-                    when "year" then 365 * s.interval_count
+  series_data = notes.map do |note|
+    unit = max_count.keys.sample
+    count = rand(1..max_count.fetch(unit))
+    spread = overdue_spread.fetch(unit)
+    due_date = Date.today + rand(-spread..spread)
+
+    interval_days = case unit
+                    when "day" then count
+                    when "week" then 7 * count
+                    when "month" then 30 * count
+                    when "quarter" then 91 * count
+                    when "year" then 365 * count
                     end
 
-    active = s.active_task
-    prev_date = active.due_date
-    rand(1..4).times do
-      prev_date -= interval_days
-      note = rand < 0.5 ? completion_notes.sample : nil
-      Task.create(
-        series_id: s.id,
-        due_date: prev_date,
-        completed_at: prev_date.to_time + rand(0..3) * 86400,
-        note: note
-      )
-    end
+    history = if [true, false].sample
+                rand(1..4).times.map do |i|
+                  past_date = due_date - (interval_days * (i + 1))
+                  {
+                    due_date: past_date,
+                    completed_at: past_date.to_time + rand(0..3) * 86400,
+                    note: rand < 0.5 ? completion_notes.sample : nil
+                  }
+                end
+              else
+                []
+              end
+
+    {
+      note: note,
+      interval_unit: unit,
+      interval_count: count,
+      due_date: due_date,
+      history: history
+    }
   end
 
+  Seed.call(user: user, series: series_data)
   puts "Seeded #{notes.length} series for #{user.name} (#{user.login})"
 end
 

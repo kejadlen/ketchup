@@ -10,6 +10,7 @@ lib/
     config.rb        # Config data object, reads DATABASE_URL from env
     db.rb            # Sequel connection + auto-migration
     models.rb        # User, Series, Task models and associations
+    seed.rb          # Seed.call(user:, series:) — creates series, tasks, and history
     web.rb           # Roda app (routes, current_user from Tailscale headers)
     views/
       layout.rb      # Phlex base layout (head, nav, body wrapper)
@@ -23,6 +24,7 @@ test/
   test_db.rb         # Schema constraint tests
   test_web.rb        # Minitest + Rack::Test integration tests
   test_sole.rb       # Sole plugin tests
+  test_seed.rb       # Seed module tests
 public/
   js/app.js          # Alpine components, OverType editor setup
   css/               # Static stylesheets
@@ -33,8 +35,9 @@ config.ru            # Rack entrypoint (Sentry + Web.app)
 
 ```sh
 rake           # runs tests + binstubs (default)
-rake test      # tests only
+rake test      # tests only (use this to run tests, not ruby directly)
 rake dev       # starts dev server with Tailscale serve + auto-restart via entr
+rake seed      # seeds database with sample series and tasks
 ```
 
 Tests set `DATABASE_URL=:memory:` so they never touch the real database.
