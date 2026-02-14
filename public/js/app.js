@@ -105,7 +105,7 @@ document.addEventListener("alpine:init", () => {
     },
   }))
 
-  Alpine.data("historyNote", (taskId, hasNote) => ({
+  Alpine.data("historyNote", (seriesId, taskId, hasNote) => ({
     hasNote,
     editing: false,
     _editor: null,
@@ -146,7 +146,7 @@ document.addEventListener("alpine:init", () => {
             return
           }
 
-          fetch(`/tasks/${taskId}/note`, {
+          fetch(`/series/${seriesId}/tasks/${taskId}/note`, {
             method: "PATCH",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `note=${encodeURIComponent(note)}`,

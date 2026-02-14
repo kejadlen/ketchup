@@ -158,7 +158,7 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
     assert last_response.redirect?
 
     series = DB[:series].first
@@ -176,7 +176,7 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-01-31")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
 
     new_task = DB[:tasks].where(completed_at: nil).first
     assert_equal Date.today >> 3, new_task[:due_date]
@@ -189,7 +189,7 @@ class TestWeb < Minitest::Test
     }, tailscale_headers(login: "alice@example.com", name: "Alice")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
     assert_equal 404, last_response.status
   end
 
@@ -198,7 +198,7 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete"
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete"
     assert_equal 403, last_response.status
   end
 
@@ -226,7 +226,8 @@ class TestWeb < Minitest::Test
 
     task = DB[:tasks].first
     get "/", {}, tailscale_headers
-    assert_includes last_response.body, "action=\"/tasks/#{task[:id]}/complete\""
+    series = DB[:series].first
+    assert_includes last_response.body, "action=\"/series/#{series[:id]}/tasks/#{task[:id]}/complete\""
   end
 
 
@@ -257,12 +258,11 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
 
     completed_task = DB[:tasks].first(id: task[:id])
-    patch "/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, tailscale_headers
-
     series = DB[:series].first
+    patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, tailscale_headers
     get "/series/#{series[:id]}", {}, tailscale_headers
     assert last_response.ok?
     assert_includes last_response.body, "Left a message"
@@ -290,10 +290,11 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
 
     completed_task = DB[:tasks].first(id: task[:id])
-    patch "/tasks/#{completed_task[:id]}/note", { note: "Called, all good" }, tailscale_headers
+    series = DB[:series].first
+    patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Called, all good" }, tailscale_headers
     assert last_response.ok?
 
     body = JSON.parse(last_response.body)
@@ -306,7 +307,8 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    patch "/tasks/#{task[:id]}/note", { note: "nope" }, tailscale_headers
+    series = DB[:series].first
+    patch "/series/#{series[:id]}/tasks/#{task[:id]}/note", { note: "nope" }, tailscale_headers
     assert_equal 422, last_response.status
   end
 
@@ -317,10 +319,11 @@ class TestWeb < Minitest::Test
     }, tailscale_headers(login: "alice@example.com", name: "Alice")
 
     task = DB[:tasks].first
-    post "/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
+    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
 
     completed_task = DB[:tasks].first(id: task[:id])
-    patch "/tasks/#{completed_task[:id]}/note", { note: "hacked" }, tailscale_headers(login: "bob@example.com", name: "Bob")
+    series = DB[:series].first
+    patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "hacked" }, tailscale_headers(login: "bob@example.com", name: "Bob")
     assert_equal 404, last_response.status
   end
 

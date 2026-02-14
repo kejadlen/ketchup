@@ -147,7 +147,7 @@ module Views
                 @series.completed_tasks.each do |ct|
                   li(
                     class: "task-history-item",
-                    "x-data": "historyNote(#{ct[:id]}, #{ct[:note] ? "true" : "false"})"
+                    "x-data": "historyNote(#{@series.id}, #{ct[:id]}, #{ct[:note] ? "true" : "false"})"
                   ) do
                     div(class: "task-history-row") do
                       span(class: "task-history-check") { "✓" }
@@ -294,7 +294,7 @@ module Views
       selected = @series && @series.id == task[:series_id]
 
       div(class: ["task-card", ("task-overdue" if overdue), ("task-selected" if selected)]) do
-        form(method: "post", action: "/tasks/#{task[:id]}/complete", class: "complete-form") do
+        form(method: "post", action: "/series/#{task[:series_id]}/tasks/#{task[:id]}/complete", class: "complete-form") do
           button(
             type: "submit", title: "Complete",
             class: "complete-btn",
