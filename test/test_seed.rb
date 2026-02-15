@@ -25,7 +25,7 @@ class TestSeed < Minitest::Test
       }
     ]
 
-    Seed.call(user: user, series: series_data)
+    Ketchup::Seed.call(user: user, series: series_data)
 
     assert_equal 1, Series.count
     assert_equal 1, Task.count
@@ -51,7 +51,7 @@ class TestSeed < Minitest::Test
       }
     ]
 
-    Seed.call(user: user, series: series_data)
+    Ketchup::Seed.call(user: user, series: series_data)
 
     assert_equal 3, Task.count
     assert_equal 2, Task.exclude(completed_at: nil).count

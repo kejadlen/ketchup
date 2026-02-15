@@ -9,6 +9,7 @@ require "ferrum"
 require "puma"
 require "puma/configuration"
 
+require_relative "seed"
 require_relative "web"
 
 module Ketchup
@@ -42,51 +43,36 @@ module Ketchup
       private
 
       def run_capture
-        # Empty dashboard
-        snap("empty-dashboard") do
-          goto @base
-          wait_for(".home")
-        end
-
-        # New series form filled with markdown, before creating
-        goto @base
-        wait_for("#new-series-form")
-        fill_new_series(
-          note: "Call Mom\n\nAsk about *weekend plans*\n- Bring **birthday cake**\n- Check flight times",
-          interval_count: 2,
-          interval_unit: "week"
-        )
-        snap("new-series-editing", selector: ".column-aside")
-
-        # Submit and capture series detail
-        @browser.at_css("#create-series-btn").click
-        wait_for("#series-note-detail")
-        snap("series-detail")
-
-        # Create more series for a populated dashboard
-        [
-          { note: "Water the plants", interval_count: 3, interval_unit: "day" },
-          { note: "Clean the kitchen", interval_count: 1, interval_unit: "week" },
-          { note: "Review finances", interval_count: 1, interval_unit: "month" },
-          { note: "Dentist appointment", interval_count: 1, interval_unit: "quarter" },
-        ].each do |series|
-          goto @base
-          wait_for("#new-series-form")
-          fill_new_series(**series)
-          @browser.at_css("#create-series-btn").click
-          wait_for("#series-note-detail")
-        end
-
+        # 1. Dashboard — populated overdue + upcoming columns
         snap("dashboard") do
           goto @base
           wait_for(".home")
         end
 
-        # Complete a task
+        # 2. Series detail — pick one with completed history
+        series_with_history = Series.first(
+          id: Task.exclude(completed_at: nil).select(:series_id)
+        ) || Series.first
+
+        snap("series-detail") do
+          goto "#{@base}/series/#{series_with_history.id}"
+          wait_for("#series-note-detail")
+        end
+
+        # 3. New series form with markdown, snap sidebar only
+        goto @base
+        wait_for("#new-series-form")
+        fill_new_series(
+          note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
+          interval_count: 2,
+          interval_unit: "week"
+        )
+        snap("new-series-editing", selector: ".column-aside")
+
+        # 4. Complete a task, snap the resulting detail page
         goto @base
         wait_for(".complete-btn").click
         wait_for(".task-history")
-
         snap("after-complete")
 
         entries = @names.map { |name| { name: name } }
@@ -112,6 +98,8 @@ module Ketchup
 
         url = "http://127.0.0.1:#{launcher.connected_ports.first}"
         user = User.find_or_create(login: "snapshot@example.com") { |u| u.name = "Snapshot User" }
+        Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
+
         browser.headers.set(
           "Tailscale-User-Login" => user.login,
           "Tailscale-User-Name" => user.name
