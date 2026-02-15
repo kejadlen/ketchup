@@ -18,3 +18,6 @@
 - CLI interface
 - Don't re-download baseline for snapshots unnecessarily
 - Dark mode
+- Add snapshots of more states to check (adding notes, etc.)
+- Scope some of the snapshots down to more specific selectors
+- Cuprite (Capybara) instead of Ferrum?

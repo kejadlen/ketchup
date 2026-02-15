@@ -14,9 +14,10 @@ require_relative "web"
 module Ketchup
   module Snapshots
     class Capture
-      def initialize(output_dir:, logger: Logger.new($stderr))
+      def initialize(output_dir:, logger: Logger.new($stderr), &server)
         @output_dir = Pathname(output_dir)
         @logger = logger
+        @server = server || method(:default_server)
         @names = []
       end
 
@@ -24,36 +25,23 @@ module Ketchup
         FileUtils.rm_rf(@output_dir)
         @output_dir.mkpath
 
-        config = Puma::Configuration.new do |c|
-          c.app Web.freeze.app
-          c.bind "tcp://127.0.0.1:0"
-          c.log_requests false
-          c.quiet
-        end
-
-        launcher = Puma::Launcher.new(config)
-        saved_out, saved_err = $stdout.dup, $stderr.dup
-        $stdout.reopen(File::NULL)
-        $stderr.reopen(File::NULL)
-        thread = Thread.new { launcher.run }
-        sleep 0.1 until launcher.connected_ports.any?
-        $stdout.reopen(saved_out)
-        $stderr.reopen(saved_err)
-
-        port = launcher.connected_ports.first
-        @base = "http://127.0.0.1:#{port}"
-        @logger.info("Server listening on port #{port}")
-        user = User.find_or_create(login: "snapshot@example.com") { |u| u.name = "Snapshot User" }
-
         @browser = Ferrum::Browser.new(
           headless: true,
           window_size: [1280, 900]
         )
-        @browser.headers.set(
-          "Tailscale-User-Login" => user.login,
-          "Tailscale-User-Name" => user.name
-        )
 
+        @server.call(@browser) do |url|
+          @base = url
+          @logger.info("Server at #{@base}")
+          run_capture
+        end
+      ensure
+        @browser&.quit
+      end
+
+      private
+
+      def run_capture
         # Empty dashboard
         snap("empty-dashboard") do
           goto @base
@@ -97,8 +85,34 @@ module Ketchup
         snap("after-complete")
 
         (@output_dir / "manifest.json").write(JSON.pretty_generate(@names))
+      end
+
+      def default_server(browser)
+        config = Puma::Configuration.new do |c|
+          c.app Web.freeze.app
+          c.bind "tcp://127.0.0.1:0"
+          c.log_requests false
+          c.quiet
+        end
+
+        launcher = Puma::Launcher.new(config)
+        saved_out, saved_err = $stdout.dup, $stderr.dup
+        $stdout.reopen(File::NULL)
+        $stderr.reopen(File::NULL)
+        thread = Thread.new { launcher.run }
+        sleep 0.1 until launcher.connected_ports.any?
+        $stdout.reopen(saved_out)
+        $stderr.reopen(saved_err)
+
+        url = "http://127.0.0.1:#{launcher.connected_ports.first}"
+        user = User.find_or_create(login: "snapshot@example.com") { |u| u.name = "Snapshot User" }
+        browser.headers.set(
+          "Tailscale-User-Login" => user.login,
+          "Tailscale-User-Name" => user.name
+        )
+
+        yield url
       ensure
-        @browser&.quit
         if launcher
           $stdout.reopen(File::NULL)
           $stderr.reopen(File::NULL)
@@ -108,8 +122,6 @@ module Ketchup
           $stderr.reopen(saved_err)
         end
       end
-
-      private
 
       def goto(url)
         @browser.goto(url)
