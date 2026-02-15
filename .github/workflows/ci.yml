@@ -72,6 +72,7 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment: fly.io
     concurrency:
       group: fly-deploy
       cancel-in-progress: true
