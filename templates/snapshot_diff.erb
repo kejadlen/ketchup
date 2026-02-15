@@ -10,31 +10,31 @@
 <body>
   <h1>Ketchup Snapshot Diff</h1>
   <% snapshots.each do |snap| %>
+  <% entry = snap.current || snap.baseline -%>
   <div class="snapshot">
     <h2>
-      <%= snap[:name] %>
-      <% if snap[:status] == :new %>
+      <%= snap.name %>
+      <% unless snap.baseline %>
       <span class="label new">new</span>
-      <% elsif snap[:status] == :removed %>
+      <% end -%>
+      <% unless snap.current %>
       <span class="label removed">removed</span>
-      <% end %>
+      <% end -%>
     </h2>
-    <% if snap[:path] -%>
-    <code class="path"><%= snap[:path] %><%= " #{snap[:selector]}" if snap[:selector] %></code>
-    <% end -%>
+    <code class="path"><%= entry.path %><%= " #{entry.selector}" if entry.selector %></code>
     <div class="pair">
       <div class="side">
         <h3>Baseline</h3>
-        <% if snap[:baseline] %>
-        <img src="<%= snap[:baseline] %>" alt="baseline <%= snap[:name] %>">
+        <% if snap.baseline %>
+        <img src="baseline/<%= snap.name %>.png" alt="baseline <%= snap.name %>">
         <% else %>
         <div class="placeholder">No baseline</div>
         <% end %>
       </div>
       <div class="side">
         <h3>Current</h3>
-        <% if snap[:current] %>
-        <img src="<%= snap[:current] %>" alt="current <%= snap[:name] %>">
+        <% if snap.current %>
+        <img src="current/<%= snap.name %>.png" alt="current <%= snap.name %>">
         <% else %>
         <div class="placeholder">Removed</div>
         <% end %>

@@ -19,8 +19,8 @@
 - Don't re-download baseline for snapshots unnecessarily
 - Dark mode
 - Add snapshots of more states to check (adding notes, etc.)
-- Scope some of the snapshots down to more specific selectors
 - Cuprite (Capybara) instead of Ferrum?
 - Make snapshots embiggen images on click
 - Steep
 - Fix pages triggering from release
+- Improve the diff page to highlight differences

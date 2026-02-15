@@ -11,9 +11,9 @@
   <h1><%= title %></h1>
   <% images.each do |image| %>
   <div class="snapshot">
-    <h2><%= image[:name] %></h2>
-    <% if image[:path] %><code class="path"><%= image[:path] %><%= " #{image[:selector]}" if image[:selector] %></code><% end %>
-    <img src="<%= image[:filename] %>" alt="<%= image[:name] %>">
+    <h2><%= image[:entry].name %></h2>
+    <code class="path"><%= image[:entry].path %><%= " #{image[:entry].selector}" if image[:entry].selector %></code>
+    <img src="<%= image[:filename] %>" alt="<%= image[:entry].name %>">
   </div>
   <% end %>
 </body>

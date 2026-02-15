@@ -26,6 +26,42 @@ module Ketchup
       end
     end
 
+    Comparison = Data.define(:name, :baseline, :current)
+
+    class Diff
+      def initialize(baseline_dir:, current_dir:)
+        @baseline = Entry.read_manifest(baseline_dir).each_with_object({}) { |e, h| h[e.name] = e }
+        @current = Entry.read_manifest(current_dir).each_with_object({}) { |e, h| h[e.name] = e }
+      end
+
+      def comparisons
+        return unchanged if @baseline.keys == @current.keys
+
+        require "tempfile"
+        baseline_file = Tempfile.new("baseline")
+        current_file = Tempfile.new("current")
+        baseline_file.write(@baseline.keys.join("\n") + "\n")
+        current_file.write(@current.keys.join("\n") + "\n")
+        baseline_file.close
+        current_file.close
+
+        `diff -u #{baseline_file.path} #{current_file.path}`.lines.drop(2).filter_map do |line|
+          name = line[1..].chomp
+          case line[0]
+          when " " then Comparison.new(name: name, baseline: @baseline.fetch(name), current: @current.fetch(name))
+          when "-" then Comparison.new(name: name, baseline: @baseline.fetch(name), current: nil)
+          when "+" then Comparison.new(name: name, baseline: nil, current: @current.fetch(name))
+          end
+        end
+      end
+
+      private
+
+      def unchanged
+        @current.map { |name, entry| Comparison.new(name: name, baseline: @baseline[name], current: entry) }
+      end
+    end
+
     class Capture
       def initialize(output_dir:, logger: Logger.new($stderr), &server)
         @output_dir = Pathname(output_dir)

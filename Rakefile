@@ -89,32 +89,7 @@ namespace :snapshots do
       puts "No baseline found — showing current screenshots only"
     end
 
-    current_entries = Ketchup::Snapshots::Entry.read_manifest(current_dir)
-    baseline_entries = Ketchup::Snapshots::Entry.read_manifest(baseline_dir)
-    order = current_entries.map(&:name)
-    by_name = (baseline_entries + current_entries).each_with_object({}) { |e, h| h[e.name] = e }
-    baseline_images = baseline_dir.glob("*.png").map { |f| f.basename(".png").to_s }
-    current_images = current_dir.glob("*.png").map { |f| f.basename(".png").to_s }
-    all_names = order | current_images | baseline_images
-
-    snapshots = all_names.map do |name|
-      entry = by_name.fetch(name)
-      has_baseline = baseline_images.include?(name)
-      has_current = current_images.include?(name)
-
-      status = if !has_baseline then :new
-               elsif !has_current then :removed
-               end
-
-      {
-        name: name,
-        path: entry.path,
-        selector: entry.selector,
-        status: status,
-        baseline: has_baseline ? "baseline/#{name}.png" : nil,
-        current: has_current ? "current/#{name}.png" : nil,
-      }
-    end
+    snapshots = Ketchup::Snapshots::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons
 
     template = (Pathname(__dir__) / "templates/snapshot_diff.erb").read
     output_path = base_dir / "diff.html"
@@ -138,16 +113,11 @@ namespace :snapshots do
     css_sources.each_key { |src| cp src, output_path.dirname.to_s }
 
     entries = Ketchup::Snapshots::Entry.read_manifest(images_dir)
-    order = entries.map(&:name)
-    by_name = entries.each_with_object({}) { |e, h| h[e.name] = e }
-    all_pngs = images_dir.glob("*.png").map { |f| f.basename(".png").to_s }
-    names = order | all_pngs
 
     title = "Ketchup Snapshots"
     images_rel = images_dir.relative_path_from(output_path.dirname)
-    images = names.map do |name|
-      entry = by_name.fetch(name)
-      { name: name, path: entry.path, selector: entry.selector, filename: (images_rel / "#{name}.png").to_s }
+    images = entries.map do |entry|
+      { entry: entry, filename: (images_rel / "#{entry.name}.png").to_s }
     end
 
     template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read
