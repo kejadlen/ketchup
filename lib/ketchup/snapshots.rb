@@ -270,7 +270,9 @@ module Ketchup
         if area
           @browser.screenshot(path: file.to_s, area: area)
         elsif selector
+          @browser.execute("document.querySelector(#{selector.to_json}).style.padding = '1.5rem'")
           @browser.screenshot(path: file.to_s, selector: selector)
+          @browser.execute("document.querySelector(#{selector.to_json}).style.padding = ''")
         else
           @browser.screenshot(path: file.to_s)
         end
