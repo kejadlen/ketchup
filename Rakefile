@@ -1,6 +1,7 @@
 $LOAD_PATH.unshift File.expand_path("lib", __dir__)
 
 require "minitest/test_task"
+require "pathname"
 
 Minitest::TestTask.create
 
@@ -131,29 +132,33 @@ namespace :snapshots do
   desc "Compare current screenshots against baseline from latest release"
   task diff: [:capture, *css_targets] do
     require "erb"
+    require "json"
 
-    base_dir = cache_dir
-    baseline_dir = File.join(base_dir, "baseline")
-    current_dir = File.join(base_dir, "current")
+    base_dir = Pathname(cache_dir)
+    baseline_dir = base_dir / "baseline"
+    current_dir = base_dir / "current"
 
     FileUtils.rm_rf(baseline_dir)
-    FileUtils.mkdir_p(baseline_dir)
+    baseline_dir.mkpath
 
-    tarball = File.join(base_dir, "baseline.tar.gz")
-    system("gh", "release", "download", "--pattern", "snapshots.tar.gz", "--output", tarball, "--clobber", exception: false)
+    tarball = base_dir / "baseline.tar.gz"
+    system("gh", "release", "download", "--pattern", "snapshots.tar.gz", "--output", tarball.to_s, "--clobber", exception: false)
 
-    if File.exist?(tarball)
-      system("tar", "xzf", tarball, "-C", baseline_dir, exception: true)
-      File.delete(tarball)
+    if tarball.exist?
+      system("tar", "xzf", tarball.to_s, "-C", baseline_dir.to_s, exception: true)
+      tarball.delete
       puts "Downloaded baseline from latest release"
     else
       puts "No baseline found — showing current screenshots only"
     end
 
-    baseline_images = Dir.glob(File.join(baseline_dir, "*.png")).map { |f| File.basename(f, ".png") }.sort
-    current_images = Dir.glob(File.join(current_dir, "*.png")).map { |f| File.basename(f, ".png") }.sort
+    manifest = current_dir / "manifest.json"
+    order = manifest.exist? ? JSON.parse(manifest.read) : []
+    baseline_images = baseline_dir.glob("*.png").map { |f| f.basename(".png").to_s }
+    current_images = current_dir.glob("*.png").map { |f| f.basename(".png").to_s }
+    all_names = order | current_images | baseline_images
 
-    snapshots = (baseline_images | current_images).sort.map do |name|
+    snapshots = all_names.map do |name|
       has_baseline = baseline_images.include?(name)
       has_current = current_images.include?(name)
 
@@ -164,40 +169,45 @@ namespace :snapshots do
       {
         name: name,
         status: status,
-        baseline: has_baseline ? File.join("baseline", "#{name}.png") : nil,
-        current: has_current ? File.join("current", "#{name}.png") : nil,
+        baseline: has_baseline ? "baseline/#{name}.png" : nil,
+        current: has_current ? "current/#{name}.png" : nil,
       }
     end
 
-    template = File.read(File.expand_path("templates/snapshot_diff.erb", __dir__))
-    output_path = File.join(base_dir, "diff.html")
-    File.write(output_path, ERB.new(template, trim_mode: "-").result_with_hash(snapshots: snapshots))
+    template = (Pathname(__dir__) / "templates/snapshot_diff.erb").read
+    output_path = base_dir / "diff.html"
+    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(snapshots: snapshots))
     puts "Diff viewer: #{output_path}"
   end
 
   desc "Capture, diff, and open the viewer"
   task review: :diff do
-    system("open", File.join(cache_dir, "diff.html"))
+    system("open", (Pathname(cache_dir) / "diff.html").to_s)
   end
 
   desc "Generate gallery HTML from images in a directory"
   task :gallery, [:images_dir, :output_path] do |_t, args|
     require "erb"
+    require "json"
 
-    images_dir = args.fetch(:images_dir) { File.join(cache_dir, "current") }
-    output_path = args.fetch(:output_path) { File.join(cache_dir, "gallery.html") }
-    output_dir = File.dirname(output_path)
+    images_dir = Pathname(args.fetch(:images_dir) { File.join(cache_dir, "current") })
+    output_path = Pathname(args.fetch(:output_path) { File.join(cache_dir, "gallery.html") })
 
-    css_sources.each_key { |src| cp src, output_dir }
+    css_sources.each_key { |src| cp src, output_path.dirname.to_s }
+
+    manifest = images_dir / "manifest.json"
+    order = manifest.exist? ? JSON.parse(manifest.read) : []
+    all_pngs = images_dir.glob("*.png").map { |f| f.basename(".png").to_s }
+    names = order | all_pngs
 
     title = "Ketchup Snapshots"
-    images_rel = Pathname.new(images_dir).relative_path_from(Pathname.new(output_dir))
-    images = Dir.glob(File.join(images_dir, "*.png")).sort.map do |f|
-      { name: File.basename(f, ".png"), filename: File.join(images_rel, File.basename(f)) }
+    images_rel = images_dir.relative_path_from(output_path.dirname)
+    images = names.map do |name|
+      { name: name, filename: (images_rel / "#{name}.png").to_s }
     end
 
-    template = File.read(File.expand_path("templates/snapshot_gallery.erb", __dir__))
-    File.write(output_path, ERB.new(template, trim_mode: "-").result_with_hash(title: title, images: images))
+    template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read
+    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(title: title, images: images))
     puts output_path
   end
 end

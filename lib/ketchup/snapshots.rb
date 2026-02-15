@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 require "logger"
+require "pathname"
 
 require "ferrum"
 require "puma"
@@ -13,13 +15,14 @@ module Ketchup
   module Snapshots
     class Capture
       def initialize(output_dir:, logger: Logger.new($stderr))
-        @output_dir = output_dir
+        @output_dir = Pathname(output_dir)
         @logger = logger
+        @names = []
       end
 
       def call
         FileUtils.rm_rf(@output_dir)
-        FileUtils.mkdir_p(@output_dir)
+        @output_dir.mkpath
 
         config = Puma::Configuration.new do |c|
           c.app Web.freeze.app
@@ -92,6 +95,8 @@ module Ketchup
         wait_for(".task-history")
 
         snap("after-complete")
+
+        (@output_dir / "manifest.json").write(JSON.pretty_generate(@names))
       ensure
         @browser&.quit
         if launcher
@@ -124,12 +129,13 @@ module Ketchup
       def snap(name, selector: nil)
         yield if block_given?
 
-        path = File.join(@output_dir, "#{name}.png")
+        path = @output_dir / "#{name}.png"
         if selector
-          @browser.screenshot(path: path, selector: selector)
+          @browser.screenshot(path: path.to_s, selector: selector)
         else
-          @browser.screenshot(path: path)
+          @browser.screenshot(path: path.to_s)
         end
+        @names << name
         @logger.info(name)
       end
 
