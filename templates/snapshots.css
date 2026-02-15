@@ -9,7 +9,8 @@ body {
 h1 { margin-bottom: var(--space-l); color: #fff; }
 
 .snapshot { margin-bottom: var(--space-xl); }
-.snapshot h2 { margin-bottom: var(--space-s); color: #ccc; }
+.snapshot h2 { margin-bottom: 0; color: #ccc; }
+.snapshot .path { display: block; margin-bottom: var(--space-s); font-size: var(--step--1); color: #888; }
 .snapshot img { max-width: 100%; border: 1px solid #333; border-radius: 4px; display: block; margin-inline: auto; }
 
 /* Diff-specific */

@@ -15,6 +15,17 @@ require_relative "web"
 
 module Ketchup
   module Snapshots
+    Entry = Data.define(:name, :path, :selector) do
+      def initialize(name:, path:, selector: nil) = super
+
+      def self.read_manifest(dir)
+        manifest = dir / "manifest.json"
+        return [] unless manifest.exist?
+
+        JSON.parse(manifest.read).map { |e| new(name: e.fetch("name"), path: e.fetch("path"), selector: e["selector"]) }
+      end
+    end
+
     class Capture
       def initialize(output_dir:, logger: Logger.new($stderr), &server)
         @output_dir = Pathname(output_dir)
@@ -77,7 +88,7 @@ module Ketchup
         wait_for(".task-history")
         entries << snap("after-complete")
 
-        (@output_dir / "manifest.json").write(JSON.pretty_generate(entries))
+        (@output_dir / "manifest.json").write(JSON.pretty_generate(entries.map(&:to_h)))
       end
 
       def default_server(browser)
@@ -144,7 +155,7 @@ module Ketchup
         end
         url_path = URI.parse(@browser.current_url).path
         @logger.info(name)
-        { name: name, path: url_path }
+        Entry.new(name: name, path: url_path, selector: selector)
       end
 
       def fill_new_series(note:, interval_count: 1, interval_unit: "day")

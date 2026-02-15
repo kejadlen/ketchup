@@ -69,7 +69,7 @@ namespace :snapshots do
   desc "Compare current screenshots against baseline from latest release"
   task diff: [:capture, *css_targets] do
     require "erb"
-    require "json"
+    require "ketchup/snapshots"
 
     base_dir = Pathname(cache_dir)
     baseline_dir = base_dir / "baseline"
@@ -89,15 +89,16 @@ namespace :snapshots do
       puts "No baseline found — showing current screenshots only"
     end
 
-    manifest = current_dir / "manifest.json"
-    manifest_entries = manifest.exist? ? JSON.parse(manifest.read) : []
-    order = manifest_entries.map { |e| e["name"] }
-    paths = manifest_entries.each_with_object({}) { |e, h| h[e["name"]] = e["path"] }
+    current_entries = Ketchup::Snapshots::Entry.read_manifest(current_dir)
+    baseline_entries = Ketchup::Snapshots::Entry.read_manifest(baseline_dir)
+    order = current_entries.map(&:name)
+    by_name = (baseline_entries + current_entries).each_with_object({}) { |e, h| h[e.name] = e }
     baseline_images = baseline_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     current_images = current_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     all_names = order | current_images | baseline_images
 
     snapshots = all_names.map do |name|
+      entry = by_name.fetch(name)
       has_baseline = baseline_images.include?(name)
       has_current = current_images.include?(name)
 
@@ -107,7 +108,8 @@ namespace :snapshots do
 
       {
         name: name,
-        path: paths[name],
+        path: entry.path,
+        selector: entry.selector,
         status: status,
         baseline: has_baseline ? "baseline/#{name}.png" : nil,
         current: has_current ? "current/#{name}.png" : nil,
@@ -128,24 +130,24 @@ namespace :snapshots do
   desc "Generate gallery HTML from images in a directory"
   task :gallery, [:images_dir, :output_path] do |_t, args|
     require "erb"
-    require "json"
+    require "ketchup/snapshots"
 
     images_dir = Pathname(args.fetch(:images_dir) { File.join(cache_dir, "current") })
     output_path = Pathname(args.fetch(:output_path) { File.join(cache_dir, "gallery.html") })
 
     css_sources.each_key { |src| cp src, output_path.dirname.to_s }
 
-    manifest = images_dir / "manifest.json"
-    manifest_entries = manifest.exist? ? JSON.parse(manifest.read) : []
-    order = manifest_entries.map { |e| e["name"] }
-    paths = manifest_entries.each_with_object({}) { |e, h| h[e["name"]] = e["path"] }
+    entries = Ketchup::Snapshots::Entry.read_manifest(images_dir)
+    order = entries.map(&:name)
+    by_name = entries.each_with_object({}) { |e, h| h[e.name] = e }
     all_pngs = images_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     names = order | all_pngs
 
     title = "Ketchup Snapshots"
     images_rel = images_dir.relative_path_from(output_path.dirname)
     images = names.map do |name|
-      { name: name, path: paths[name], filename: (images_rel / "#{name}.png").to_s }
+      entry = by_name.fetch(name)
+      { name: name, path: entry.path, selector: entry.selector, filename: (images_rel / "#{name}.png").to_s }
     end
 
     template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read

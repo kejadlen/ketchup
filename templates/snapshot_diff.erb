@@ -13,15 +13,15 @@
   <div class="snapshot">
     <h2>
       <%= snap[:name] %>
-      <% if snap[:path] -%>
-      <code><%= snap[:path] %></code>
-      <% end -%>
       <% if snap[:status] == :new %>
       <span class="label new">new</span>
       <% elsif snap[:status] == :removed %>
       <span class="label removed">removed</span>
       <% end %>
     </h2>
+    <% if snap[:path] -%>
+    <code class="path"><%= snap[:path] %><%= " #{snap[:selector]}" if snap[:selector] %></code>
+    <% end -%>
     <div class="pair">
       <div class="side">
         <h3>Baseline</h3>
