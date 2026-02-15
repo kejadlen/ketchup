@@ -90,7 +90,9 @@ namespace :snapshots do
     end
 
     manifest = current_dir / "manifest.json"
-    order = manifest.exist? ? JSON.parse(manifest.read).map { |e| e["name"] } : []
+    manifest_entries = manifest.exist? ? JSON.parse(manifest.read) : []
+    order = manifest_entries.map { |e| e["name"] }
+    paths = manifest_entries.each_with_object({}) { |e, h| h[e["name"]] = e["path"] }
     baseline_images = baseline_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     current_images = current_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     all_names = order | current_images | baseline_images
@@ -105,6 +107,7 @@ namespace :snapshots do
 
       {
         name: name,
+        path: paths[name],
         status: status,
         baseline: has_baseline ? "baseline/#{name}.png" : nil,
         current: has_current ? "current/#{name}.png" : nil,
@@ -133,14 +136,16 @@ namespace :snapshots do
     css_sources.each_key { |src| cp src, output_path.dirname.to_s }
 
     manifest = images_dir / "manifest.json"
-    order = manifest.exist? ? JSON.parse(manifest.read).map { |e| e["name"] } : []
+    manifest_entries = manifest.exist? ? JSON.parse(manifest.read) : []
+    order = manifest_entries.map { |e| e["name"] }
+    paths = manifest_entries.each_with_object({}) { |e, h| h[e["name"]] = e["path"] }
     all_pngs = images_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     names = order | all_pngs
 
     title = "Ketchup Snapshots"
     images_rel = images_dir.relative_path_from(output_path.dirname)
     images = names.map do |name|
-      { name: name, filename: (images_rel / "#{name}.png").to_s }
+      { name: name, path: paths[name], filename: (images_rel / "#{name}.png").to_s }
     end
 
     template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read

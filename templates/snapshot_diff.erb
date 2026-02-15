@@ -13,6 +13,9 @@
   <div class="snapshot">
     <h2>
       <%= snap[:name] %>
+      <% if snap[:path] -%>
+      <code><%= snap[:path] %></code>
+      <% end -%>
       <% if snap[:status] == :new %>
       <span class="label new">new</span>
       <% elsif snap[:status] == :removed %>

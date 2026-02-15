@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require "logger"
+require "uri"
 require "pathname"
 
 require "ferrum"
@@ -19,7 +20,6 @@ module Ketchup
         @output_dir = Pathname(output_dir)
         @logger = logger
         @server = server || method(:default_server)
-        @names = []
       end
 
       def call
@@ -43,8 +43,10 @@ module Ketchup
       private
 
       def run_capture
+        entries = []
+
         # 1. Dashboard — populated overdue + upcoming columns
-        snap("dashboard") do
+        entries << snap("dashboard") do
           goto @base
           wait_for(".home")
         end
@@ -54,7 +56,7 @@ module Ketchup
           id: Task.exclude(completed_at: nil).select(:series_id)
         ) || Series.first
 
-        snap("series-detail") do
+        entries << snap("series-detail") do
           goto "#{@base}/series/#{series_with_history.id}"
           wait_for("#series-note-detail")
         end
@@ -67,15 +69,14 @@ module Ketchup
           interval_count: 2,
           interval_unit: "week"
         )
-        snap("new-series-editing", selector: ".column-aside")
+        entries << snap("new-series-editing", selector: ".column-aside")
 
         # 4. Complete a task, snap the resulting detail page
         goto @base
         wait_for(".complete-btn").click
         wait_for(".task-history")
-        snap("after-complete")
+        entries << snap("after-complete")
 
-        entries = @names.map { |name| { name: name } }
         (@output_dir / "manifest.json").write(JSON.pretty_generate(entries))
       end
 
@@ -135,14 +136,15 @@ module Ketchup
       def snap(name, selector: nil)
         yield if block_given?
 
-        path = @output_dir / "#{name}.png"
+        file = @output_dir / "#{name}.png"
         if selector
-          @browser.screenshot(path: path.to_s, selector: selector)
+          @browser.screenshot(path: file.to_s, selector: selector)
         else
-          @browser.screenshot(path: path.to_s)
+          @browser.screenshot(path: file.to_s)
         end
-        @names << name
+        url_path = URI.parse(@browser.current_url).path
         @logger.info(name)
+        { name: name, path: url_path }
       end
 
       def fill_new_series(note:, interval_count: 1, interval_unit: "day")
