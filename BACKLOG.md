@@ -21,3 +21,4 @@
 - Add snapshots of more states to check (adding notes, etc.)
 - Scope some of the snapshots down to more specific selectors
 - Cuprite (Capybara) instead of Ferrum?
+- Make snapshots embiggen images on click
