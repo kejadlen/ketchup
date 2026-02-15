@@ -170,6 +170,16 @@ namespace :snapshots do
     Rake::Task["snapshots:diff"].invoke
     system("open", File.join(Snapshots.cache_dir, "diff.html"))
   end
+
+  desc "Generate gallery HTML from images in a directory"
+  task :gallery, [:images_dir, :output_path] do |_t, args|
+    require "ketchup/snapshots"
+
+    images_dir = args.fetch(:images_dir)
+    output_path = args.fetch(:output_path)
+    Snapshots.generate_gallery_html(images_dir: images_dir, output_path: output_path)
+    puts output_path
+  end
 end
 
 task default: %i[ test binstubs ]
