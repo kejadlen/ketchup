@@ -9,6 +9,13 @@ Config = Data.define(:database_url, :sentry, :default_user) do
     end
   end
 
+  def to_s
+    parts = ["database=#{database_url}"]
+    parts << "sentry=#{sentry.env || "on"}" if sentry
+    parts << "default_user=#{default_user.login}" if default_user
+    "Config(#{parts.join(", ")})"
+  end
+
   def self.from_env(env = ENV)
     sentry_dsn = env["SENTRY_DSN"]
     default_user = env["DEFAULT_USER"]
