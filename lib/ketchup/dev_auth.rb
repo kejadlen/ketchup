@@ -3,10 +3,9 @@
 module Ketchup
   class DevAuth
     def initialize(app, default_user)
-      login, name = default_user.split(":", 2)
       @app = app
-      @login = login
-      @name = name || login
+      @login = default_user.login
+      @name = default_user.name
     end
 
     def call(env)
