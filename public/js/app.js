@@ -223,6 +223,6 @@ document.addEventListener("alpine:init", () => {
   }
 
   Alpine.data("upcoming", () => ({
-    showEmpty: Alpine.$persist(true),
+    showEmpty: Alpine.$persist(false),
   }))
 })
