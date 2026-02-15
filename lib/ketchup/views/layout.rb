@@ -30,7 +30,21 @@ module Views
             span(class: "user") { @current_user[:name] || @current_user[:login] }
           end
           yield
+          render_footer
         end
+      end
+    end
+
+    private
+
+    def render_footer
+      config = CONFIG
+      parts = []
+      parts << config.change_id if config.change_id
+      parts << config.commit_sha if config.commit_sha
+      parts << config.build_date if config.build_date
+      footer(class: "site-footer") do
+        plain parts.join(" \u00b7 ")
       end
     end
   end

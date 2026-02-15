@@ -25,3 +25,4 @@
 - Fix pages triggering from release
 - Improve the diff page to highlight differences
 - Status endpoint with debug information
+- Ship the gallery in the docker image

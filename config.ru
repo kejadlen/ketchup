@@ -2,6 +2,12 @@
 
 $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 
+unless ENV["COMMIT_SHA"]
+  ENV["COMMIT_SHA"] = `jj log -r @ --no-graph -T 'commit_id.short(7)' 2>/dev/null`.strip
+  ENV["CHANGE_ID"] = `jj log -r @ --no-graph -T 'change_id.short(8)' 2>/dev/null`.strip
+  ENV["BUILD_DATE"] = Time.now.strftime("%Y-%m-%d")
+end
+
 require_relative "lib/ketchup/web"
 
 $stderr.puts CONFIG

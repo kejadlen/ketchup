@@ -37,6 +37,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: short-sha
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - id: change-id
+        run: echo "id=$(git cat-file -p HEAD | grep '^change-id ' | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: docker/metadata-action@v5
         id: meta
         with:
@@ -50,6 +52,10 @@ jobs:
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            COMMIT_SHA=${{ steps.short-sha.outputs.sha }}
+            CHANGE_ID=${{ steps.change-id.outputs.id }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - if: github.ref == 'refs/heads/main' && github.event_name == 'push'

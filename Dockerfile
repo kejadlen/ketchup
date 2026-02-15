@@ -11,6 +11,13 @@ COPY . .
 
 FROM ruby:4.0-slim
 
+ARG COMMIT_SHA
+ARG CHANGE_ID
+ARG BUILD_DATE
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV CHANGE_ID=${CHANGE_ID}
+ENV BUILD_DATE=${BUILD_DATE}
+
 WORKDIR /app
 
 COPY --from=build /usr/local/bundle /usr/local/bundle
