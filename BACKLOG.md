@@ -22,3 +22,5 @@
 - Scope some of the snapshots down to more specific selectors
 - Cuprite (Capybara) instead of Ferrum?
 - Make snapshots embiggen images on click
+- Steep
+- Fix pages triggering from release
