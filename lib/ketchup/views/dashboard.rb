@@ -13,7 +13,7 @@ module Views
 
     def view_template
       render Layout.new(current_user: @current_user) do
-        div(class: "home") do
+        div(class: @series ? "home home--series" : "home") do
           div(class: "column", "x-data": "sortable") do
             div(class: "column-header") do
               h2 { "Overdue" }

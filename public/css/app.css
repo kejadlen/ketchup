@@ -101,6 +101,10 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   .column-aside {
     width: auto;
   }
+
+  .home--series .column-aside {
+    order: -1;
+  }
 }
 
 .column {
