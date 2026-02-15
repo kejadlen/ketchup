@@ -184,8 +184,8 @@ namespace :snapshots do
   task :gallery, [:images_dir, :output_path] do |_t, args|
     require "erb"
 
-    images_dir = args.fetch(:images_dir)
-    output_path = args.fetch(:output_path)
+    images_dir = args.fetch(:images_dir) { File.join(cache_dir, "current") }
+    output_path = args.fetch(:output_path) { File.join(cache_dir, "gallery.html") }
     output_dir = File.dirname(output_path)
 
     css_sources.each_key { |src| cp src, output_dir }
