@@ -7,6 +7,7 @@ app = 'ketchup-t1zvtw'
 primary_region = 'sjc'
 
 [build]
+  image = 'ghcr.io/kejadlen/ketchup:fly.io'
 
 [http_service]
   internal_port = 9292
