@@ -191,8 +191,9 @@ namespace :snapshots do
     css_sources.each_key { |src| cp src, output_dir }
 
     title = "Ketchup Snapshots"
+    images_rel = Pathname.new(images_dir).relative_path_from(Pathname.new(output_dir))
     images = Dir.glob(File.join(images_dir, "*.png")).sort.map do |f|
-      { name: File.basename(f, ".png"), filename: File.basename(f) }
+      { name: File.basename(f, ".png"), filename: File.join(images_rel, File.basename(f)) }
     end
 
     template = File.read(File.expand_path("templates/snapshot_gallery.erb", __dir__))
