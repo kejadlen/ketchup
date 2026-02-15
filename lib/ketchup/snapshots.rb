@@ -9,6 +9,7 @@ require "pathname"
 require "ferrum"
 require "puma"
 require "puma/configuration"
+require "rack/builder"
 
 require_relative "seed"
 require_relative "web"
@@ -47,6 +48,7 @@ module Ketchup
 
         `diff -u #{baseline_file.path} #{current_file.path}`.lines.drop(2).filter_map do |line|
           name = line[1..].chomp
+          next if name.empty?
           case line[0]
           when " " then Comparison.new(name: name, baseline: @baseline.fetch(name), current: @current.fetch(name))
           when "-" then Comparison.new(name: name, baseline: @baseline.fetch(name), current: nil)
@@ -214,7 +216,8 @@ module Ketchup
         require_relative "dev_auth"
 
         app = Rack::Builder.app do
-          use Ketchup::DevAuth, Config::DefaultUser.new(login: "snapshot@example.com", name: "Snapshot User")
+          default_user = Config::DefaultUser.new(login: "snapshot@example.com", name: "Snapshot User")
+          use Ketchup::DevAuth, default_user
           run Web.freeze.app
         end
 

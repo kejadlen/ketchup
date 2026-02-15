@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-Config = Data.define(:database_url, :sentry, :default_user) do
+Config = Data.define(:database_url, :sentry, :default_user)
+
+class Config
   SentryConfig = Data.define(:dsn, :env)
   DefaultUser = Data.define(:login, :name) do
     def self.parse(value)
