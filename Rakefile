@@ -124,7 +124,12 @@ namespace :snapshots do
     launcher.stop
     thread.join
 
-    puts "Screenshots saved to #{output_dir}"
+    if ENV["CI"]
+      require "json"
+      puts({ output_dir: output_dir }.to_json)
+    else
+      puts "Screenshots saved to #{output_dir}"
+    end
   end
 
   desc "Compare current screenshots against baseline from latest release"
