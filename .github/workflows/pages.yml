@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to deploy
-        required: true
+        description: Release tag to deploy (defaults to latest release)
+        required: false
 
 permissions:
   contents: read
@@ -32,8 +32,12 @@ jobs:
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          tag="${{ inputs.tag || github.event.release.tag_name }}"
+          if [ -z "$tag" ]; then
+            tag="$(gh release view --json tagName -q .tagName)"
+          fi
           mkdir -p gallery
-          gh release download "${{ inputs.tag || github.event.release.tag_name }}" --pattern "snapshots.tar.gz" --output snapshots.tar.gz
+          gh release download "$tag" --pattern "snapshots.tar.gz" --output snapshots.tar.gz
           tar xzf snapshots.tar.gz -C gallery
           bundle exec rake "snapshots:gallery[gallery,gallery/index.html]"
       - uses: actions/upload-pages-artifact@v3
