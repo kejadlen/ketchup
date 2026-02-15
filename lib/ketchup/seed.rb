@@ -24,14 +24,14 @@ module Ketchup
         due_date: Date.today - 4,
         history: []
       },
-      # Overdue — low urgency (long interval, few days past)
+      # Overdue — low urgency (long interval, many days past)
       {
         note: "Review finances",
         interval_unit: "month",
         interval_count: 1,
-        due_date: Date.today - 3,
+        due_date: Date.today - 7,
         history: [
-          { due_date: Date.today - 33, completed_at: (Date.today - 32).to_time, note: "All good\n\n- Checked statements\n- Updated budget" },
+          { due_date: Date.today - 37, completed_at: (Date.today - 36).to_time, note: "All good\n\n- Checked statements\n- Updated budget" },
         ]
       },
       # Overdue — quarterly, just past due

@@ -138,15 +138,25 @@ module Ketchup
         # 5. Upcoming column
         entries << snap("upcoming", selector: '[x-data="upcoming"]')
 
-        # 6. Upcoming column, calendar view (top)
+        # 6. Upcoming column, calendar view (top visible in viewport)
         wait_for('[x-data="upcoming"] .sort-toggle button').click
         wait_for(".calendar-day-empty")
-        entries << snap("upcoming-calendar", selector: '[x-data="upcoming"]')
+        col = @browser.evaluate('document.querySelector(\'[x-data="upcoming"]\').getBoundingClientRect().toJSON()')
+        viewport_h = @browser.evaluate("window.innerHeight")
+        entries << snap("upcoming-calendar", area: { x: col["x"], y: 0, width: col["width"], height: viewport_h })
 
-        # 7. Upcoming column, calendar view (scrolled to bottom)
-        @browser.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        entries << snap("upcoming-calendar-bottom", selector: '[x-data="upcoming"]')
-        @browser.evaluate("window.scrollTo(0, 0)")
+        # 7. Upcoming column, calendar view (bottom)
+        #
+        # HACK: headless Chrome doesn't render content outside the viewport,
+        # so scrollTo + screenshot produces a blank image. Resizing the
+        # viewport to the full page height forces Chrome to paint everything,
+        # then we clip to the bottom viewport-sized slice of the column.
+        # There's probably a better way — captureBeyondViewport, full-page
+        # screenshot with crop, etc. — but this works for now.
+        page_h = @browser.evaluate("document.body.scrollHeight")
+        @browser.resize(width: 1280, height: page_h)
+        entries << snap("upcoming-calendar-bottom", area: { x: col["x"], y: page_h - viewport_h, width: col["width"], height: viewport_h })
+        @browser.resize(width: 1280, height: 900)
 
         # 8. Sidebar (new series)
         entries << snap("new-series", selector: ".column-aside")
@@ -253,11 +263,13 @@ module Ketchup
         end
       end
 
-      def snap(name, selector: nil)
+      def snap(name, selector: nil, area: nil)
         yield if block_given?
 
         file = @output_dir / "#{name}.png"
-        if selector
+        if area
+          @browser.screenshot(path: file.to_s, area: area)
+        elsif selector
           @browser.screenshot(path: file.to_s, selector: selector)
         else
           @browser.screenshot(path: file.to_s)
