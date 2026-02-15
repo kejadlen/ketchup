@@ -10,7 +10,7 @@ h1 { margin-bottom: var(--space-l); color: #fff; }
 
 .snapshot { margin-bottom: var(--space-xl); }
 .snapshot h2 { margin-bottom: var(--space-s); color: #ccc; }
-.snapshot img { max-width: 100%; border: 1px solid #333; border-radius: 4px; }
+.snapshot img { max-width: 100%; border: 1px solid #333; border-radius: 4px; display: block; margin-inline: auto; }
 
 /* Diff-specific */
 
@@ -21,6 +21,6 @@ h1 { margin-bottom: var(--space-l); color: #fff; }
 .pair { display: flex; gap: var(--space-s); }
 .side { flex: 1; min-width: 0; }
 .side h3 { margin-bottom: var(--space-xs); color: #999; font-size: var(--step--1); text-transform: uppercase; }
-.side img { width: 100%; border: 1px solid #333; border-radius: 4px; }
+.side img { max-width: 100%; border: 1px solid #333; border-radius: 4px; display: block; margin-inline: auto; }
 
 .placeholder { padding: var(--space-xl); text-align: center; color: #666; border: 1px dashed #333; border-radius: 4px; }

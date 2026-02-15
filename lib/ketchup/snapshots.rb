@@ -48,14 +48,19 @@ module Ketchup
           wait_for(".home")
         end
 
-        # Create a series through the UI
+        # New series form filled with markdown, before creating
         goto @base
         wait_for("#new-series-form")
-        fill_new_series(note: "Call Mom", interval_count: 2, interval_unit: "week")
+        fill_new_series(
+          note: "Call Mom\n\nAsk about *weekend plans*\n- Bring **birthday cake**\n- Check flight times",
+          interval_count: 2,
+          interval_unit: "week"
+        )
+        snap("new-series-editing", selector: ".column-aside")
+
+        # Submit and capture series detail
         @browser.at_css("#create-series-btn").click
         wait_for("#series-note-detail")
-
-        # Series detail after creation (redirects to detail page)
         snap("series-detail")
 
         # Create more series for a populated dashboard
@@ -155,7 +160,8 @@ module Ketchup
       def fill_new_series(note:, interval_count: 1, interval_unit: "day")
         textarea = @browser.at_css("#series-note-editor textarea")
         textarea.focus
-        textarea.type(note)
+        textarea.evaluate("this.value = #{note.to_json}")
+        textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
 
         count_input = @browser.at_css("input[name='interval_count']")
         count_input.focus
