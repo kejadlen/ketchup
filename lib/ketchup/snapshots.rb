@@ -84,7 +84,8 @@ module Ketchup
 
         snap("after-complete")
 
-        (@output_dir / "manifest.json").write(JSON.pretty_generate(@names))
+        entries = @names.map { |name| { name: name } }
+        (@output_dir / "manifest.json").write(JSON.pretty_generate(entries))
       end
 
       def default_server(browser)

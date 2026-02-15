@@ -153,7 +153,7 @@ namespace :snapshots do
     end
 
     manifest = current_dir / "manifest.json"
-    order = manifest.exist? ? JSON.parse(manifest.read) : []
+    order = manifest.exist? ? JSON.parse(manifest.read).map { |e| e["name"] } : []
     baseline_images = baseline_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     current_images = current_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     all_names = order | current_images | baseline_images
@@ -196,7 +196,7 @@ namespace :snapshots do
     css_sources.each_key { |src| cp src, output_path.dirname.to_s }
 
     manifest = images_dir / "manifest.json"
-    order = manifest.exist? ? JSON.parse(manifest.read) : []
+    order = manifest.exist? ? JSON.parse(manifest.read).map { |e| e["name"] } : []
     all_pngs = images_dir.glob("*.png").map { |f| f.basename(".png").to_s }
     names = order | all_pngs
 
