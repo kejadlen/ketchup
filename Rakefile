@@ -100,17 +100,14 @@ namespace :snapshots do
   desc "Capture screenshots of the app in key states"
   task :capture do
     ENV["DATABASE_URL"] = ":memory:"
-    require "ketchup/web"
     require "ketchup/snapshots"
 
-    output_dir = File.join(Ketchup::Snapshots.cache_dir, "current")
-    Ketchup::Snapshots::Capture.new(output_dir: output_dir).call
+    capture = Ketchup::Snapshots::Capture.new
+    capture.call
 
     if ENV["CI"]
       require "json"
-      puts({ output_dir: output_dir }.to_json)
-    else
-      puts "Screenshots saved to #{output_dir}"
+      puts({ output_dir: capture.output_dir }.to_json)
     end
   end
 
@@ -155,9 +152,9 @@ namespace :snapshots do
       }
     end
 
-    template = File.read(File.expand_path("snapshot_diff.erb", __dir__))
+    template = File.read(File.expand_path("templates/snapshot_diff.erb", __dir__))
     output_path = File.join(base_dir, "diff.html")
-    File.write(output_path, ERB.new(template, trim_mode: "-").result(binding))
+    File.write(output_path, ERB.new(template, trim_mode: "-").result_with_hash(snapshots: snapshots))
     puts "Diff viewer: #{output_path}"
   end
 
@@ -178,8 +175,8 @@ namespace :snapshots do
       { name: File.basename(f, ".png"), filename: File.basename(f) }
     end
 
-    template = File.read(File.expand_path("snapshot_gallery.erb", __dir__))
-    File.write(output_path, ERB.new(template, trim_mode: "-").result(binding))
+    template = File.read(File.expand_path("templates/snapshot_gallery.erb", __dir__))
+    File.write(output_path, ERB.new(template, trim_mode: "-").result_with_hash(title: title, images: images))
     puts output_path
   end
 end

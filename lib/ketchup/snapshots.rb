@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "logger"
+
+require "ferrum"
+require "puma"
+require "puma/configuration"
+
+require_relative "web"
 
 module Ketchup
   module Snapshots
@@ -10,12 +17,11 @@ module Ketchup
     end
 
     class Capture
-      def initialize(output_dir:)
-        require "ferrum"
-        require "puma"
-        require "puma/configuration"
+      attr_reader :output_dir
 
-        @output_dir = output_dir
+      def initialize(logger: Logger.new($stderr))
+        @output_dir = File.join(Snapshots.cache_dir, "current")
+        @logger = logger
       end
 
       def call
@@ -30,10 +36,17 @@ module Ketchup
         end
 
         launcher = Puma::Launcher.new(config)
+        saved_out, saved_err = $stdout.dup, $stderr.dup
+        $stdout.reopen(File::NULL)
+        $stderr.reopen(File::NULL)
         thread = Thread.new { launcher.run }
-        sleep 1 until launcher.connected_ports.any?
+        sleep 0.1 until launcher.connected_ports.any?
+        $stdout.reopen(saved_out)
+        $stderr.reopen(saved_err)
 
-        @base = "http://127.0.0.1:#{launcher.connected_ports.first}"
+        port = launcher.connected_ports.first
+        @base = "http://127.0.0.1:#{port}"
+        @logger.info("Server listening on port #{port}")
         user = User.find_or_create(login: "snapshot@example.com") { |u| u.name = "Snapshot User" }
 
         @browser = Ferrum::Browser.new(
@@ -48,13 +61,15 @@ module Ketchup
         # Empty dashboard
         snap("empty-dashboard") do
           goto @base
+          wait_for(".home")
         end
 
         # Create a series through the UI
         goto @base
+        wait_for("#new-series-form")
         fill_new_series(note: "Call Mom", interval_count: 2, interval_unit: "week")
         @browser.at_css("#create-series-btn").click
-        sleep 0.3
+        wait_for("#series-note-detail")
 
         # Series detail after creation (redirects to detail page)
         snap("series-detail")
@@ -67,37 +82,54 @@ module Ketchup
           { note: "Dentist appointment", interval_count: 1, interval_unit: "quarter" },
         ].each do |series|
           goto @base
+          wait_for("#new-series-form")
           fill_new_series(**series)
           @browser.at_css("#create-series-btn").click
-          sleep 0.3
+          wait_for("#series-note-detail")
         end
 
         snap("dashboard") do
           goto @base
+          wait_for(".home")
         end
 
         # Complete a task
         goto @base
-        @browser.at_css(".complete-btn").click
-        sleep 0.3
+        wait_for(".complete-btn").click
+        wait_for(".task-history")
 
         snap("after-complete")
       ensure
         @browser&.quit
-        launcher&.stop
-        thread&.join
+        if launcher
+          $stdout.reopen(File::NULL)
+          $stderr.reopen(File::NULL)
+          launcher.stop
+          thread&.join
+          $stdout.reopen(saved_out)
+          $stderr.reopen(saved_err)
+        end
       end
 
       private
 
       def goto(url)
         @browser.goto(url)
-        sleep 0.3
+      end
+
+      def wait_for(selector, timeout: 5)
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        loop do
+          node = @browser.at_css(selector)
+          return node if node
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+          raise Ferrum::TimeoutError, "waiting for #{selector}" if elapsed > timeout
+          sleep 0.05
+        end
       end
 
       def snap(name, selector: nil)
         yield if block_given?
-        sleep 0.3
 
         path = File.join(@output_dir, "#{name}.png")
         if selector
@@ -105,6 +137,7 @@ module Ketchup
         else
           @browser.screenshot(path: path)
         end
+        @logger.info(name)
       end
 
       def fill_new_series(note:, interval_count: 1, interval_unit: "day")
