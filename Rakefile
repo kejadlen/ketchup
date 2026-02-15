@@ -102,26 +102,9 @@ namespace :snapshots do
     ENV["DATABASE_URL"] = ":memory:"
     require "ketchup/web"
     require "ketchup/snapshots"
-    require "puma"
-    require "puma/configuration"
 
     output_dir = File.join(Ketchup::Snapshots.cache_dir, "current")
-
-    config = Puma::Configuration.new do |c|
-      c.app Web.freeze.app
-      c.bind "tcp://127.0.0.1:0"
-      c.log_requests false
-      c.quiet
-    end
-
-    launcher = Puma::Launcher.new(config)
-    thread = Thread.new { launcher.run }
-    sleep 1 until launcher.connected_ports.any?
-
-    port = launcher.connected_ports.first
-    Ketchup::Snapshots::Capture.new(output_dir: output_dir, port: port).call
-    launcher.stop
-    thread.join
+    Ketchup::Snapshots::Capture.new(output_dir: output_dir).call
 
     if ENV["CI"]
       require "json"
@@ -132,8 +115,8 @@ namespace :snapshots do
   end
 
   desc "Compare current screenshots against baseline from latest release"
-  task :diff do
-    require "ketchup/snapshots"
+  task diff: :capture do
+    require "erb"
 
     base_dir = Ketchup::Snapshots.cache_dir
     baseline_dir = File.join(base_dir, "baseline")
@@ -153,30 +136,50 @@ namespace :snapshots do
       puts "No baseline found — showing current screenshots only"
     end
 
-    Rake::Task["snapshots:capture"].invoke
+    baseline_images = Dir.glob(File.join(baseline_dir, "*.png")).map { |f| File.basename(f, ".png") }.sort
+    current_images = Dir.glob(File.join(current_dir, "*.png")).map { |f| File.basename(f, ".png") }.sort
 
+    snapshots = (baseline_images | current_images).sort.map do |name|
+      has_baseline = baseline_images.include?(name)
+      has_current = current_images.include?(name)
+
+      status = if !has_baseline then :new
+               elsif !has_current then :removed
+               end
+
+      {
+        name: name,
+        status: status,
+        baseline: has_baseline ? File.join("baseline", "#{name}.png") : nil,
+        current: has_current ? File.join("current", "#{name}.png") : nil,
+      }
+    end
+
+    template = File.read(File.expand_path("snapshot_diff.erb", __dir__))
     output_path = File.join(base_dir, "diff.html")
-    Ketchup::Snapshots.generate_diff_html(
-      baseline_dir: baseline_dir,
-      current_dir: current_dir,
-      output_path: output_path
-    )
+    File.write(output_path, ERB.new(template, trim_mode: "-").result(binding))
     puts "Diff viewer: #{output_path}"
   end
 
   desc "Capture, diff, and open the viewer"
-  task :review do
-    Rake::Task["snapshots:diff"].invoke
+  task review: :diff do
     system("open", File.join(Ketchup::Snapshots.cache_dir, "diff.html"))
   end
 
   desc "Generate gallery HTML from images in a directory"
   task :gallery, [:images_dir, :output_path] do |_t, args|
-    require "ketchup/snapshots"
+    require "erb"
 
     images_dir = args.fetch(:images_dir)
     output_path = args.fetch(:output_path)
-    Ketchup::Snapshots.generate_gallery_html(images_dir: images_dir, output_path: output_path)
+
+    title = "Ketchup Snapshots"
+    images = Dir.glob(File.join(images_dir, "*.png")).sort.map do |f|
+      { name: File.basename(f, ".png"), filename: File.basename(f) }
+    end
+
+    template = File.read(File.expand_path("snapshot_gallery.erb", __dir__))
+    File.write(output_path, ERB.new(template, trim_mode: "-").result(binding))
     puts output_path
   end
 end
