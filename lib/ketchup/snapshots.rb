@@ -89,28 +89,69 @@ module Ketchup
 
       private
 
+      # Snapshots, grouped by flow. Indentation means "then, without
+      # navigating away." Each leaf is one screenshot.
+      #
+      # Dashboard
+      #   full page
+      #   complete a task, return to dashboard, full page
+      #   overdue column only
+      #   switch overdue sort to date, overdue column only
+      #   upcoming column only
+      #   toggle calendar view, upcoming column only
+      #   scroll to bottom of calendar, upcoming column only
+      #
+      # New series
+      #   empty sidebar form
+      #   fill in note (markdown) and interval, sidebar
+      #   submit, sidebar after redirect to series detail
+      #   click Edit, sidebar with note in editing mode
+      #
+      # Existing series (one with noted + un-noted completed tasks)
+      #   series detail with task history
+      #   TODO: hover over un-noted task to reveal "add a note...", sidebar
+      #   click "add a note", type markdown, sidebar
+      #   focus an existing note's editor, sidebar
       def run_capture
         entries = []
 
-        # 1. Dashboard — populated overdue + upcoming columns
+        # 1. Whole dashboard
         entries << snap("dashboard") do
           goto @base
           wait_for(".home")
         end
 
-        # 2. Series detail — pick one with completed history
-        series_with_history = Series.first(
-          id: Task.exclude(completed_at: nil).select(:series_id)
-        ) || Series.first
-
-        entries << snap("series-detail") do
-          goto "#{@base}/series/#{series_with_history.id}"
-          wait_for("#series-note-detail")
-        end
-
-        # 3. New series form with markdown, snap sidebar only
+        # 2. Whole dashboard after completing a task
+        wait_for(".complete-btn").click
+        wait_for("#series-note-detail")
         goto @base
-        wait_for("#new-series-form")
+        wait_for(".home")
+        entries << snap("dashboard-after-complete")
+
+        # 3. Overdue column
+        entries << snap("overdue", selector: '[x-data="sortable"]')
+
+        # 4. Overdue column, sorted by date
+        wait_for('[x-data="sortable"] .sort-toggle button').click
+        entries << snap("overdue-by-date", selector: '[x-data="sortable"]')
+
+        # 5. Upcoming column
+        entries << snap("upcoming", selector: '[x-data="upcoming"]')
+
+        # 6. Upcoming column, calendar view (top)
+        wait_for('[x-data="upcoming"] .sort-toggle button').click
+        wait_for(".calendar-day-empty")
+        entries << snap("upcoming-calendar", selector: '[x-data="upcoming"]')
+
+        # 7. Upcoming column, calendar view (scrolled to bottom)
+        @browser.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        entries << snap("upcoming-calendar-bottom", selector: '[x-data="upcoming"]')
+        @browser.evaluate("window.scrollTo(0, 0)")
+
+        # 8. Sidebar (new series)
+        entries << snap("new-series", selector: ".column-aside")
+
+        # 9. New series form filled in (with markdown), not created yet
         fill_new_series(
           note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
           interval_count: 2,
@@ -118,11 +159,43 @@ module Ketchup
         )
         entries << snap("new-series-editing", selector: ".column-aside")
 
-        # 4. Complete a task, snap the resulting detail page
-        goto @base
-        wait_for(".complete-btn").click
-        wait_for(".task-history")
-        entries << snap("after-complete")
+        # 10. Series detail, post-creation
+        wait_for("#create-series-btn").click
+        wait_for("#series-note-detail")
+        entries << snap("series-created", selector: ".column-aside")
+
+        # 11. Series detail, editing note, post-creation
+        wait_for("button.aside-heading-action").click
+        entries << snap("series-editing", selector: ".column-aside")
+
+        # 12. Series detail of a series with multiple finished tasks
+        noted_ids = Task.exclude(completed_at: nil).where(Sequel.like(:note, "%*%")).select(:series_id)
+        unnoted_ids = Task.exclude(completed_at: nil).where(note: nil).select(:series_id)
+        series_with_history = Series.first(
+          Sequel.&({ id: noted_ids }, { id: unnoted_ids })
+        ) || Series.first
+        entries << snap("series-detail") do
+          goto "#{@base}/series/#{series_with_history.id}"
+          wait_for(".task-history")
+        end
+
+        # TODO: hover snapshot — CSS :hover doesn't trigger in headless Chrome
+        #   via mouse.move; need another approach to reveal ".task-history-add-note"
+
+        # 13. Task: Add task note (with markdown)
+        @browser.evaluate(<<~JS)
+          document.querySelector('.task-history-item:has(.task-history-note-editor[data-value=""]) .task-history-add-note').click()
+        JS
+        textarea = wait_for('.task-history-note-editor[data-value=""] textarea')
+        note_text = "Checked *both* lines\n- Front needs **new filter**\n- Back is fine"
+        textarea.evaluate("this.value = #{note_text.to_json}")
+        textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
+        entries << snap("task-add-note", selector: ".column-aside")
+
+        # 14. Task: Edit task note (with markdown)
+        existing = @browser.at_css('.task-history-note-editor:not([data-value=""]) textarea')
+        existing.focus
+        entries << snap("task-edit-note", selector: ".column-aside")
 
         (@output_dir / "manifest.json").write(JSON.pretty_generate(entries.map(&:to_h)))
       end
