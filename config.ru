@@ -16,4 +16,9 @@ if CONFIG.sentry
   use Sentry::Rack::CaptureExceptions
 end
 
+if CONFIG.default_user
+  require_relative "lib/ketchup/dev_auth"
+  use Ketchup::DevAuth, CONFIG.default_user
+end
+
 run Web.freeze.app

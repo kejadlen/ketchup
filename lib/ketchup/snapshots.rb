@@ -211,8 +211,15 @@ module Ketchup
       end
 
       def default_server(browser)
+        require_relative "dev_auth"
+
+        app = Rack::Builder.app do
+          use Ketchup::DevAuth, "snapshot@example.com:Snapshot User"
+          run Web.freeze.app
+        end
+
         config = Puma::Configuration.new do |c|
-          c.app Web.freeze.app
+          c.app app
           c.bind "tcp://127.0.0.1:0"
           c.log_requests false
           c.quiet
@@ -230,11 +237,6 @@ module Ketchup
         url = "http://127.0.0.1:#{launcher.connected_ports.first}"
         user = User.find_or_create(login: "snapshot@example.com") { |u| u.name = "Snapshot User" }
         Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
-
-        browser.headers.set(
-          "Tailscale-User-Login" => user.login,
-          "Tailscale-User-Name" => user.name
-        )
 
         yield url
       ensure
