@@ -66,6 +66,10 @@ module Snapshots
       headless: true,
       window_size: [1280, 900]
     )
+    browser.headers.set(
+      "Tailscale-User-Login" => user.login,
+      "Tailscale-User-Name" => user.name
+    )
 
     snapshots.each do |snap|
       browser.goto(snap[:url])
