@@ -119,12 +119,12 @@ namespace :snapshots do
     ENV["DATABASE_URL"] = ":memory:"
     require "ketchup/snapshots"
 
-    capture = Ketchup::Snapshots::Capture.new
-    capture.call
+    output_dir = File.join(cache_dir, "current")
+    Ketchup::Snapshots::Capture.new(output_dir: output_dir).call
 
     if ENV["CI"]
       require "json"
-      puts({ output_dir: capture.output_dir }.to_json)
+      puts({ output_dir: output_dir }.to_json)
     end
   end
 
@@ -132,7 +132,7 @@ namespace :snapshots do
   task diff: [:capture, *css_targets] do
     require "erb"
 
-    base_dir = Ketchup::Snapshots.cache_dir
+    base_dir = cache_dir
     baseline_dir = File.join(base_dir, "baseline")
     current_dir = File.join(base_dir, "current")
 
@@ -177,7 +177,7 @@ namespace :snapshots do
 
   desc "Capture, diff, and open the viewer"
   task review: :diff do
-    system("open", File.join(Ketchup::Snapshots.cache_dir, "diff.html"))
+    system("open", File.join(cache_dir, "diff.html"))
   end
 
   desc "Generate gallery HTML from images in a directory"

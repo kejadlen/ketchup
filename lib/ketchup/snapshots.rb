@@ -11,16 +11,9 @@ require_relative "web"
 
 module Ketchup
   module Snapshots
-    def self.cache_dir
-      base = ENV.fetch("XDG_CACHE_HOME", File.expand_path("~/.cache"))
-      File.join(base, "ketchup", "snapshots")
-    end
-
     class Capture
-      attr_reader :output_dir
-
-      def initialize(logger: Logger.new($stderr))
-        @output_dir = File.join(Snapshots.cache_dir, "current")
+      def initialize(output_dir:, logger: Logger.new($stderr))
+        @output_dir = output_dir
         @logger = logger
       end
 
