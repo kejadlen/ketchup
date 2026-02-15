@@ -97,6 +97,23 @@ task :seed do
 end
 
 namespace :snapshots do
+  cache_dir = File.join(ENV.fetch("XDG_CACHE_HOME", File.expand_path("~/.cache")), "ketchup", "snapshots")
+  css_sources = {
+    "public/css/reset.css" => "reset.css",
+    "public/css/utopia.css" => "utopia.css",
+    "templates/snapshots.css" => "snapshots.css",
+  }
+
+  directory cache_dir
+
+  css_targets = css_sources.map do |src, basename|
+    target = File.join(cache_dir, basename)
+    file target => [cache_dir, src] do
+      cp src, target
+    end
+    target
+  end
+
   desc "Capture screenshots of the app in key states"
   task :capture do
     ENV["DATABASE_URL"] = ":memory:"
@@ -112,7 +129,7 @@ namespace :snapshots do
   end
 
   desc "Compare current screenshots against baseline from latest release"
-  task diff: :capture do
+  task diff: [:capture, *css_targets] do
     require "erb"
 
     base_dir = Ketchup::Snapshots.cache_dir
@@ -169,6 +186,9 @@ namespace :snapshots do
 
     images_dir = args.fetch(:images_dir)
     output_path = args.fetch(:output_path)
+    output_dir = File.dirname(output_path)
+
+    css_sources.each_key { |src| cp src, output_dir }
 
     title = "Ketchup Snapshots"
     images = Dir.glob(File.join(images_dir, "*.png")).sort.map do |f|

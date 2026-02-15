@@ -17,3 +17,4 @@
 - Shared tasks — visible to all users, anyone can mark done
 - CLI interface
 - Don't re-download baseline for snapshots unnecessarily
+- Dark mode
