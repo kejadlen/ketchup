@@ -101,12 +101,11 @@ namespace :snapshots do
   task :capture do
     ENV["DATABASE_URL"] = ":memory:"
     require "ketchup/web"
-    require "ketchup/seed"
     require "ketchup/snapshots"
     require "puma"
     require "puma/configuration"
 
-    output_dir = File.join(Snapshots.cache_dir, "current")
+    output_dir = File.join(Ketchup::Snapshots.cache_dir, "current")
 
     config = Puma::Configuration.new do |c|
       c.app Web.freeze.app
@@ -120,7 +119,7 @@ namespace :snapshots do
     sleep 1 until launcher.connected_ports.any?
 
     port = launcher.connected_ports.first
-    Snapshots.capture(output_dir: output_dir, port: port)
+    Ketchup::Snapshots::Capture.new(output_dir: output_dir, port: port).call
     launcher.stop
     thread.join
 
@@ -136,7 +135,7 @@ namespace :snapshots do
   task :diff do
     require "ketchup/snapshots"
 
-    base_dir = Snapshots.cache_dir
+    base_dir = Ketchup::Snapshots.cache_dir
     baseline_dir = File.join(base_dir, "baseline")
     current_dir = File.join(base_dir, "current")
 
@@ -157,7 +156,7 @@ namespace :snapshots do
     Rake::Task["snapshots:capture"].invoke
 
     output_path = File.join(base_dir, "diff.html")
-    Snapshots.generate_diff_html(
+    Ketchup::Snapshots.generate_diff_html(
       baseline_dir: baseline_dir,
       current_dir: current_dir,
       output_path: output_path
@@ -168,7 +167,7 @@ namespace :snapshots do
   desc "Capture, diff, and open the viewer"
   task :review do
     Rake::Task["snapshots:diff"].invoke
-    system("open", File.join(Snapshots.cache_dir, "diff.html"))
+    system("open", File.join(Ketchup::Snapshots.cache_dir, "diff.html"))
   end
 
   desc "Generate gallery HTML from images in a directory"
@@ -177,7 +176,7 @@ namespace :snapshots do
 
     images_dir = args.fetch(:images_dir)
     output_path = args.fetch(:output_path)
-    Snapshots.generate_gallery_html(images_dir: images_dir, output_path: output_path)
+    Ketchup::Snapshots.generate_gallery_html(images_dir: images_dir, output_path: output_path)
     puts output_path
   end
 end
