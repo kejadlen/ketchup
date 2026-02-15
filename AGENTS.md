@@ -11,10 +11,13 @@ lib/
     db.rb            # Sequel connection + auto-migration
     models.rb        # User, Series, Task models and associations
     seed.rb          # Seed.call(user:, series:) — creates series, tasks, and history
+    snapshots.rb     # Ferrum-driven headless screenshot capture
     web.rb           # Roda app (routes, current_user from Tailscale headers)
     views/
       layout.rb      # Phlex base layout (head, nav, body wrapper)
       dashboard.rb   # Main view: overdue, upcoming, series detail/new sidebar
+      series/
+        new.rb       # Standalone new-series form page
   sequel/
     plugins/
       sole.rb        # Custom Sequel plugin: Dataset#sole
@@ -25,6 +28,7 @@ test/
   test_web.rb        # Minitest + Rack::Test integration tests
   test_sole.rb       # Sole plugin tests
   test_seed.rb       # Seed module tests
+templates/           # ERB templates for snapshot diff and gallery viewers
 public/
   js/app.js          # Alpine components, OverType editor setup
   css/               # Static stylesheets
@@ -34,13 +38,38 @@ config.ru            # Rack entrypoint (Sentry + Web.app)
 ## Running
 
 ```sh
-rake           # runs tests + binstubs (default)
-rake test      # tests only (use this to run tests, not ruby directly)
-rake dev       # starts dev server with Tailscale serve + auto-restart via entr
-rake seed      # seeds database with sample series and tasks
+rake                    # runs tests + binstubs (default)
+rake test               # tests only (use this to run tests, not ruby directly)
+rake dev                # starts dev server with Tailscale serve + auto-restart via entr
+rake seed               # seeds database with sample series and tasks
+rake snapshots:capture  # headless Chrome screenshots of key app states
+rake snapshots:diff     # compare current screenshots against latest release baseline
+rake snapshots:review   # capture, diff, and open in browser
+rake snapshots:gallery  # generate an HTML gallery of screenshots
 ```
 
+Binstubs are installed to `.direnv/`, which direnv adds to `$PATH`. Run `rake` directly — `bundle exec` is unnecessary.
+
 Tests set `DATABASE_URL=:memory:` so they never touch the real database.
+
+## Snapshots
+
+Headless Chrome screenshots for visual review after UI changes. `Capture#run_capture` in `lib/ketchup/snapshots.rb` scripts a browser session against an in-memory database — no real data is touched.
+
+Run `rake snapshots:review` to capture screenshots and open a side-by-side diff against the baseline from the latest GitHub release. CI uploads new baselines on each push to main.
+
+To add a snapshot, add a `snap("name")` call in `run_capture`. Pass a block for navigation before the screenshot, or `selector:` to capture a single element instead of the full page:
+
+```ruby
+snap("my-state") do
+  goto @base
+  wait_for(".some-element")
+end
+
+snap("just-sidebar", selector: ".column-aside")
+```
+
+Output goes to `~/.cache/ketchup/snapshots/` (or `$XDG_CACHE_HOME`). Templates for the diff and gallery viewers live in `templates/`.
 
 ## Conventions
 
