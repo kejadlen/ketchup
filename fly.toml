@@ -21,3 +21,7 @@ primary_region = 'sjc'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 256
+
+[env]
+  DATABASE_URL = ':memory:'
+  SENTRY_ENV = 'fly.io'
