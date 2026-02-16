@@ -29,7 +29,7 @@ class Config
       sentry: sentry_dsn ? SentryConfig.new(dsn: sentry_dsn, env: env["SENTRY_ENV"]) : nil,
       default_user: default_user ? DefaultUser.parse(default_user) : nil,
       commit_sha: env["COMMIT_SHA"],
-      change_id: env["CHANGE_ID"],
+      change_id: env["CHANGE_ID"]&.slice(0, 8),
       build_date: env["BUILD_DATE"]
     )
   end
