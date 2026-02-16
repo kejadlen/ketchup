@@ -174,7 +174,7 @@ module Views
     end
 
     def new_series_sidebar
-      div(class: "column column-aside") do
+      div(class: "column column-aside column-aside--new") do
         div(class: "column-header") do
           h2 { "New Series" }
           button(type: "submit", form: "new-series-form", id: "create-series-btn", class: "aside-heading-action", disabled: true) { "Create" }

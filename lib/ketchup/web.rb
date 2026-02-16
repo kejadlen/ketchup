@@ -5,6 +5,7 @@ require "roda"
 
 require_relative "models"
 require_relative "views/dashboard"
+require_relative "views/series/new"
 
 class Web < Roda
   plugin :halt
@@ -34,6 +35,10 @@ class Web < Roda
     end
 
     r.on "series" do
+      r.get "new" do
+        Views::Series::New.new(current_user: @user).call
+      end
+
       r.is do
         r.post do
           note = r.params["note"].to_s.strip
