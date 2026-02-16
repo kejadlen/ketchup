@@ -1,6 +1,8 @@
 app = 'ketchup-preview'
 primary_region = 'sjc'
 
+[build]
+
 [http_service]
   internal_port = 9292
   force_https = true
