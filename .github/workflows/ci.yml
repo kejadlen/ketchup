@@ -45,7 +45,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}-${{ steps.short-sha.outputs.sha }}
-            type=raw,value=fly.io,enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+            type=raw,value=demo,enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -77,7 +77,7 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: fly.io
+    environment: demo
     concurrency:
       group: fly-deploy
       cancel-in-progress: true

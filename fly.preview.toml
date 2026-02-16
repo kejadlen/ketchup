@@ -1,13 +1,5 @@
-# fly.toml app configuration file generated for ketchup-t1zvtw on 2026-02-15T21:11:33Z
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
-app = 'ketchup-t1zvtw'
+app = 'ketchup-preview'
 primary_region = 'sjc'
-
-[build]
-  image = 'ghcr.io/kejadlen/ketchup:demo'
 
 [http_service]
   internal_port = 9292
@@ -25,5 +17,5 @@ primary_region = 'sjc'
 
 [env]
   DATABASE_URL = ':memory:'
-  SENTRY_ENV = 'demo'
+  SENTRY_ENV = 'preview'
   DEFAULT_USER = 'demo@example.com:Demo User'
