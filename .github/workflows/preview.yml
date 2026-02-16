@@ -25,3 +25,31 @@ jobs:
         with:
           config: fly.preview.toml
           memory: 256
+
+      - name: Update PR description with preview link
+        if: github.event.action != 'closed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          preview_url="${{ steps.deploy.outputs.url }}"
+          if [ -z "$preview_url" ]; then
+            echo "No preview URL available, skipping"
+            exit 0
+          fi
+
+          body=$(gh pr view "${{ github.event.number }}" --json body --jq '.body // ""')
+
+          marker_start="<!-- preview-link -->"
+          marker_end="<!-- /preview-link -->"
+          preview_block=$(printf '%s\n\n---\n\n**Preview:** %s\n%s' "$marker_start" "$preview_url" "$marker_end")
+
+          if echo "$body" | grep -q "$marker_start"; then
+            new_body=$(echo "$body" | awk -v block="$preview_block" \
+              '/<!-- preview-link -->/{skip=1; print block; next}
+               /<!-- \/preview-link -->/{skip=0; next}
+               !skip{print}')
+          else
+            new_body=$(printf '%s\n\n%s' "$body" "$preview_block")
+          fi
+
+          gh pr edit "${{ github.event.number }}" --body "$new_body"
