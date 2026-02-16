@@ -5,6 +5,8 @@ require "phlex"
 require_relative "layout"
 
 module Views
+  INTERVAL_OPTIONS = Series::INTERVAL_UNITS.map { |u| [u, "#{u}(s)"] }.freeze
+
   class Dashboard < Phlex::HTML
     def initialize(current_user:, series: nil)
       @current_user = current_user
@@ -106,11 +108,7 @@ module Views
                 "x-model": "unit",
                 "x-on:change": "save()"
               ) do
-                option(value: "day") { "day(s)" }
-                option(value: "week") { "week(s)" }
-                option(value: "month") { "month(s)" }
-                option(value: "quarter") { "quarter(s)" }
-                option(value: "year") { "year(s)" }
+                INTERVAL_OPTIONS.each { |val, label| option(value: val) { label } }
               end
             end
 
@@ -192,11 +190,7 @@ module Views
                 min: 1, value: 1, required: true
               )
               select(name: "interval_unit", class: "detail-input detail-input-unit", required: true) do
-                option(value: "day", selected: true) { "day(s)" }
-                option(value: "week") { "week(s)" }
-                option(value: "month") { "month(s)" }
-                option(value: "quarter") { "quarter(s)" }
-                option(value: "year") { "year(s)" }
+                INTERVAL_OPTIONS.each_with_index { |(val, label), i| option(value: val, selected: i == 0) { label } }
               end
             end
 

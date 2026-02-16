@@ -30,11 +30,7 @@ module Views
                     min: 1, value: 1, required: true
                   )
                   select(id: "interval_unit", name: "interval_unit", required: true) do
-                    option(value: "day") { "day(s)" }
-                    option(value: "week") { "week(s)" }
-                    option(value: "month") { "month(s)" }
-                    option(value: "quarter") { "quarter(s)" }
-                    option(value: "year") { "year(s)" }
+                    Views::INTERVAL_OPTIONS.each { |val, label| option(value: val) { label } }
                   end
                 end
               end

@@ -25,4 +25,4 @@ COPY --from=build /app /app
 
 EXPOSE 9292
 
-CMD ["bundle", "exec", "rackup", "-o", "0.0.0.0"]
+CMD ["rackup", "-o", "0.0.0.0"]
