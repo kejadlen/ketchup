@@ -7,9 +7,10 @@ on:
     branches: [main]
 
 permissions:
-  actions: write
   contents: write
+  id-token: write
   packages: write
+  pages: write
 
 jobs:
   test:
@@ -24,6 +25,8 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
     steps:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
@@ -72,10 +75,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ steps.meta.outputs.version }}" snapshots.tar.gz
-      - if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run pages.yml --field tag=${{ steps.meta.outputs.version }}
 
   deploy:
     name: Deploy to Fly.io
@@ -92,3 +91,32 @@ jobs:
       - run: flyctl deploy
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  pages:
+    name: Deploy to Pages
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p gallery
+          gh release download "${{ needs.build.outputs.version }}" --pattern "snapshots.tar.gz" --output snapshots.tar.gz
+          tar xzf snapshots.tar.gz -C gallery
+          bundle exec rake "snapshots:gallery[gallery,gallery/index.html]"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: gallery
+      - id: deployment
+        uses: actions/deploy-pages@v4
