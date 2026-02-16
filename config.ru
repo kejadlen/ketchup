@@ -8,7 +8,20 @@ unless ENV["COMMIT_SHA"]
   ENV["BUILD_DATE"] = Time.now.strftime("%Y-%m-%d")
 end
 
-require_relative "lib/ketchup/web"
+require_relative "lib/ketchup/config"
+
+if CONFIG.otel
+  require "opentelemetry/sdk"
+  require "opentelemetry/exporter/otlp"
+  require "opentelemetry/instrumentation/rack"
+
+  OpenTelemetry::SDK.configure do |c|
+    c.service_name = "ketchup"
+    c.use "OpenTelemetry::Instrumentation::Rack"
+  end
+
+  use(*OpenTelemetry::Instrumentation::Rack::Instrumentation.instance.middleware_args)
+end
 
 $stderr.puts CONFIG
 
@@ -29,4 +42,5 @@ if CONFIG.default_user
   use Ketchup::DevAuth, CONFIG.default_user
 end
 
+require_relative "lib/ketchup/web"
 run Web.freeze.app

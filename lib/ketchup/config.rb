@@ -7,6 +7,7 @@ Config = Data.define(
   :database_url, #: String
   :session_secret, #: String
   :sentry, #: SentryConfig?
+  :otel, #: OtelConfig?
   :default_user, #: DefaultUser?
   :commit_sha, #: String?
   :change_id, #: String?
@@ -17,6 +18,10 @@ class Config
   SentryConfig = Data.define(
     :dsn, #: String
     :env, #: String?
+  )
+
+  OtelConfig = Data.define(
+    :endpoint, #: String
   )
 
   DefaultUser = Data.define(
@@ -37,6 +42,7 @@ class Config
   def to_s
     parts = ["database=#{database_url}"]
     parts << "sentry=#{sentry.env || "on"}" if sentry
+    parts << "otel=on" if otel
     parts << "default_user=#{default_user.login}" if default_user
     parts << "commit=#{commit_sha}" if commit_sha
     parts << "change=#{change_id}" if change_id
@@ -47,11 +53,13 @@ class Config
   #: (?Hash[String, String] env) -> Config
   def self.from_env(env = ENV)
     sentry_dsn = env["SENTRY_DSN"]
+    otel_endpoint = env["OTEL_EXPORTER_OTLP_ENDPOINT"]
     default_user = env["DEFAULT_USER"]
     new(
       database_url: env.fetch("DATABASE_URL") { "db/ketchup.db" },
       session_secret: env.fetch("SESSION_SECRET") { SecureRandom.hex(64) },
       sentry: sentry_dsn ? SentryConfig.new(dsn: sentry_dsn, env: env["SENTRY_ENV"]) : nil,
+      otel: otel_endpoint ? OtelConfig.new(endpoint: otel_endpoint) : nil,
       default_user: default_user ? DefaultUser.parse(default_user) : nil,
       commit_sha: env["COMMIT_SHA"],
       change_id: env["CHANGE_ID"]&.slice(0, 8),
@@ -59,3 +67,5 @@ class Config
     )
   end
 end
+
+CONFIG = Config.from_env
