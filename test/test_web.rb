@@ -12,10 +12,10 @@ class TestWeb < Minitest::Test
 
   def app = Web.app
 
-  # TODO Wrap tests in a transaction or something?
   def setup
     DB[:tasks].delete
     DB[:series].delete
+    DB[:users].delete
   end
 
   def test_root_shows_new_series_form
