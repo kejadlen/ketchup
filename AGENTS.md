@@ -2,6 +2,8 @@
 
 Read the README for project context, domain concepts, and design intent.
 
+The [project backlog](https://github.com/users/kejadlen/projects/5/views/1) tracks planned work.
+
 ## Layout
 
 ```
