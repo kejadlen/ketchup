@@ -58,8 +58,9 @@ config.ru            # Rack entrypoint (Sentry + Web.app)
 ## Running
 
 ```sh
-rake                    # runs tests + binstubs (default)
+rake                    # runs tests, type checking, and binstubs (default)
 rake test               # tests only (use this to run tests, not ruby directly)
+rake check              # rbs-inline + steep check
 rake dev                # starts dev server with Tailscale serve + auto-restart via entr
 rake seed               # seeds database with sample series and tasks
 rake snapshots:capture  # headless Chrome screenshots of key app states
@@ -68,7 +69,7 @@ rake snapshots:review   # capture, diff, and open in browser
 rake snapshots:gallery  # generate an HTML gallery of screenshots
 ```
 
-Binstubs are installed to `.direnv/`, which direnv adds to `$PATH`. Run `rake` directly — `bundle exec` is unnecessary.
+Binstubs are installed to `.direnv/`, which direnv adds to `$PATH`. **Never use `bundle exec`** — run commands directly (`rake`, `rbs-inline`, `steep`, etc.).
 
 Tests set `DATABASE_URL=:memory:` so they never touch the real database.
 
