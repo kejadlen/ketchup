@@ -98,5 +98,5 @@ Output goes to `~/.cache/ketchup/snapshots/` (or `$XDG_CACHE_HOME`). Templates f
 - **Migrations:** Sequel migrations in `db/migrate/`, numbered sequentially (`001_`, `002_`, …). Migrations auto-run on boot.
 - **User identification:** Current user from `HTTP_TAILSCALE_USER_LOGIN` / `HTTP_TAILSCALE_USER_NAME` request headers.
 - **Testing:** Minitest with `Rack::Test`. Fake Tailscale headers via helper.
-- **Client-side:** Alpine.js for reactivity, Alpine Persist for state persistence, OverType for markdown editing. No build step — all loaded via CDN.
+- **Client-side:** Alpine.js for reactivity, Alpine Persist for state persistence, OverType for markdown editing. No build step — all loaded via CDN with pinned versions and SRI hashes in `views/layout.rb`. To update a dependency: fetch the new versioned URL, generate a hash with `curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A`, and update both the `src` and `integrity` attributes.
 - **Ownership scoping:** User has `many_through_many :tasks` through `:series`. Routes use `@user.tasks_dataset` and `@user.series_dataset` to scope lookups.
