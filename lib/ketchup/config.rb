@@ -1,16 +1,36 @@
+# rbs_inline: enabled
 # frozen_string_literal: true
 
-Config = Data.define(:database_url, :sentry, :default_user, :commit_sha, :change_id, :build_date)
+Config = Data.define(
+  :database_url, #: String
+  :sentry, #: SentryConfig?
+  :default_user, #: DefaultUser?
+  :commit_sha, #: String?
+  :change_id, #: String?
+  :build_date, #: String?
+)
 
 class Config
-  SentryConfig = Data.define(:dsn, :env)
-  DefaultUser = Data.define(:login, :name) do
+  SentryConfig = Data.define(
+    :dsn, #: String
+    :env, #: String?
+  )
+
+  DefaultUser = Data.define(
+    :login, #: String
+    :name, #: String
+  )
+
+  # Reopened because rbs-inline ignores methods defined inside Data.define blocks.
+  class DefaultUser
+    #: (String) -> DefaultUser
     def self.parse(value)
-      login, name = value.split(":", 2)
+      login, name = value.split(":", 2) #: [String, String?]
       new(login: login, name: name || login)
     end
   end
 
+  #: () -> String
   def to_s
     parts = ["database=#{database_url}"]
     parts << "sentry=#{sentry.env || "on"}" if sentry
@@ -21,6 +41,7 @@ class Config
     "Config(#{parts.join(", ")})"
   end
 
+  #: (?Hash[String, String] env) -> Config
   def self.from_env(env = ENV)
     sentry_dsn = env["SENTRY_DSN"]
     default_user = env["DEFAULT_USER"]

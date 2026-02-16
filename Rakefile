@@ -126,4 +126,10 @@ namespace :snapshots do
   end
 end
 
-task default: %i[ test binstubs ]
+desc "Generate RBS from inline annotations and run Steep type checker"
+task :check do
+  sh "rbs-inline --output lib/"
+  sh "steep check"
+end
+
+task default: %i[ test check binstubs ]
