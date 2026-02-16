@@ -7,7 +7,7 @@ app = 'ketchup-t1zvtw'
 primary_region = 'sjc'
 
 [build]
-  image = 'ghcr.io/kejadlen/ketchup:fly.io'
+  image = 'ghcr.io/kejadlen/ketchup:demo'
 
 [http_service]
   internal_port = 9292
@@ -25,5 +25,5 @@ primary_region = 'sjc'
 
 [env]
   DATABASE_URL = ':memory:'
-  SENTRY_ENV = 'fly.io'
+  SENTRY_ENV = 'demo'
   DEFAULT_USER = 'demo@example.com:Demo User'
