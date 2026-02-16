@@ -161,35 +161,53 @@ module Ketchup
         wait_for(".home")
         entries << snap("dashboard-after-complete")
 
-        # 3. Overdue column
-        entries << snap("overdue", selector: '[x-data="sortable"]')
+        # 3. Overdue column, sorted by urgency
+        # Explicitly select Urgency — Alpine.$persist may carry "date"
+        # from a previous viewport run.
+        overdue_sel = '[x-data="sortable"]'
+        wait_for("#{overdue_sel} .sort-toggle button:last-child").click
+        entries << snap("overdue-urgency", selector: overdue_sel)
 
         # 4. Overdue column, sorted by date
-        wait_for('[x-data="sortable"] .sort-toggle button').click
-        entries << snap("overdue-by-date", selector: '[x-data="sortable"]')
+        wait_for("#{overdue_sel} .sort-toggle button:first-child").click
+        entries << snap("overdue-date", selector: overdue_sel)
 
-        # 5. Upcoming column
-        entries << snap("upcoming", selector: '[x-data="upcoming"]')
+        # Toggle back to urgency so the persist doesn't bleed into
+        # the next viewport run.
+        wait_for("#{overdue_sel} .sort-toggle button:last-child").click
 
-        # 6. Upcoming column, calendar view (top visible in viewport)
-        wait_for('[x-data="upcoming"] .sort-toggle button').click
+        # 5. Upcoming column (list view)
+        # Resize viewport to page height so headless Chrome renders
+        # content below the fold (it won't paint outside the viewport).
+        upcoming_sel = '[x-data="upcoming"]'
+        with_rendered_page(width, height) do
+          entries << snap("upcoming", selector: upcoming_sel)
+        end
+
+        # 6. Upcoming column, calendar view (top)
+        # Toggle calendar on, then temporarily hide items past one
+        # viewport-height so the selector capture stays compact.
+        wait_for("#{upcoming_sel} .sort-toggle button").click
         wait_for(".calendar-day-empty")
-        col = @browser.evaluate('document.querySelector(\'[x-data="upcoming"]\').getBoundingClientRect().toJSON()')
-        viewport_h = @browser.evaluate("window.innerHeight")
-        entries << snap("upcoming-calendar", area: { x: col["x"], y: 0, width: col["width"], height: viewport_h })
+        hide_upcoming_items_past(upcoming_sel, height)
+        with_rendered_page(width, height) do
+          entries << snap("upcoming-calendar", selector: upcoming_sel)
+        end
+        restore_hidden_items
 
         # 7. Upcoming column, calendar view (bottom)
-        #
-        # HACK: headless Chrome doesn't render content outside the viewport,
-        # so scrollTo + screenshot produces a blank image. Resizing the
-        # viewport to the full page height forces Chrome to paint everything,
-        # then we clip to the bottom viewport-sized slice of the column.
-        # There's probably a better way — captureBeyondViewport, full-page
-        # screenshot with crop, etc. — but this works for now.
-        page_h = @browser.evaluate("document.body.scrollHeight")
-        @browser.resize(width: width, height: page_h)
-        entries << snap("upcoming-calendar-bottom", area: { x: col["x"], y: page_h - viewport_h, width: col["width"], height: viewport_h })
-        @browser.resize(width: width, height: height)
+        # Hide items before the horizon marker, keeping a few rows of
+        # context above it so the screenshot shows the transition from
+        # regular calendar into the far-future section.
+        hide_upcoming_items_before_horizon(upcoming_sel, height)
+        with_rendered_page(width, height) do
+          entries << snap("upcoming-calendar-bottom", selector: upcoming_sel)
+        end
+        restore_hidden_items
+
+        # Toggle calendar off — Alpine.$persist keeps showEmpty in
+        # localStorage, which would bleed into the next viewport run.
+        wait_for("#{upcoming_sel} .sort-toggle button").click
 
         # Steps 8-11: on desktop, these use the inline sidebar on the
         # dashboard. On mobile, series creation uses the standalone
@@ -378,6 +396,66 @@ module Ketchup
 
         unit_select = @browser.at_css("select#interval_unit")
         unit_select.select(interval_unit)
+      end
+
+      # Hide calendar list items whose top edge exceeds +cutoff_px+ from
+      # the column's top, so a selector capture stays compact.
+      def hide_upcoming_items_past(selector, cutoff_px)
+        @browser.evaluate(<<~JS)
+          (function() {
+            var col = document.querySelector(#{selector.to_json});
+            var cutoff = col.getBoundingClientRect().top + #{cutoff_px};
+            var items = col.querySelectorAll('.task-list > li');
+            var toHide = [];
+            items.forEach(function(li) {
+              if (li.getBoundingClientRect().top > cutoff) toHide.push(li);
+            });
+            toHide.forEach(function(li) {
+              li.dataset.snapshotHidden = '1';
+              li.style.display = 'none';
+            });
+          })()
+        JS
+      end
+
+      # Hide calendar list items above the "3 months" horizon marker,
+      # keeping roughly 30 % of a viewport's worth of context above it.
+      def hide_upcoming_items_before_horizon(selector, viewport_h)
+        @browser.evaluate(<<~JS)
+          (function() {
+            var horizon = document.querySelector('.calendar-horizon');
+            if (!horizon) return;
+            var cutoff = horizon.getBoundingClientRect().top - #{(viewport_h * 0.3).to_i};
+            var items = document.querySelector(#{selector.to_json}).querySelectorAll('.task-list > li');
+            var toHide = [];
+            items.forEach(function(li) {
+              if (li.getBoundingClientRect().bottom < cutoff) toHide.push(li);
+            });
+            toHide.forEach(function(li) {
+              li.dataset.snapshotHidden = '1';
+              li.style.display = 'none';
+            });
+          })()
+        JS
+      end
+
+      # Temporarily resize the viewport to the full page height so
+      # headless Chrome paints everything, then restore after the block.
+      def with_rendered_page(width, height)
+        page_h = @browser.evaluate("document.body.scrollHeight")
+        @browser.resize(width: width, height: page_h) if page_h > height
+        yield
+      ensure
+        @browser.resize(width: width, height: height) if page_h > height
+      end
+
+      def restore_hidden_items
+        @browser.evaluate(<<~JS)
+          document.querySelectorAll('[data-snapshot-hidden]').forEach(function(el) {
+            el.style.display = '';
+            delete el.dataset.snapshotHidden;
+          });
+        JS
       end
     end
   end
