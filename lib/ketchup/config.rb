@@ -1,8 +1,11 @@
 # rbs_inline: enabled
 # frozen_string_literal: true
 
+require "securerandom"
+
 Config = Data.define(
   :database_url, #: String
+  :session_secret, #: String
   :sentry, #: SentryConfig?
   :default_user, #: DefaultUser?
   :commit_sha, #: String?
@@ -47,6 +50,7 @@ class Config
     default_user = env["DEFAULT_USER"]
     new(
       database_url: env.fetch("DATABASE_URL") { "db/ketchup.db" },
+      session_secret: env.fetch("SESSION_SECRET") { SecureRandom.hex(64) },
       sentry: sentry_dsn ? SentryConfig.new(dsn: sentry_dsn, env: env["SENTRY_ENV"]) : nil,
       default_user: default_user ? DefaultUser.parse(default_user) : nil,
       commit_sha: env["COMMIT_SHA"],

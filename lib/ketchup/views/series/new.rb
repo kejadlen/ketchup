@@ -7,8 +7,9 @@ require_relative "../layout"
 module Views
   module Series
     class New < Phlex::HTML
-      def initialize(current_user:)
+      def initialize(current_user:, csrf:)
         @current_user = current_user
+        @csrf = csrf
       end
 
       def view_template
@@ -17,6 +18,7 @@ module Views
             h1 { "New Series" }
 
             form(method: "post", action: "/series") do
+              input(type: "hidden", name: "_csrf", value: @csrf.call("/series"))
               div(class: "field") do
                 label(for: "note") { "Note" }
                 textarea(id: "note", name: "note", rows: 3, required: true)

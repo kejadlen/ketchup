@@ -6,8 +6,9 @@ require_relative "task_card"
 
 module Views
   class UpcomingColumn < Phlex::HTML
-    def initialize(tasks:, selected_series: nil)
+    def initialize(tasks:, csrf:, selected_series: nil)
       @tasks = tasks
+      @csrf = csrf
       @selected_series = selected_series
     end
 
@@ -68,7 +69,7 @@ module Views
           next if empty
           day_tasks.each do |task|
             li(class: ["task-item", ("calendar-day-weekend" if weekend)]) do
-              render TaskCard.new(task: task, selected: selected?(task))
+              render TaskCard.new(task: task, csrf: @csrf, selected: selected?(task))
             end
           end
         end

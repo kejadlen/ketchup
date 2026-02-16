@@ -11,6 +11,8 @@ class Web < Roda
   plugin :halt
   plugin :static, %w[ /css /js ]
   plugin :all_verbs
+  plugin :sessions, secret: CONFIG.session_secret
+  plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
   plugin :error_handler do |e|
     raise e unless e.is_a?(Sequel::NoMatchingRow)
 
@@ -30,13 +32,15 @@ class Web < Roda
     @user = current_user
     r.halt 403 unless @user
 
+    check_csrf!
+
     r.root do
-      Views::Dashboard.new(current_user: @user).call
+      Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
     end
 
     r.on "series" do
       r.get "new" do
-        Views::Series::New.new(current_user: @user).call
+        Views::Series::New.new(current_user: @user, csrf: method(:csrf_token)).call
       end
 
       r.is do
@@ -73,7 +77,7 @@ class Web < Roda
 
         r.is do
           r.get do
-            Views::Dashboard.new(current_user: @user, series: @series).call
+            Views::Dashboard.new(current_user: @user, series: @series, csrf: method(:csrf_token)).call
           end
 
           r.patch do

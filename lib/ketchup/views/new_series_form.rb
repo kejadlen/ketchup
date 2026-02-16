@@ -4,6 +4,10 @@ require "phlex"
 
 module Views
   class NewSeriesForm < Phlex::HTML
+    def initialize(csrf:)
+      @csrf = csrf
+    end
+
     def view_template
       div(class: "column column-aside column-aside--new") do
         div(class: "column-header") do
@@ -12,6 +16,7 @@ module Views
         end
 
         form(method: "post", action: "/series", id: "new-series-form", class: "task-detail") do
+          input(type: "hidden", name: "_csrf", value: @csrf.call("/series"))
           div(id: "series-note-editor", class: "task-detail-note")
 
           dl(class: "task-detail-fields") do

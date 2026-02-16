@@ -40,15 +40,17 @@ class TestWeb < Minitest::Test
   end
 
   def test_root_only_shows_own_tasks
-    post "/series", {
+    create_series(
       note: "Alice task", interval_unit: "week", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+      first_due_date: "2026-03-01",
+      headers: tailscale_headers(login: "alice@example.com", name: "Alice")
+    )
 
-    post "/series", {
+    create_series(
       note: "Bob task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers(login: "bob@example.com", name: "Bob")
+      first_due_date: "2026-03-01",
+      headers: tailscale_headers(login: "bob@example.com", name: "Bob")
+    )
 
     get "/", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
     assert_includes last_response.body, "Alice task"
@@ -72,10 +74,10 @@ class TestWeb < Minitest::Test
   end
 
   def test_create_series
-    post "/series", {
+    create_series(
       note: "Call Mom", interval_unit: "week", interval_count: "2",
       first_due_date: "2026-03-01"
-    }, tailscale_headers
+    )
     assert last_response.redirect?
 
     series = DB[:series].first
@@ -86,10 +88,10 @@ class TestWeb < Minitest::Test
   end
 
   def test_create_series_creates_first_task
-    post "/series", {
+    create_series(
       note: "Call Mom", interval_unit: "week", interval_count: "2",
       first_due_date: "2026-03-01"
-    }, tailscale_headers
+    )
 
     series = DB[:series].first
     task = DB[:tasks].first(series_id: series[:id])
@@ -98,10 +100,11 @@ class TestWeb < Minitest::Test
   end
 
   def test_create_series_belongs_to_current_user
-    post "/series", {
+    create_series(
       note: "Dentist", interval_unit: "quarter", interval_count: "1",
-      first_due_date: "2026-06-01"
-    }, tailscale_headers(login: "dave@example.com", name: "Dave")
+      first_due_date: "2026-06-01",
+      headers: tailscale_headers(login: "dave@example.com", name: "Dave")
+    )
 
     series = DB[:series].first
     user = DB[:users].first(login: "dave@example.com")
@@ -109,45 +112,45 @@ class TestWeb < Minitest::Test
   end
 
   def test_create_series_strips_whitespace
-    post "/series", {
+    create_series(
       note: "  Trim me  ", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01"
-    }, tailscale_headers
+    )
     assert_equal "Trim me", DB[:series].first[:note]
   end
 
   def test_create_series_rejects_empty_note
-    post "/series", {
+    create_series(
       note: "  ", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01"
-    }, tailscale_headers
+    )
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
   end
 
   def test_create_series_rejects_invalid_interval_unit
-    post "/series", {
+    create_series(
       note: "Nope", interval_unit: "fortnight", interval_count: "1",
       first_due_date: "2026-03-01"
-    }, tailscale_headers
+    )
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
   end
 
   def test_create_series_rejects_zero_interval_count
-    post "/series", {
+    create_series(
       note: "Nope", interval_unit: "day", interval_count: "0",
       first_due_date: "2026-03-01"
-    }, tailscale_headers
+    )
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
   end
 
   def test_create_series_rejects_invalid_due_date
-    post "/series", {
+    create_series(
       note: "Nope", interval_unit: "day", interval_count: "1",
       first_due_date: "not-a-date"
-    }, tailscale_headers
+    )
     assert_equal 422, last_response.status
     assert_equal 0, DB[:series].count
     assert_equal 0, DB[:tasks].count
@@ -158,10 +161,11 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    series = DB[:series].first
+    complete_path = "/series/#{series[:id]}/tasks/#{task[:id]}/complete"
+    csrf_post complete_path, {}, tailscale_headers
     assert last_response.redirect?
 
-    series = DB[:series].first
     assert_includes last_response["Location"], "/series/#{series[:id]}"
 
     old_task = DB[:tasks].first(id: task[:id])
@@ -176,7 +180,8 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-01-31")
 
     task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
 
     new_task = DB[:tasks].where(completed_at: nil).first
     assert_equal Date.today >> 3, new_task[:due_date]
@@ -194,14 +199,15 @@ class TestWeb < Minitest::Test
   end
 
   def test_complete_task_requires_own_task
-    post "/series", {
+    create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+      first_due_date: "2026-03-01",
+      headers: tailscale_headers(login: "alice@example.com", name: "Alice")
+    )
 
     task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
-    assert_equal 404, last_response.status
+    csrf_post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
+    assert_includes [403, 404], last_response.status
   end
 
   def test_complete_task_requires_tailscale_user
@@ -241,6 +247,13 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "action=\"/series/#{series[:id]}/tasks/#{task[:id]}/complete\""
   end
 
+  def test_task_card_has_csrf_token
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    get "/", {}, tailscale_headers
+    assert_includes last_response.body, 'name="_csrf"'
+  end
 
   def test_series_sidebar_has_new_link
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
@@ -269,10 +282,10 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
 
     completed_task = DB[:tasks].first(id: task[:id])
-    series = DB[:series].first
     patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, tailscale_headers
     get "/series/#{series[:id]}", {}, tailscale_headers
     assert last_response.ok?
@@ -281,10 +294,11 @@ class TestWeb < Minitest::Test
   end
 
   def test_get_series_requires_own_series
-    post "/series", {
+    create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+      first_due_date: "2026-03-01",
+      headers: tailscale_headers(login: "alice@example.com", name: "Alice")
+    )
 
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, tailscale_headers(login: "bob@example.com", name: "Bob")
@@ -301,10 +315,10 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers
 
     completed_task = DB[:tasks].first(id: task[:id])
-    series = DB[:series].first
     patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Called, all good" }, tailscale_headers
     assert last_response.ok?
 
@@ -324,16 +338,17 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_note_requires_own_task
-    post "/series", {
+    create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+      first_due_date: "2026-03-01",
+      headers: tailscale_headers(login: "alice@example.com", name: "Alice")
+    )
 
     task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, tailscale_headers(login: "alice@example.com", name: "Alice")
 
     completed_task = DB[:tasks].first(id: task[:id])
-    series = DB[:series].first
     patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "hacked" }, tailscale_headers(login: "bob@example.com", name: "Bob")
     assert_equal 404, last_response.status
   end
@@ -401,10 +416,11 @@ class TestWeb < Minitest::Test
   end
 
   def test_patch_series_requires_own_series
-    post "/series", {
+    create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
-    }, tailscale_headers(login: "alice@example.com", name: "Alice")
+      first_due_date: "2026-03-01",
+      headers: tailscale_headers(login: "alice@example.com", name: "Alice")
+    )
 
     series = DB[:series].first
     patch "/series/#{series[:id]}", { note: "hacked" }, tailscale_headers(login: "bob@example.com", name: "Bob")
@@ -428,13 +444,33 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
+  def test_csrf_rejects_post_without_token
+    get "/", {}, tailscale_headers  # establish session
+    post "/series", {
+      note: "No token", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01"
+    }, tailscale_headers
+    assert_equal 403, last_response.status
+  end
+
   private
 
-  def create_series(note:, interval_unit:, interval_count:, first_due_date:)
+  def csrf_post(path, params = {}, headers = tailscale_headers)
+    get "/", {}, headers  # establish session and get tokens
+    token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
+    post path, params.merge("_csrf" => token), headers
+  end
+
+
+
+  def create_series(note:, interval_unit:, interval_count:, first_due_date:, headers: tailscale_headers)
+    get "/", {}, headers  # establish session and get tokens
+    token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/series", {
+      _csrf: token,
       note: note, interval_unit: interval_unit, interval_count: interval_count,
       first_due_date: first_due_date
-    }, tailscale_headers
+    }, headers
   end
 
   def tailscale_headers(

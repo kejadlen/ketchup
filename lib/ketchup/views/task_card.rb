@@ -4,8 +4,9 @@ require "phlex"
 
 module Views
   class TaskCard < Phlex::HTML
-    def initialize(task:, selected: false, sortable: false)
+    def initialize(task:, csrf:, selected: false, sortable: false)
       @task = task
+      @csrf = csrf
       @selected = selected
       @sortable = sortable
     end
@@ -13,9 +14,11 @@ module Views
     def view_template
       name = @task[:note].lines.first&.strip || @task[:note]
       overdue = @task[:due_date] < Date.today
+      complete_path = "/series/#{@task[:series_id]}/tasks/#{@task[:id]}/complete"
 
       div(class: ["task-card", ("task-overdue" if overdue), ("task-selected" if @selected)]) do
-        form(method: "post", action: "/series/#{@task[:series_id]}/tasks/#{@task[:id]}/complete", class: "complete-form") do
+        form(method: "post", action: complete_path, class: "complete-form") do
+          input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
           button(
             type: "submit", title: "Complete",
             class: "complete-btn",

@@ -6,8 +6,9 @@ require_relative "task_card"
 
 module Views
   class OverdueColumn < Phlex::HTML
-    def initialize(tasks:, selected_series: nil)
+    def initialize(tasks:, csrf:, selected_series: nil)
       @tasks = tasks
+      @csrf = csrf
       @selected_series = selected_series
     end
 
@@ -39,7 +40,7 @@ module Views
                 "data-urgency": format("%.4f", task.urgency),
                 "data-due-date": task[:due_date].to_s
               ) do
-                render TaskCard.new(task: task, selected: selected?(task), sortable: true)
+                render TaskCard.new(task: task, csrf: @csrf, selected: selected?(task), sortable: true)
               end
             end
           end
