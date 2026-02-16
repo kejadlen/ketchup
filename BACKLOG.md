@@ -26,3 +26,5 @@
 - Improve the diff page to highlight differences
 - Status endpoint with debug information
 - Ship the gallery in the docker image
+- Only show the short change id in the footer
+- Email notifications
