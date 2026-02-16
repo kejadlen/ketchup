@@ -66,15 +66,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "${{ steps.meta.outputs.version }}" --generate-notes
-      - if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
+
+  snapshots:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - run: |
           output=$(bundle exec rake snapshots:capture)
           dir=$(echo "$output" | jq -r .output_dir)
           tar czf snapshots.tar.gz -C "$dir" .
-      - if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        env:
+      - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ steps.meta.outputs.version }}" snapshots.tar.gz
+        run: gh release upload "${{ needs.build.outputs.version }}" snapshots.tar.gz
 
   deploy:
     name: Deploy to Fly.io
@@ -94,7 +102,7 @@ jobs:
 
   pages:
     name: Deploy to Pages
-    needs: build
+    needs: [build, snapshots]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
