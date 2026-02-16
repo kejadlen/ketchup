@@ -122,7 +122,7 @@ class Web < Roda
 
           r.post "complete" do
             r.halt 422 unless @task[:completed_at].nil?
-            @task.complete!
+            @task.complete!(today: Date.today)
 
             r.redirect "/series/#{series_id}"
           end

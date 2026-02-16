@@ -182,6 +182,17 @@ class TestWeb < Minitest::Test
     assert_equal Date.today >> 3, new_task[:due_date]
   end
 
+  def test_complete_task_advances_from_given_date
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    task = Task.first
+    task.complete!(today: Date.new(2026, 4, 1))
+
+    new_task = Task.where(completed_at: nil).first
+    assert_equal Date.new(2026, 4, 15), new_task.due_date
+  end
+
   def test_complete_task_requires_own_task
     post "/series", {
       note: "Alice task", interval_unit: "day", interval_count: "1",
