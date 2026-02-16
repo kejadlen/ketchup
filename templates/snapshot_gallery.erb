@@ -25,12 +25,26 @@
     <% end %>
   </div>
   <% end -%>
+  <div class="lightbox" id="lightbox"><img></div>
   <script>
     document.querySelector(".tab-bar").addEventListener("click", function(e) {
       if (!e.target.matches(".tab")) return;
       var viewport = e.target.dataset.viewport;
       document.querySelectorAll(".tab").forEach(function(t) { t.classList.toggle("active", t.dataset.viewport === viewport); });
       document.querySelectorAll(".viewport-group").forEach(function(g) { g.classList.toggle("hidden", g.dataset.viewport !== viewport); });
+    });
+
+    var lightbox = document.getElementById("lightbox");
+    document.addEventListener("click", function(e) {
+      if (e.target.matches(".snapshot img")) {
+        lightbox.querySelector("img").src = e.target.src;
+        lightbox.classList.add("open");
+      } else if (lightbox.classList.contains("open")) {
+        lightbox.classList.remove("open");
+      }
+    });
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") lightbox.classList.remove("open");
     });
   </script>
 </body>
