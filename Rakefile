@@ -75,18 +75,24 @@ namespace :snapshots do
     baseline_dir = base_dir / "baseline"
     current_dir = base_dir / "current"
 
-    FileUtils.rm_rf(baseline_dir)
-    baseline_dir.mkpath
+    tag_file = base_dir / ".baseline-tag"
+    latest_tag = `gh release view --repo kejadlen/ketchup --json tagName -q .tagName 2>/dev/null`.strip
+    cached_tag = tag_file.exist? ? tag_file.read.strip : nil
 
-    tarball = base_dir / "baseline.tar.gz"
-    system("gh", "release", "download", "--pattern", "snapshots.tar.gz", "--output", tarball.to_s, "--clobber", exception: false)
+    if latest_tag.empty?
+      puts "No release found — showing current screenshots only"
+    elsif cached_tag == latest_tag && baseline_dir.exist? && baseline_dir.glob("*/manifest.json").any?
+      puts "Baseline #{latest_tag} already cached"
+    else
+      FileUtils.rm_rf(baseline_dir)
+      baseline_dir.mkpath
 
-    if tarball.exist?
+      tarball = base_dir / "baseline.tar.gz"
+      system("gh", "release", "download", latest_tag, "--repo", "kejadlen/ketchup", "--pattern", "snapshots.tar.gz", "--output", tarball.to_s, "--clobber", exception: true)
       system("tar", "xzf", tarball.to_s, "-C", baseline_dir.to_s, exception: true)
       tarball.delete
-      puts "Downloaded baseline from latest release"
-    else
-      puts "No baseline found — showing current screenshots only"
+      tag_file.write(latest_tag)
+      puts "Downloaded baseline from release #{latest_tag}"
     end
 
     snapshots_by_viewport = Ketchup::Snapshots::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons_by_viewport
