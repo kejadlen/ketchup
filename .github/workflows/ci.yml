@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 permissions:
+  actions: write
   contents: write
   packages: write
 
@@ -71,6 +72,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ steps.meta.outputs.version }}" snapshots.tar.gz
+      - if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run pages.yml --field tag=${{ steps.meta.outputs.version }}
 
   deploy:
     name: Deploy to Fly.io
