@@ -63,6 +63,10 @@ end
 class Task < Sequel::Model
   many_to_one :series
 
+  # Fixed day approximations for urgency scoring. complete! uses calendar
+  # month arithmetic (Date#>>) for advancement so "1 month" lands on the
+  # same day-of-month. Urgency only needs a rough ratio, so fixed counts
+  # are fine and avoid coupling to a specific start date.
   INTERVAL_DAYS = {
     "day" => 1, "week" => 7, "month" => 30, "quarter" => 91, "year" => 365
   }.freeze
