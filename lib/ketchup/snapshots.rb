@@ -98,7 +98,8 @@ module Ketchup
 
         @browser = Ferrum::Browser.new(
           headless: true,
-          window_size: VIEWPORTS.fetch("desktop")
+          window_size: VIEWPORTS.fetch("desktop"),
+          browser_options: { "force-device-scale-factor" => 2 }
         )
 
         @server.call(@browser) do |url|
