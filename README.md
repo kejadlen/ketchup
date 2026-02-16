@@ -4,7 +4,7 @@ A personal tool for tracking recurring tasks and catching up on what's overdue.
 
 ## Overview
 
-Ketchup is for me and my family. Authentication comes from Tailscale headers — there's no in-app login. The stack is Ruby 4, Roda, Sequel, SQLite, Phlex, Alpine.js, and OverType (for inline markdown editing). Puma serves it, Sentry tracks errors in production.
+Ketchup is for me and my family. Authentication comes from Tailscale headers — there's no in-app login. The stack is Ruby 4, Roda, Sequel, SQLite, Phlex, Alpine.js, and OverType (for inline markdown editing). Puma serves it, Sentry tracks errors, and OpenTelemetry sends traces to Honeycomb.
 
 ## Domain model
 

@@ -27,7 +27,7 @@ gh project item-add 5 --owner kejadlen --url <url>   # add an issue to the board
 ```
 lib/
   ketchup/
-    config.rb        # Config data object, reads DATABASE_URL from env
+    config.rb        # Config data object + CONFIG constant, reads env vars
     db.rb            # Sequel connection + auto-migration
     models.rb        # User, Series, Task models and associations
     seed.rb          # Seed.call(user:, series:) — creates series, tasks, and history
@@ -52,7 +52,7 @@ templates/           # ERB templates for snapshot diff and gallery viewers
 public/
   js/app.js          # Alpine components, OverType editor setup
   css/               # Static stylesheets
-config.ru            # Rack entrypoint (Sentry + Web.app)
+config.ru            # Rack entrypoint (OTel, Sentry, Web.app)
 ```
 
 ## Running
@@ -100,3 +100,4 @@ Output goes to `~/.cache/ketchup/snapshots/` (or `$XDG_CACHE_HOME`). Templates f
 - **Testing:** Minitest with `Rack::Test`. Fake Tailscale headers via helper.
 - **Client-side:** Alpine.js for reactivity, Alpine Persist for state persistence, OverType for markdown editing. No build step — all loaded via CDN with pinned versions and SRI hashes in `views/layout.rb`. To update a dependency: fetch the new versioned URL, generate a hash with `curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A`, and update both the `src` and `integrity` attributes.
 - **Ownership scoping:** User has `many_through_many :tasks` through `:series`. Routes use `@user.tasks_dataset` and `@user.series_dataset` to scope lookups.
+- **Observability:** OpenTelemetry with Rack instrumentation, gated on `OTEL_EXPORTER_OTLP_ENDPOINT`. The SDK reads standard `OTEL_EXPORTER_OTLP_*` env vars directly — no app-level proxying. No-op when unset.
