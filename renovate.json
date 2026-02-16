@@ -3,8 +3,19 @@
   "extends": ["config:recommended"],
   "packageRules": [
     {
-      "matchManagers": ["bundler", "github-actions"],
+      "matchManagers": ["bundler", "dockerfile", "github-actions", "ruby-version"],
       "schedule": ["every weekend"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["lib/ketchup/views/layout\\.rb$"],
+      "matchStrings": [
+        "src:\\s*\"https://unpkg\\.com/(?<depName>[^@]+)@(?<currentValue>[^/]+)/",
+        "src:\\s*\"https://cdn\\.jsdelivr\\.net/npm/(?<depName>[^@]+)@(?<currentValue>[^/]+)/"
+      ],
+      "datasourceTemplate": "npm"
     }
   ]
 }

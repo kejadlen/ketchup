@@ -134,6 +134,24 @@ namespace :snapshots do
   end
 end
 
+namespace :cdn do
+  desc "Update integrity hashes for CDN scripts in layout.rb"
+  task :rehash do
+    layout = "lib/ketchup/views/layout.rb"
+    content = File.read(layout)
+
+    content.gsub!(%r{src:\s*"(https://[^"]+)".*\n\s*integrity:\s*"sha384-[^"]+"}) do |match|
+      url = match[/"(https:\/\/[^"]+)"/, 1]
+      hash = `curl -sL '#{url}' | openssl dgst -sha384 -binary | openssl base64 -A`.strip
+      abort "Failed to fetch #{url}" if hash.empty?
+      puts "#{url} -> sha384-#{hash}"
+      match.sub(/sha384-[^"]+/, "sha384-#{hash}")
+    end
+
+    File.write(layout, content)
+  end
+end
+
 desc "Generate RBS from inline annotations and run Steep type checker"
 task :check do
   sh "rbs-inline --output lib/"
