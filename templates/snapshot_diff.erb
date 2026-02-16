@@ -9,38 +9,55 @@
 </head>
 <body>
   <h1>Ketchup Snapshot Diff</h1>
-  <% snapshots.each do |snap| %>
-  <% entry = snap.current || snap.baseline -%>
-  <div class="snapshot">
-    <h2>
-      <%= snap.name %>
-      <% unless snap.baseline %>
-      <span class="label new">new</span>
-      <% end -%>
-      <% unless snap.current %>
-      <span class="label removed">removed</span>
-      <% end -%>
-    </h2>
-    <code class="path"><%= entry.path %><%= " #{entry.selector}" if entry.selector %></code>
-    <div class="pair">
-      <div class="side">
-        <h3>Baseline</h3>
-        <% if snap.baseline %>
-        <img src="baseline/<%= snap.name %>.png" alt="baseline <%= snap.name %>">
-        <% else %>
-        <div class="placeholder">No baseline</div>
-        <% end %>
-      </div>
-      <div class="side">
-        <h3>Current</h3>
-        <% if snap.current %>
-        <img src="current/<%= snap.name %>.png" alt="current <%= snap.name %>">
-        <% else %>
-        <div class="placeholder">Removed</div>
-        <% end %>
+  <div class="tab-bar">
+    <% snapshots_by_viewport.each_with_index do |(viewport, _), i| -%>
+    <button class="tab<%= " active" if i == 0 %>" data-viewport="<%= viewport %>"><%= viewport.capitalize %></button>
+    <% end -%>
+  </div>
+  <% snapshots_by_viewport.each_with_index do |(viewport, snapshots), i| -%>
+  <div class="viewport-group<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
+    <% snapshots.each do |snap| %>
+    <% entry = snap.current || snap.baseline -%>
+    <div class="snapshot">
+      <h2>
+        <%= snap.name %>
+        <% unless snap.baseline %>
+        <span class="label new">new</span>
+        <% end -%>
+        <% unless snap.current %>
+        <span class="label removed">removed</span>
+        <% end -%>
+      </h2>
+      <code class="path"><%= entry.path %><%= " #{entry.selector}" if entry.selector %></code>
+      <div class="pair">
+        <div class="side">
+          <h3>Baseline</h3>
+          <% if snap.baseline %>
+          <img src="baseline/<%= viewport %>/<%= snap.name %>.png" alt="baseline <%= snap.name %>">
+          <% else %>
+          <div class="placeholder">No baseline</div>
+          <% end %>
+        </div>
+        <div class="side">
+          <h3>Current</h3>
+          <% if snap.current %>
+          <img src="current/<%= viewport %>/<%= snap.name %>.png" alt="current <%= snap.name %>">
+          <% else %>
+          <div class="placeholder">Removed</div>
+          <% end %>
+        </div>
       </div>
     </div>
+    <% end %>
   </div>
-  <% end %>
+  <% end -%>
+  <script>
+    document.querySelector(".tab-bar").addEventListener("click", function(e) {
+      if (!e.target.matches(".tab")) return;
+      var viewport = e.target.dataset.viewport;
+      document.querySelectorAll(".tab").forEach(function(t) { t.classList.toggle("active", t.dataset.viewport === viewport); });
+      document.querySelectorAll(".viewport-group").forEach(function(g) { g.classList.toggle("hidden", g.dataset.viewport !== viewport); });
+    });
+  </script>
 </body>
 </html>

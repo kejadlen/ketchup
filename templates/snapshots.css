@@ -13,6 +13,14 @@ h1 { margin-bottom: var(--space-l); color: #fff; }
 .snapshot .path { display: block; margin-bottom: var(--space-s); font-size: var(--step--1); color: #888; }
 .snapshot img { max-width: 100%; border: 1px solid #333; border-radius: 4px; display: block; margin-inline: auto; }
 
+/* Tabs */
+
+.tab-bar { display: flex; gap: var(--space-xs); margin-bottom: var(--space-l); border-bottom: 1px solid #333; padding-bottom: var(--space-xs); }
+.tab { background: none; border: none; color: #888; font-size: var(--step-0); padding: var(--space-xs) var(--space-s); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab:hover { color: #ccc; }
+.tab.active { color: #fff; border-bottom-color: #5e81ac; }
+.viewport-group.hidden { display: none; }
+
 /* Diff-specific */
 
 .label { font-size: var(--step--2); padding: 0.15rem 0.5rem; border-radius: 4px; vertical-align: middle; }

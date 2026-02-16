@@ -9,12 +9,29 @@
 </head>
 <body>
   <h1><%= title %></h1>
-  <% images.each do |image| %>
-  <div class="snapshot">
-    <h2><%= image[:entry].name %></h2>
-    <code class="path"><%= image[:entry].path %><%= " #{image[:entry].selector}" if image[:entry].selector %></code>
-    <img src="<%= image[:filename] %>" alt="<%= image[:entry].name %>">
+  <div class="tab-bar">
+    <% images_by_viewport.each_with_index do |(viewport, _), i| -%>
+    <button class="tab<%= " active" if i == 0 %>" data-viewport="<%= viewport %>"><%= viewport.capitalize %></button>
+    <% end -%>
   </div>
-  <% end %>
+  <% images_by_viewport.each_with_index do |(viewport, images), i| -%>
+  <div class="viewport-group<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
+    <% images.each do |image| %>
+    <div class="snapshot">
+      <h2><%= image[:entry].name %></h2>
+      <code class="path"><%= image[:entry].path %><%= " #{image[:entry].selector}" if image[:entry].selector %></code>
+      <img src="<%= image[:filename] %>" alt="<%= image[:entry].name %>">
+    </div>
+    <% end %>
+  </div>
+  <% end -%>
+  <script>
+    document.querySelector(".tab-bar").addEventListener("click", function(e) {
+      if (!e.target.matches(".tab")) return;
+      var viewport = e.target.dataset.viewport;
+      document.querySelectorAll(".tab").forEach(function(t) { t.classList.toggle("active", t.dataset.viewport === viewport); });
+      document.querySelectorAll(".viewport-group").forEach(function(g) { g.classList.toggle("hidden", g.dataset.viewport !== viewport); });
+    });
+  </script>
 </body>
 </html>

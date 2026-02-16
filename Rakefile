@@ -89,11 +89,11 @@ namespace :snapshots do
       puts "No baseline found — showing current screenshots only"
     end
 
-    snapshots = Ketchup::Snapshots::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons
+    snapshots_by_viewport = Ketchup::Snapshots::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons_by_viewport
 
     template = (Pathname(__dir__) / "templates/snapshot_diff.erb").read
     output_path = base_dir / "diff.html"
-    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(snapshots: snapshots))
+    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(snapshots_by_viewport: snapshots_by_viewport))
     puts "Diff viewer: #{output_path}"
   end
 
@@ -112,16 +112,18 @@ namespace :snapshots do
 
     css_sources.each_key { |src| cp src, output_path.dirname.to_s }
 
-    entries = Ketchup::Snapshots::Entry.read_manifest(images_dir)
-
     title = "Ketchup Snapshots"
-    images_rel = images_dir.relative_path_from(output_path.dirname)
-    images = entries.map do |entry|
-      { entry: entry, filename: (images_rel / "#{entry.name}.png").to_s }
+    images_by_viewport = Ketchup::Snapshots::VIEWPORTS.keys.each_with_object({}) do |viewport, result|
+      viewport_dir = images_dir / viewport
+      entries = Ketchup::Snapshots::Entry.read_manifest(viewport_dir)
+      images_rel = viewport_dir.relative_path_from(output_path.dirname)
+      result[viewport] = entries.map do |entry|
+        { entry: entry, filename: (images_rel / "#{entry.name}.png").to_s }
+      end
     end
 
     template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read
-    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(title: title, images: images))
+    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(title: title, images_by_viewport: images_by_viewport))
     puts output_path
   end
 end

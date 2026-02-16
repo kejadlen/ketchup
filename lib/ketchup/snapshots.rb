@@ -16,14 +16,21 @@ require_relative "web"
 
 module Ketchup
   module Snapshots
-    Entry = Data.define(:name, :path, :selector) do
-      def initialize(name:, path:, selector: nil) = super
+    VIEWPORTS = {
+      "desktop" => [1280, 900],
+      "mobile" => [375, 812],
+    }.freeze
+
+    Entry = Data.define(:name, :path, :selector, :viewport) do
+      def initialize(name:, path:, selector: nil, viewport: "desktop") = super
 
       def self.read_manifest(dir)
         manifest = dir / "manifest.json"
         return [] unless manifest.exist?
 
-        JSON.parse(manifest.read).map { |e| new(name: e.fetch("name"), path: e.fetch("path"), selector: e["selector"]) }
+        JSON.parse(manifest.read).map do |e|
+          new(name: e.fetch("name"), path: e.fetch("path"), selector: e["selector"], viewport: e.fetch("viewport", "desktop"))
+        end
       end
     end
 
@@ -31,18 +38,38 @@ module Ketchup
 
     class Diff
       def initialize(baseline_dir:, current_dir:)
-        @baseline = Entry.read_manifest(baseline_dir).each_with_object({}) { |e, h| h[e.name] = e }
-        @current = Entry.read_manifest(current_dir).each_with_object({}) { |e, h| h[e.name] = e }
+        @baseline_dir = Pathname(baseline_dir)
+        @current_dir = Pathname(current_dir)
       end
 
+      # Returns { "desktop" => [Comparison, ...], "mobile" => [Comparison, ...] }
+      def comparisons_by_viewport
+        VIEWPORTS.keys.each_with_object({}) do |viewport, result|
+          baseline = read_entries(@baseline_dir / viewport)
+          current = read_entries(@current_dir / viewport)
+          result[viewport] = compare(baseline, current)
+        end
+      end
+
+      # Flat list for backward compatibility (desktop only, or merged)
       def comparisons
-        return unchanged if @baseline.keys == @current.keys
+        comparisons_by_viewport.values.first || []
+      end
+
+      private
+
+      def read_entries(dir)
+        Entry.read_manifest(dir).each_with_object({}) { |e, h| h[e.name] = e }
+      end
+
+      def compare(baseline, current)
+        return current.map { |name, entry| Comparison.new(name: name, baseline: baseline[name], current: entry) } if baseline.keys == current.keys
 
         require "tempfile"
         baseline_file = Tempfile.new("baseline")
         current_file = Tempfile.new("current")
-        baseline_file.write(@baseline.keys.join("\n") + "\n")
-        current_file.write(@current.keys.join("\n") + "\n")
+        baseline_file.write(baseline.keys.join("\n") + "\n")
+        current_file.write(current.keys.join("\n") + "\n")
         baseline_file.close
         current_file.close
 
@@ -50,17 +77,11 @@ module Ketchup
           name = line[1..].chomp
           next if name.empty?
           case line[0]
-          when " " then Comparison.new(name: name, baseline: @baseline.fetch(name), current: @current.fetch(name))
-          when "-" then Comparison.new(name: name, baseline: @baseline.fetch(name), current: nil)
-          when "+" then Comparison.new(name: name, baseline: nil, current: @current.fetch(name))
+          when " " then Comparison.new(name: name, baseline: baseline.fetch(name), current: current.fetch(name))
+          when "-" then Comparison.new(name: name, baseline: baseline.fetch(name), current: nil)
+          when "+" then Comparison.new(name: name, baseline: nil, current: current.fetch(name))
           end
         end
-      end
-
-      private
-
-      def unchanged
-        @current.map { |name, entry| Comparison.new(name: name, baseline: @baseline[name], current: entry) }
       end
     end
 
@@ -77,13 +98,23 @@ module Ketchup
 
         @browser = Ferrum::Browser.new(
           headless: true,
-          window_size: [1280, 900]
+          window_size: VIEWPORTS.fetch("desktop")
         )
 
         @server.call(@browser) do |url|
           @base = url
           @logger.info("Server at #{@base}")
-          run_capture
+
+          VIEWPORTS.each do |viewport_name, (width, height)|
+            @viewport = viewport_name
+            @viewport_dir = @output_dir / viewport_name
+            @viewport_dir.mkpath
+            @browser.resize(width: width, height: height)
+            @logger.info("Capturing #{viewport_name} (#{width}x#{height})")
+
+            entries = run_capture(width: width, height: height)
+            (@viewport_dir / "manifest.json").write(JSON.pretty_generate(entries.map(&:to_h)))
+          end
         end
       ensure
         @browser&.quit
@@ -114,7 +145,7 @@ module Ketchup
       #   TODO: hover over un-noted task to reveal "add a note...", sidebar
       #   click "add a note", type markdown, sidebar
       #   focus an existing note's editor, sidebar
-      def run_capture
+      def run_capture(width:, height:)
         entries = []
 
         # 1. Whole dashboard
@@ -156,29 +187,57 @@ module Ketchup
         # There's probably a better way — captureBeyondViewport, full-page
         # screenshot with crop, etc. — but this works for now.
         page_h = @browser.evaluate("document.body.scrollHeight")
-        @browser.resize(width: 1280, height: page_h)
+        @browser.resize(width: width, height: page_h)
         entries << snap("upcoming-calendar-bottom", area: { x: col["x"], y: page_h - viewport_h, width: col["width"], height: viewport_h })
-        @browser.resize(width: 1280, height: 900)
+        @browser.resize(width: width, height: height)
 
-        # 8. Sidebar (new series)
-        entries << snap("new-series", selector: ".column-aside")
+        # Steps 8-11: on desktop, these use the inline sidebar on the
+        # dashboard. On mobile, series creation uses the standalone
+        # /series/new page and the detail view stacks at the top.
+        if element_visible?(".column-aside")
+          # 8. Sidebar (new series)
+          entries << snap("new-series", selector: ".column-aside")
 
-        # 9. New series form filled in (with markdown), not created yet
-        fill_new_series(
-          note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
-          interval_count: 2,
-          interval_unit: "week"
-        )
-        entries << snap("new-series-editing", selector: ".column-aside")
+          # 9. New series form filled in (with markdown), not created yet
+          fill_new_series(
+            note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
+            interval_count: 2,
+            interval_unit: "week"
+          )
+          entries << snap("new-series-editing", selector: ".column-aside")
 
-        # 10. Series detail, post-creation
-        wait_for("#create-series-btn").click
-        wait_for("#series-note-detail")
-        entries << snap("series-created", selector: ".column-aside")
+          # 10. Series detail, post-creation
+          wait_for("#create-series-btn").click
+          wait_for("#series-note-detail")
+          entries << snap("series-created", selector: ".column-aside")
 
-        # 11. Series detail, editing note, post-creation
-        wait_for("button.aside-heading-action").click
-        entries << snap("series-editing", selector: ".column-aside")
+          # 11. Series detail, editing note, post-creation
+          wait_for("button.aside-heading-action").click
+          entries << snap("series-editing", selector: ".column-aside")
+        else
+          # 8. Standalone new-series page
+          entries << snap("new-series") do
+            goto "#{@base}/series/new"
+            wait_for("form[action='/series']")
+          end
+
+          # 9. New series form filled in
+          fill_new_series_standalone(
+            note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
+            interval_count: 2,
+            interval_unit: "week"
+          )
+          entries << snap("new-series-editing")
+
+          # 10. Series detail, post-creation
+          wait_for("button[type='submit']").click
+          wait_for("#series-note-detail")
+          entries << snap("series-created")
+
+          # 11. Series detail, editing note, post-creation
+          wait_for("button.aside-heading-action").click
+          entries << snap("series-editing")
+        end
 
         # 12. Series detail of a series with multiple finished tasks
         noted_ids = Task.exclude(completed_at: nil).where(Sequel.like(:note, "%*%")).select(:series_id)
@@ -209,7 +268,7 @@ module Ketchup
         existing.focus
         entries << snap("task-edit-note", selector: ".column-aside")
 
-        (@output_dir / "manifest.json").write(JSON.pretty_generate(entries.map(&:to_h)))
+        entries
       end
 
       def default_server(browser)
@@ -271,10 +330,10 @@ module Ketchup
       def snap(name, selector: nil, area: nil)
         yield if block_given?
 
-        file = @output_dir / "#{name}.png"
+        file = @viewport_dir / "#{name}.png"
         if area
           @browser.screenshot(path: file.to_s, area: area)
-        elsif selector
+        elsif selector && element_visible?(selector)
           @browser.execute("document.querySelector(#{selector.to_json}).style.padding = '1.5rem'")
           @browser.screenshot(path: file.to_s, selector: selector)
           @browser.execute("document.querySelector(#{selector.to_json}).style.padding = ''")
@@ -282,8 +341,13 @@ module Ketchup
           @browser.screenshot(path: file.to_s)
         end
         url_path = URI.parse(@browser.current_url).path
-        @logger.info(name)
-        Entry.new(name: name, path: url_path, selector: selector)
+        @logger.info("#{@viewport}/#{name}")
+        Entry.new(name: name, path: url_path, selector: selector, viewport: @viewport)
+      end
+
+      def element_visible?(selector)
+        @browser.evaluate("(function() { var el = document.querySelector(#{selector.to_json}); if (!el) return null; var r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; })()")
+          &.then { |rect| rect["width"] > 0 && rect["height"] > 0 } || false
       end
 
       def fill_new_series(note:, interval_count: 1, interval_unit: "day")
@@ -298,6 +362,21 @@ module Ketchup
         count_input.type(interval_count.to_s)
 
         unit_select = @browser.at_css("select[name='interval_unit']")
+        unit_select.select(interval_unit)
+      end
+
+      def fill_new_series_standalone(note:, interval_count: 1, interval_unit: "day")
+        textarea = @browser.at_css("textarea#note")
+        textarea.focus
+        textarea.evaluate("this.value = #{note.to_json}")
+        textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
+
+        count_input = @browser.at_css("input#interval_count")
+        count_input.focus
+        count_input.evaluate("this.value = ''")
+        count_input.type(interval_count.to_s)
+
+        unit_select = @browser.at_css("select#interval_unit")
         unit_select.select(interval_unit)
       end
     end
