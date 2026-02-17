@@ -287,6 +287,18 @@ module Ketchup
         existing.focus
         entries << snap("task-edit-note", selector: ".column-aside")
 
+        # 15. User detail sidebar
+        user = User.first(login: "snapshot@example.com")
+        entries << snap("user-detail", selector: ".column-aside") do
+          goto "#{@base}/users/#{user.id}"
+          wait_for(".column-aside")
+        end
+
+        # 16. User detail editing
+        @browser.at_css('[x-on\\:click="editing = true"]').click
+        wait_for('input[name="email"]')
+        entries << snap("user-editing", selector: ".column-aside")
+
         entries
       end
 
