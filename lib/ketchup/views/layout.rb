@@ -16,6 +16,7 @@ module Views
           meta(charset: "utf-8")
           meta(name: "viewport", content: "width=device-width, initial-scale=1")
           title { @title }
+          link(rel: "icon", href: "/favicon.svg", type: "image/svg+xml")
           link(rel: "stylesheet", href: "/css/reset.css")
           link(rel: "stylesheet", href: "/css/utopia.css")
           link(rel: "stylesheet", href: "/css/app.css")
