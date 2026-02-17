@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-ENV["DATABASE_URL"] = ":memory:"
+require_relative "test_helper"
 
 require "minitest/autorun"
 

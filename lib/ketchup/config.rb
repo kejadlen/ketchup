@@ -4,15 +4,15 @@
 require "securerandom"
 
 Config = Data.define(
-  :database_url, #: String
+  :database_url,   #: String
   :session_secret, #: String
-  :auth_header, #: String
-  :sentry, #: SentryConfig?
-  :otel, #: OtelConfig?
-  :default_user, #: String?
-  :commit_sha, #: String?
-  :change_id, #: String?
-  :build_date, #: String?
+  :auth_header,    #: String
+  :sentry,         #: SentryConfig?
+  :otel,           #: OtelConfig?
+  :default_user,   #: String?
+  :commit_sha,     #: String?
+  :change_id,      #: String?
+  :build_date,     #: String?
 )
 
 class Config

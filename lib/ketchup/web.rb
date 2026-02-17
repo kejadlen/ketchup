@@ -14,10 +14,13 @@ class Web < Roda
   plugin :sessions, secret: CONFIG.session_secret
   plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
   plugin :error_handler do |e|
-    raise e unless e.is_a?(Sequel::NoMatchingRow)
-
-    response.status = 404
-    ""
+    case e
+    when Sequel::NoMatchingRow
+      response.status = 404
+      ""
+    else
+      raise
+    end
   end
 
   def current_user

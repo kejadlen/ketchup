@@ -11,7 +11,14 @@ class User < Sequel::Model
   many_through_many :tasks, [[:series, :user_id, :id]], right_primary_key: :series_id
 
   def active_tasks
-    Task.active.for_user(self)
+    tasks_dataset
+      .where(completed_at: nil)
+      .select_all(:tasks)
+      .select_append(
+        Sequel[:series][:note],
+        Sequel[:series][:interval_unit],
+        Sequel[:series][:interval_count]
+      )
   end
 
   def overdue_tasks
@@ -100,23 +107,5 @@ class Task < Sequel::Model
                   end
       Task.create(series_id: series.id, due_date: next_date)
     end
-  end
-
-  dataset_module do
-    def active
-      where(completed_at: nil)
-    end
-
-    def for_user(user)
-      join(:series, id: :series_id)
-        .where(Sequel[:series][:user_id] => user.id)
-        .select_all(:tasks)
-        .select_append(
-          Sequel[:series][:note],
-          Sequel[:series][:interval_unit],
-          Sequel[:series][:interval_count]
-        )
-    end
-
   end
 end
