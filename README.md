@@ -4,7 +4,19 @@ A personal tool for tracking recurring tasks and catching up on what's overdue.
 
 ## Overview
 
-Ketchup is for me and my family. Authentication comes from a reverse proxy header (configurable via `AUTH_HEADER`, defaults to `Remote-User`) — there's no in-app login. The stack is Ruby 4, Roda, Sequel, SQLite, Phlex, Alpine.js, and OverType (for inline markdown editing). Puma serves it, Sentry tracks errors, and OpenTelemetry sends traces to Honeycomb.
+Ketchup tracks recurring obligations — "Call Mom every 2 weeks," "Renew passport every 10 years" — and surfaces what's overdue so nothing slips through the cracks. It's a personal tool for me and my family, not a SaaS product.
+
+There's no login screen. Users are identified by a reverse proxy header (`AUTH_HEADER`, defaults to `Remote-User`), so authentication is handled at the network layer — originally Tailscale, but any authenticating proxy works.
+
+The stack is deliberately simple:
+
+- **Roda** — routing
+- **Sequel** + **SQLite** — persistence
+- **Phlex** — views
+- **Alpine.js** — client-side reactivity
+- **OverType** — inline markdown editing
+- **Puma** — app server
+- **Sentry** / **OpenTelemetry** — optional observability
 
 ## Domain model
 
@@ -14,15 +26,7 @@ Each Series has one active **Task** at a time. Completing a task creates the nex
 
 A **User** owns Series and, transitively, Tasks. The `many_through_many` association on User provides direct task access for ownership scoping.
 
-## Main view
-
-The dashboard has three columns:
-
-1. Overdue — tasks past due, sorted by urgency (how late relative to interval) or by date
-2. Upcoming — a calendar view showing tasks by due date, with month headers, weekend highlighting, and toggleable empty days for context
-3. Sidebar — either a new series form or the selected series detail, where notes, interval, and due date are editable inline
-
-Sort order and calendar preferences persist across sessions via Alpine's Persist plugin.
+There's a [screenshot gallery](https://kejadlen.github.io/ketchup/) — it's auto-generated for development, not a showcase, but it gives a sense of the UI.
 
 ## Primary use case
 
@@ -68,4 +72,5 @@ docker build -t ketchup .
 docker run -p 9292:9292 -e TZ=America/Los_Angeles ketchup
 ```
 
-Set `TZ` to match the users' timezone — `Date.today` controls which tasks show as overdue.
+> [!IMPORTANT]
+> Set `TZ` to match the users' timezone. The app uses `Date.today` to decide what's overdue — if the container's timezone is wrong, tasks will flip between overdue and upcoming at the wrong time of day.
