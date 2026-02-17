@@ -123,6 +123,7 @@ jobs:
           gh release download "${{ needs.build.outputs.version }}" --pattern "snapshots.tar.gz" --output snapshots.tar.gz
           tar xzf snapshots.tar.gz -C gallery
           bundle exec rake "snapshots:gallery[gallery,gallery/index.html]"
+          cp public/favicon.svg gallery/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: gallery
