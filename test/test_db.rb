@@ -12,8 +12,8 @@ class TestDB < Minitest::Test
     DB[:series].delete
     @now = Time.now
     DB[:users]
-      .insert_conflict(target: :login, update: { name: "Test", updated_at: @now })
-      .insert(login: "test@example.com", name: "Test", created_at: @now, updated_at: @now)
+      .insert_conflict(target: :login, update: { updated_at: @now })
+      .insert(login: "test@example.com", created_at: @now, updated_at: @now)
     @user_id = DB[:users].first(login: "test@example.com")[:id]
   end
 

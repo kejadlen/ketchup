@@ -14,9 +14,9 @@ class TestSole < Minitest::Test
   end
 
   def test_sole_returns_single_record
-    User.create(login: "alice@example.com", name: "Alice")
+    User.create(login: "alice@example.com")
     user = User.where(login: "alice@example.com").sole
-    assert_equal "Alice", user.name
+    assert_equal "alice@example.com", user.login
   end
 
   def test_sole_raises_on_no_records
@@ -26,8 +26,8 @@ class TestSole < Minitest::Test
   end
 
   def test_sole_raises_on_multiple_records
-    User.create(login: "alice@example.com", name: "Alice")
-    User.create(login: "bob@example.com", name: "Bob")
+    User.create(login: "alice@example.com")
+    User.create(login: "bob@example.com")
 
     assert_raises(Sequel::Plugins::Sole::TooManyRows) do
       User.dataset.sole

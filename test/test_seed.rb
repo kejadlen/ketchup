@@ -14,7 +14,7 @@ class TestSeed < Minitest::Test
   end
 
   def test_seed_creates_series_and_tasks
-    user = User.create(login: "test@example.com", name: "Test")
+    user = User.create(login: "test@example.com")
     series_data = [
       {
         note: "Call Mom",
@@ -37,7 +37,7 @@ class TestSeed < Minitest::Test
   end
 
   def test_seed_creates_completed_history
-    user = User.create(login: "test@example.com", name: "Test")
+    user = User.create(login: "test@example.com")
     series_data = [
       {
         note: "Water plants",

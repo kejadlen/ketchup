@@ -325,7 +325,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   font-size: var(--step--2);
   padding: 1px 4px;
   margin: -2px -5px;
-  border: 1px solid transparent;
+  border: 1px solid #ddd;
   border-radius: 3px;
   background: transparent;
   color: #444;
@@ -340,6 +340,11 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   border-color: #999;
   outline: none;
   background: #fff;
+}
+
+.detail-placeholder {
+  color: #999;
+  font-size: var(--step--2);
 }
 
 .detail-edit-interval {

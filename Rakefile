@@ -31,7 +31,7 @@ task :seed do
   user = User.first || abort("No users yet — visit the app first to create one")
 
   Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
-  puts "Seeded #{Ketchup::Seed::DATA.length} series for #{user.name} (#{user.login})"
+  puts "Seeded #{Ketchup::Seed::DATA.length} series for #{user.login}"
 end
 
 namespace :snapshots do

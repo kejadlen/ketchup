@@ -25,7 +25,7 @@ class Web < Roda
     login = env[rack_header]
     return unless login
 
-    User.find_or_create(login: login) { |u| u.name = login }
+    User.find_or_create(login: login)
   end
 
   route do |r|
@@ -36,6 +36,20 @@ class Web < Roda
 
     r.root do
       Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
+    end
+
+    r.on "users", Integer do |user_id|
+      r.halt 404 unless @user.id == user_id
+
+      r.get do
+        Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token), panel: :user).call
+      end
+
+      r.post "email" do
+        email = r.params["email"].to_s.strip
+        @user.update(email: email.empty? ? nil : email)
+        r.redirect "/users/#{user_id}"
+      end
     end
 
     r.on "series" do

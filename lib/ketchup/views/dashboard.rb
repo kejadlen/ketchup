@@ -7,15 +7,17 @@ require_relative "overdue_column"
 require_relative "upcoming_column"
 require_relative "series_detail"
 require_relative "new_series_form"
+require_relative "user_form"
 
 module Views
   INTERVAL_OPTIONS = Series::INTERVAL_UNITS.map { |u| [u, "#{u}(s)"] }.freeze
 
   class Dashboard < Phlex::HTML
-    def initialize(current_user:, csrf:, series: nil)
+    def initialize(current_user:, csrf:, series: nil, panel: nil)
       @current_user = current_user
       @csrf = csrf
       @series = series
+      @panel = panel
     end
 
     def view_template
@@ -34,6 +36,8 @@ module Views
 
           if @series
             render SeriesDetail.new(series: @series)
+          elsif @panel == :user
+            render UserForm.new(current_user: @current_user, csrf: @csrf)
           else
             render NewSeriesForm.new(csrf: @csrf)
           end

@@ -315,7 +315,7 @@ module Ketchup
         $stderr.reopen(saved_err)
 
         url = "http://127.0.0.1:#{launcher.connected_ports.first}"
-        user = User.find_or_create(login: "snapshot@example.com") { |u| u.name = "Snapshot User" }
+        user = User.find_or_create(login: "snapshot@example.com")
         Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
 
         yield url

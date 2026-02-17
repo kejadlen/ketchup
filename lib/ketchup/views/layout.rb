@@ -35,7 +35,7 @@ module Views
           header(class: "site-header") do
             a(href: "/", class: "site-name") { "Ketchup" }
             a(href: "/series/new", class: "mobile-new-link") { "+ New" }
-            span(class: "user") { @current_user[:name] || @current_user[:login] }
+            a(href: "/users/#{@current_user[:id]}", class: "user") { @current_user[:login] }
           end
           yield
           render_footer

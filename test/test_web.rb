@@ -65,7 +65,7 @@ class TestWeb < Minitest::Test
   def test_root_creates_user_record
     get "/", {}, auth_headers(login: "bob@example.com")
     user = DB[:users].first(login: "bob@example.com")
-    assert_equal "bob@example.com", user[:name]
+    assert user
   end
 
   def test_root_requires_auth
@@ -444,6 +444,50 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
+  def test_get_user_shows_email_form
+    get "/", {}, auth_headers  # create user
+    user_id = DB[:users].first(login: "alice@example.com")[:id]
+
+    get "/users/#{user_id}", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "alice@example.com"
+    assert_includes last_response.body, 'name="email"'
+  end
+
+  def test_post_user_email
+    get "/", {}, auth_headers  # create user
+    user_id = DB[:users].first(login: "alice@example.com")[:id]
+
+    get "/users/#{user_id}", {}, auth_headers
+    token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
+    post "/users/#{user_id}/email", { "_csrf" => token, email: "alice@example.org" }, auth_headers
+    assert last_response.redirect?
+
+    user = DB[:users].first(id: user_id)
+    assert_equal "alice@example.org", user[:email]
+  end
+
+  def test_post_user_email_clears_empty
+    get "/", {}, auth_headers
+    user_id = DB[:users].first(login: "alice@example.com")[:id]
+
+    get "/users/#{user_id}", {}, auth_headers
+    token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
+    post "/users/#{user_id}/email", { "_csrf" => token, email: "" }, auth_headers
+
+    user = DB[:users].first(id: user_id)
+    assert_nil user[:email]
+  end
+
+  def test_get_user_rejects_other_user
+    get "/", {}, auth_headers  # create alice
+    get "/", {}, auth_headers(login: "bob@example.com")  # create bob
+    bob_id = DB[:users].first(login: "bob@example.com")[:id]
+
+    get "/users/#{bob_id}", {}, auth_headers
+    assert_equal 404, last_response.status
+  end
+
   def test_csrf_rejects_post_without_token
     get "/", {}, auth_headers  # establish session
     post "/series", {
@@ -456,12 +500,10 @@ class TestWeb < Minitest::Test
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
-    get "/", {}, headers  # establish session and get tokens
+    get "/", {}, headers  # establish session
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post path, params.merge("_csrf" => token), headers
   end
-
-
 
   def create_series(note:, interval_unit:, interval_count:, first_due_date:, headers: auth_headers)
     get "/", {}, headers  # establish session and get tokens
