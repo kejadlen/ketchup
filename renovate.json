@@ -3,7 +3,7 @@
   "extends": ["config:recommended"],
   "packageRules": [
     {
-      "matchManagers": ["bundler", "dockerfile", "github-actions", "ruby-version"],
+      "matchManagers": ["bundler", "dockerfile", "github-actions"],
       "schedule": ["every weekend"]
     }
   ],
