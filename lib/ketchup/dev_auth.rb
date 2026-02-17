@@ -2,17 +2,14 @@
 
 module Ketchup
   class DevAuth
-    def initialize(app, default_user)
+    def initialize(app, login)
       @app = app
-      @login = default_user.login
-      @name = default_user.name
+      @login = login
+      @rack_header = "HTTP_#{CONFIG.auth_header.upcase.tr("-", "_")}"
     end
 
     def call(env)
-      unless env["HTTP_TAILSCALE_USER_LOGIN"]
-        env["HTTP_TAILSCALE_USER_LOGIN"] = @login
-        env["HTTP_TAILSCALE_USER_NAME"] = @name
-      end
+      env[@rack_header] ||= @login
       @app.call(env)
     end
   end

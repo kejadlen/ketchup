@@ -294,8 +294,7 @@ module Ketchup
         require_relative "dev_auth"
 
         app = Rack::Builder.app do
-          default_user = Config::DefaultUser.new(login: "snapshot@example.com", name: "Snapshot User")
-          use Ketchup::DevAuth, default_user
+          use Ketchup::DevAuth, "snapshot@example.com"
           run Web.freeze.app
         end
 

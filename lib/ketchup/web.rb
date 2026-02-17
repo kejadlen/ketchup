@@ -21,11 +21,11 @@ class Web < Roda
   end
 
   def current_user
-    login = env["HTTP_TAILSCALE_USER_LOGIN"]
+    rack_header = "HTTP_#{CONFIG.auth_header.upcase.tr("-", "_")}"
+    login = env[rack_header]
     return unless login
 
-    name = env["HTTP_TAILSCALE_USER_NAME"]
-    User.find_or_create(login: login) { |u| u.name = name }
+    User.find_or_create(login: login) { |u| u.name = login }
   end
 
   route do |r|
