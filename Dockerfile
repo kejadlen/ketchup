@@ -17,6 +17,7 @@ ARG BUILD_DATE
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV CHANGE_ID=${CHANGE_ID}
 ENV BUILD_DATE=${BUILD_DATE}
+# Set TZ at runtime to control Date.today (e.g. TZ=America/Los_Angeles)
 
 WORKDIR /app
 

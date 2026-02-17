@@ -65,5 +65,7 @@ GitHub Actions runs tests, builds a Docker image tagged `YYYYMMDD-<sha>`, and pu
 
 ```
 docker build -t ketchup .
-docker run -p 9292:9292 ketchup
+docker run -p 9292:9292 -e TZ=America/Los_Angeles ketchup
 ```
+
+Set `TZ` to match the users' timezone — `Date.today` controls which tasks show as overdue.
