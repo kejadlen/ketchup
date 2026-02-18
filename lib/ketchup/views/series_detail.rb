@@ -4,37 +4,39 @@ require "phlex"
 
 module Views
   class SeriesDetail < Phlex::HTML
-    def initialize(series:)
+    def initialize(series:, csrf: nil)
       @series = series
+      @csrf = csrf
     end
 
     def view_template
       active_task = @series.active_task
-      div(class: "column column-aside", "x-data": "{ editing: false }") do
-        div(class: "column-header") do
-          h2(class: "aside-heading") do
-            a(href: "/", class: "aside-heading-action") { "New" }
+      div(class: "panel-inner", "x-data": "{ editing: false }") do
+        div(class: "panel-header") do
+          a(href: "/", class: "panel-close", "aria-label": "Close") { "←" }
+          div(class: "panel-actions") do
+            button(
+              class: "panel-action",
+              "x-show": "!editing",
+              "x-on:click": "editing = true; $dispatch('start-editing')"
+            ) { "Edit" }
+            button(
+              class: "panel-action",
+              "x-show": "editing",
+              "x-on:click": "editing = false; $dispatch('stop-editing')"
+            ) { "Done" }
           end
-          button(
-            class: "aside-heading-action",
-            "x-show": "!editing",
-            "x-on:click": "editing = true; $dispatch('start-editing')"
-          ) { "Edit" }
-          button(
-            class: "aside-heading-action",
-            "x-show": "editing",
-            "x-on:click": "editing = false; $dispatch('stop-editing')"
-          ) { "Done" }
         end
 
-        div(class: "task-detail") do
+        div(class: "panel-body") do
           div(
             id: "series-note-detail",
-            class: "task-detail-note",
+            class: "series-note",
             "data-value": @series.note || "",
             "data-series-id": @series.id.to_s
           )
-          dl(class: "task-detail-fields") do
+
+          dl(class: "detail-fields") do
             dt { "Repeat every" }
             dd("x-show": "!editing") do
               plain interval_text(@series.interval_count, @series.interval_unit)
@@ -82,7 +84,7 @@ module Views
 
               if active_task.urgency > 0
                 dt { "Urgency" }
-                dd { "#{format("%.1f", active_task.urgency)}x" }
+                dd { "#{format("%.1f", active_task.urgency)}×" }
               end
             end
           end

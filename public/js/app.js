@@ -59,6 +59,24 @@ function saveSeriesField(seriesId, field, value) {
 OverType.setTheme({ name: "ketchup", colors: { text: "#1a1a1a" } })
 
 document.addEventListener("alpine:init", () => {
+  // Panel open/close
+  Alpine.data("panel", () => ({
+    open: false,
+
+    init() {
+      // Open panel if server rendered content into it
+      if (this.$el.querySelector(".panel-inner")) {
+        this.$nextTick(() => { this.open = true })
+      }
+    },
+
+    close() {
+      this.open = false
+      // Navigate back to root after close animation
+      setTimeout(() => { window.location.href = "/" }, 250)
+    },
+  }))
+
   Alpine.data("sortable", () => ({
     sort: Alpine.$persist("urgency"),
 
@@ -221,8 +239,4 @@ document.addEventListener("alpine:init", () => {
       })
     }
   }
-
-  Alpine.data("upcoming", () => ({
-    showEmpty: Alpine.$persist(false),
-  }))
 })

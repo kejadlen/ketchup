@@ -18,16 +18,22 @@ class TestWeb < Minitest::Test
     DB[:users].delete
   end
 
-  def test_root_shows_new_series_form
-    get "/", {}, auth_headers
+  def test_new_series_page
+    get "/series/new", {}, auth_headers
     assert last_response.ok?
     assert_includes last_response.body, "New Series"
     assert_includes last_response.body, 'action="/series"'
   end
 
+  def test_root_links_to_new_series
+    get "/", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "/series/new"
+  end
+
   def test_root_shows_empty_state
     get "/", {}, auth_headers
-    assert_includes last_response.body, "Nothing overdue."
+    assert_includes last_response.body, "All caught up!"
     assert_includes last_response.body, "Nothing upcoming."
   end
 
@@ -274,7 +280,7 @@ class TestWeb < Minitest::Test
     assert last_response.ok?
     assert_includes last_response.body, "2 weeks"
     assert_includes last_response.body, "2026-03-01"
-    assert_includes last_response.body, "task-selected"
+    assert_includes last_response.body, "task-card--selected"
   end
 
   def test_get_series_shows_completed_history
@@ -500,13 +506,13 @@ class TestWeb < Minitest::Test
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
-    get "/", {}, headers  # establish session
+    get "/series/new", {}, headers  # establish session and get CSRF token
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post path, params.merge("_csrf" => token), headers
   end
 
   def create_series(note:, interval_unit:, interval_count:, first_due_date:, headers: auth_headers)
-    get "/", {}, headers  # establish session and get tokens
+    get "/series/new", {}, headers  # establish session and get CSRF token
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/series", {
       _csrf: token,

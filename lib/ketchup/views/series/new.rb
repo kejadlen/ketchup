@@ -20,8 +20,8 @@ module Views
             form(method: "post", action: "/series") do
               input(type: "hidden", name: "_csrf", value: @csrf.call("/series"))
               div(class: "field") do
-                label(for: "note") { "Note" }
-                textarea(id: "note", name: "note", rows: 3, required: true)
+                label(for: "series-note-editor") { "Note" }
+                div(id: "series-note-editor", class: "series-note series-note--editable")
               end
 
               div(class: "field") do
@@ -37,7 +37,6 @@ module Views
                 end
               end
 
-              # Maybe we should update this if we change the interval?
               div(class: "field") do
                 label(for: "first_due_date") { "First due date" }
                 input(
@@ -46,7 +45,7 @@ module Views
                 )
               end
 
-              button(type: "submit") { "Create" }
+              button(type: "submit", id: "create-series-btn", disabled: true) { "Create" }
             end
           end
         end

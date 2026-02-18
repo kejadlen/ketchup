@@ -123,142 +123,90 @@ module Ketchup
 
       private
 
-      # Snapshots, grouped by flow. Indentation means "then, without
-      # navigating away." Each leaf is one screenshot.
+      # Snapshots grouped by flow:
       #
       # Dashboard
-      #   full page
-      #   complete a task, return to dashboard, full page
-      #   overdue column only
-      #   switch overdue sort to date, overdue column only
-      #   upcoming column only
-      #   toggle calendar view, upcoming column only
-      #   scroll to bottom of calendar, upcoming column only
+      #   full page (overdue + upcoming, single column)
+      #   complete a task, return to dashboard
+      #   overdue sorted by urgency (main column)
+      #   overdue sorted by date (main column)
       #
-      # New series
-      #   empty sidebar form
-      #   fill in note (markdown) and interval, sidebar
-      #   submit, sidebar after redirect to series detail
-      #   click Edit, sidebar with note in editing mode
+      # New series (panel)
+      #   panel with empty form
+      #   panel with filled-in note + interval
+      #   panel after submission (series detail)
+      #   panel in editing mode
       #
-      # Existing series (one with noted + un-noted completed tasks)
-      #   series detail with task history
-      #   TODO: hover over un-noted task to reveal "add a note...", sidebar
-      #   click "add a note", type markdown, sidebar
-      #   focus an existing note's editor, sidebar
+      # Series detail (panel)
+      #   series with task history
+      #   add a task note
+      #   edit existing task note
+      #
+      # User settings (panel)
+      #   user detail
+      #   user editing
       def run_capture(width:, height:)
         entries = []
 
-        # 1. Whole dashboard
+        # 1. Dashboard — full page
         entries << snap("dashboard") do
           goto @base
-          wait_for(".home")
+          wait_for(".dashboard")
         end
 
-        # 2. Whole dashboard after completing a task
+        # 2. Dashboard after completing a task
         wait_for(".complete-btn").click
         wait_for("#series-note-detail")
         goto @base
-        wait_for(".home")
+        wait_for(".dashboard")
         entries << snap("dashboard-after-complete")
 
-        # 3. Overdue column, sorted by urgency
+        # 3. Overdue sorted by urgency
         # Explicitly select Urgency — Alpine.$persist may carry "date"
         # from a previous viewport run.
-        overdue_sel = '[x-data="sortable"]'
-        wait_for("#{overdue_sel} .sort-toggle button:last-child").click
-        entries << snap("overdue-urgency", selector: overdue_sel)
+        sortable_sel = '[x-data="sortable"]'
+        urgency_btn = @browser.at_css("#{sortable_sel} .sort-toggle button:last-child") ||
+                      @browser.at_css("#{sortable_sel} .sort-toggle button:nth-child(1)")
+        urgency_btn.click if urgency_btn
+        entries << snap("overdue-urgency", selector: ".main-column")
 
-        # 4. Overdue column, sorted by date
-        wait_for("#{overdue_sel} .sort-toggle button:first-child").click
-        entries << snap("overdue-date", selector: overdue_sel)
+        # 4. Overdue sorted by date
+        date_btn = @browser.at_css("#{sortable_sel} .sort-toggle button:first-child") ||
+                   @browser.at_css("#{sortable_sel} .sort-toggle button:nth-child(2)")
+        date_btn.click if date_btn
+        entries << snap("overdue-date", selector: ".main-column")
 
-        # Toggle back to urgency so the persist doesn't bleed into
-        # the next viewport run.
-        wait_for("#{overdue_sel} .sort-toggle button:last-child").click
+        # Reset to urgency sort
+        urgency_btn = @browser.at_css("#{sortable_sel} .sort-toggle button:last-child") ||
+                      @browser.at_css("#{sortable_sel} .sort-toggle button:nth-child(1)")
+        urgency_btn.click if urgency_btn
 
-        # 5. Upcoming column (list view)
-        # Resize viewport to page height so headless Chrome renders
-        # content below the fold (it won't paint outside the viewport).
-        upcoming_sel = '[x-data="upcoming"]'
-        with_rendered_page(width, height) do
-          entries << snap("upcoming", selector: upcoming_sel)
+        # 5. New series — navigate to standalone page
+        entries << snap("new-series") do
+          goto "#{@base}/series/new"
+          wait_for("form[action='/series']")
         end
 
-        # 6. Upcoming column, calendar view (top)
-        # Toggle calendar on, then temporarily hide items past one
-        # viewport-height so the selector capture stays compact.
-        wait_for("#{upcoming_sel} .sort-toggle button").click
-        wait_for(".calendar-day-empty")
-        hide_upcoming_items_past(upcoming_sel, height)
-        with_rendered_page(width, height) do
-          entries << snap("upcoming-calendar", selector: upcoming_sel)
-        end
-        restore_hidden_items
+        # 6. New series form filled in
+        fill_new_series_standalone(
+          note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
+          interval_count: 2,
+          interval_unit: "week"
+        )
+        entries << snap("new-series-editing")
 
-        # 7. Upcoming column, calendar view (bottom)
-        # Hide items before the horizon marker, keeping a few rows of
-        # context above it so the screenshot shows the transition from
-        # regular calendar into the far-future section.
-        hide_upcoming_items_before_horizon(upcoming_sel, height)
-        with_rendered_page(width, height) do
-          entries << snap("upcoming-calendar-bottom", selector: upcoming_sel)
-        end
-        restore_hidden_items
+        # 7. Series detail after creation — submit the form
+        wait_for("#create-series-btn:not([disabled])").click
+        wait_for("#series-note-detail")
+        # Wait for panel to be visible
+        wait_for(".panel-inner")
+        entries << snap("series-created")
 
-        # Toggle calendar off — Alpine.$persist keeps showEmpty in
-        # localStorage, which would bleed into the next viewport run.
-        wait_for("#{upcoming_sel} .sort-toggle button").click
+        # 8. Series detail in editing mode
+        wait_for("button.panel-action").click
+        entries << snap("series-editing")
 
-        # Steps 8-11: on desktop, these use the inline sidebar on the
-        # dashboard. On mobile, series creation uses the standalone
-        # /series/new page and the detail view stacks at the top.
-        if element_visible?(".column-aside")
-          # 8. Sidebar (new series)
-          entries << snap("new-series", selector: ".column-aside")
-
-          # 9. New series form filled in (with markdown), not created yet
-          fill_new_series(
-            note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
-            interval_count: 2,
-            interval_unit: "week"
-          )
-          entries << snap("new-series-editing", selector: ".column-aside")
-
-          # 10. Series detail, post-creation
-          wait_for("#create-series-btn").click
-          wait_for("#series-note-detail")
-          entries << snap("series-created", selector: ".column-aside")
-
-          # 11. Series detail, editing note, post-creation
-          wait_for("button.aside-heading-action").click
-          entries << snap("series-editing", selector: ".column-aside")
-        else
-          # 8. Standalone new-series page
-          entries << snap("new-series") do
-            goto "#{@base}/series/new"
-            wait_for("form[action='/series']")
-          end
-
-          # 9. New series form filled in
-          fill_new_series_standalone(
-            note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
-            interval_count: 2,
-            interval_unit: "week"
-          )
-          entries << snap("new-series-editing")
-
-          # 10. Series detail, post-creation
-          wait_for("button[type='submit']").click
-          wait_for("#series-note-detail")
-          entries << snap("series-created")
-
-          # 11. Series detail, editing note, post-creation
-          wait_for("button.aside-heading-action").click
-          entries << snap("series-editing")
-        end
-
-        # 12. Series detail of a series with multiple finished tasks
+        # 9. Series detail with task history
         noted_ids = Task.exclude(completed_at: nil).where(Sequel.like(:note, "%*%")).select(:series_id)
         unnoted_ids = Task.exclude(completed_at: nil).where(note: nil).select(:series_id)
         series_with_history = Series.first(
@@ -269,10 +217,7 @@ module Ketchup
           wait_for(".task-history")
         end
 
-        # TODO: hover snapshot — CSS :hover doesn't trigger in headless Chrome
-        #   via mouse.move; need another approach to reveal ".task-history-add-note"
-
-        # 13. Task: Add task note (with markdown)
+        # 10. Add a task note
         @browser.evaluate(<<~JS)
           document.querySelector('.task-history-item:has(.task-history-note-editor[data-value=""]) .task-history-add-note').click()
         JS
@@ -280,24 +225,24 @@ module Ketchup
         note_text = "Checked *both* lines\n- Front needs **new filter**\n- Back is fine"
         textarea.evaluate("this.value = #{note_text.to_json}")
         textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
-        entries << snap("task-add-note", selector: ".column-aside")
+        entries << snap("task-add-note", selector: ".panel-content")
 
-        # 14. Task: Edit task note (with markdown)
+        # 11. Edit existing task note
         existing = @browser.at_css('.task-history-note-editor:not([data-value=""]) textarea')
         existing.focus
-        entries << snap("task-edit-note", selector: ".column-aside")
+        entries << snap("task-edit-note", selector: ".panel-content")
 
-        # 15. User detail sidebar
+        # 12. User detail
         user = User.first(login: "snapshot@example.com")
-        entries << snap("user-detail", selector: ".column-aside") do
+        entries << snap("user-detail") do
           goto "#{@base}/users/#{user.id}"
-          wait_for(".column-aside")
+          wait_for(".panel-inner")
         end
 
-        # 16. User detail editing
+        # 13. User editing
         @browser.at_css('[x-on\\:click="editing = true"]').click
         wait_for('input[name="email"]')
-        entries << snap("user-editing", selector: ".column-aside")
+        entries << snap("user-editing")
 
         entries
       end
@@ -380,23 +325,8 @@ module Ketchup
           &.then { |rect| rect["width"] > 0 && rect["height"] > 0 } || false
       end
 
-      def fill_new_series(note:, interval_count: 1, interval_unit: "day")
-        textarea = @browser.at_css("#series-note-editor textarea")
-        textarea.focus
-        textarea.evaluate("this.value = #{note.to_json}")
-        textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
-
-        count_input = @browser.at_css("input[name='interval_count']")
-        count_input.focus
-        count_input.evaluate("this.value = ''")
-        count_input.type(interval_count.to_s)
-
-        unit_select = @browser.at_css("select[name='interval_unit']")
-        unit_select.select(interval_unit)
-      end
-
       def fill_new_series_standalone(note:, interval_count: 1, interval_unit: "day")
-        textarea = @browser.at_css("textarea#note")
+        textarea = wait_for("#series-note-editor textarea")
         textarea.focus
         textarea.evaluate("this.value = #{note.to_json}")
         textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
@@ -410,47 +340,6 @@ module Ketchup
         unit_select.select(interval_unit)
       end
 
-      # Hide calendar list items whose top edge exceeds +cutoff_px+ from
-      # the column's top, so a selector capture stays compact.
-      def hide_upcoming_items_past(selector, cutoff_px)
-        @browser.evaluate(<<~JS)
-          (function() {
-            var col = document.querySelector(#{selector.to_json});
-            var cutoff = col.getBoundingClientRect().top + #{cutoff_px};
-            var items = col.querySelectorAll('.task-list > li');
-            var toHide = [];
-            items.forEach(function(li) {
-              if (li.getBoundingClientRect().top > cutoff) toHide.push(li);
-            });
-            toHide.forEach(function(li) {
-              li.dataset.snapshotHidden = '1';
-              li.style.display = 'none';
-            });
-          })()
-        JS
-      end
-
-      # Hide calendar list items above the "3 months" horizon marker,
-      # keeping roughly 30 % of a viewport's worth of context above it.
-      def hide_upcoming_items_before_horizon(selector, viewport_h)
-        @browser.evaluate(<<~JS)
-          (function() {
-            var horizon = document.querySelector('.calendar-horizon');
-            if (!horizon) return;
-            var cutoff = horizon.getBoundingClientRect().top - #{(viewport_h * 0.3).to_i};
-            var items = document.querySelector(#{selector.to_json}).querySelectorAll('.task-list > li');
-            var toHide = [];
-            items.forEach(function(li) {
-              if (li.getBoundingClientRect().bottom < cutoff) toHide.push(li);
-            });
-            toHide.forEach(function(li) {
-              li.dataset.snapshotHidden = '1';
-              li.style.display = 'none';
-            });
-          })()
-        JS
-      end
-
       # Temporarily resize the viewport to the full page height so
       # headless Chrome paints everything, then restore after the block.
       def with_rendered_page(width, height)
@@ -459,15 +348,6 @@ module Ketchup
         yield
       ensure
         @browser.resize(width: width, height: height) if page_h > height
-      end
-
-      def restore_hidden_items
-        @browser.evaluate(<<~JS)
-          document.querySelectorAll('[data-snapshot-hidden]').forEach(function(el) {
-            el.style.display = '';
-            delete el.dataset.snapshotHidden;
-          });
-        JS
       end
     end
   end
