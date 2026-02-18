@@ -98,9 +98,18 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 @media (max-width: 48rem) {
+  .site-header,
+  .site-footer,
+  .wrapper {
+    padding-inline: var(--space-xs);
+  }
+
   .home {
     grid-template-columns: 1fr;
     gap: var(--space-l);
+    padding: var(--space-m) var(--space-m);
+    max-width: none;
+    margin-inline: 0;
   }
 
   .column-aside {
