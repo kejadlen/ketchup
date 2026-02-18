@@ -6,6 +6,7 @@ require "roda"
 require_relative "models"
 require_relative "views/dashboard"
 require_relative "views/series/new"
+require_relative "views/series_panel"
 
 class Web < Roda
   plugin :halt
@@ -91,6 +92,10 @@ class Web < Roda
 
       r.on Integer do |series_id|
         @series = @user.series_dataset.where(id: series_id).sole
+
+        r.get "panel" do
+          Views::SeriesPanel.new(series: @series, csrf: method(:csrf_token)).call
+        end
 
         r.is do
           r.get do
