@@ -535,6 +535,19 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, 'x-data="panel"'
   end
 
+  def test_header_shows_view_nav
+    get "/", {}, auth_headers
+    assert_includes last_response.body, 'href="/"'
+    assert_includes last_response.body, 'href="/focus"'
+    assert_includes last_response.body, 'href="/calendar"'
+    assert_includes last_response.body, 'href="/agenda"'
+  end
+
+  def test_header_highlights_active_view
+    get "/", {}, auth_headers
+    assert_includes last_response.body, "view-link--active"
+  end
+
   def test_csrf_rejects_post_without_token
     get "/", {}, auth_headers  # establish session
     post "/series", {

@@ -79,6 +79,21 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #555;
 }
 
+.view-link {
+  font-size: var(--step--1);
+  color: #999;
+  text-decoration: none;
+}
+
+.view-link:hover {
+  color: #555;
+}
+
+.view-link--active {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
 /* -------------------- */
 /* Site footer */
 /* -------------------- */

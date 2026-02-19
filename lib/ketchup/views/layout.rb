@@ -4,9 +4,10 @@ require "phlex"
 
 module Views
   class Layout < Phlex::HTML
-    def initialize(current_user:, title: "Ketchup")
+    def initialize(current_user:, title: "Ketchup", active_view: :list)
       @current_user = current_user
       @title = title
+      @active_view = active_view
     end
 
     def view_template(&)
@@ -35,6 +36,12 @@ module Views
           header(class: "site-header") do
             a(href: "/", class: "site-name") { "Ketchup" }
             nav(class: "site-nav") do
+              view_links.each do |path, label, view_key|
+                a(
+                  href: path,
+                  class: ["view-link", ("view-link--active" if @active_view == view_key)]
+                ) { label }
+              end
               a(href: "/series/new", class: "header-action") { "+ New" }
               a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
             end
@@ -55,6 +62,15 @@ module Views
     end
 
     private
+
+    def view_links
+      [
+        ["/", "List", :list],
+        ["/focus", "Focus", :focus],
+        ["/calendar", "Calendar", :calendar],
+        ["/agenda", "Agenda", :agenda],
+      ]
+    end
 
     def render_footer
       config = CONFIG
