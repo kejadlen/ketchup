@@ -595,6 +595,25 @@ class TestWeb < Minitest::Test
     assert_equal "/focus", last_response["Location"]
   end
 
+  def test_calendar_view_renders
+    get "/calendar", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "calendar-grid"
+  end
+
+  def test_calendar_shows_tasks_on_due_date
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: Date.today.to_s)
+
+    get "/calendar", {}, auth_headers
+    assert_includes last_response.body, "Call Mom"
+  end
+
+  def test_calendar_view_highlights_active
+    get "/calendar", {}, auth_headers
+    assert_includes last_response.body, "view-link--active"
+  end
+
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
