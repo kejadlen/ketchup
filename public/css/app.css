@@ -17,11 +17,11 @@
 /* -------------------- */
 
 body {
-  font-family: system-ui, sans-serif;
-  font-size: var(--step-0);
+  font-family: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  font-size: var(--step--1);
   line-height: 1.5;
-  color: #1a1a1a;
-  background: #fff;
+  color: #222;
+  background: #fcfcfc;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -42,55 +42,58 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .site-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-s);
-  padding: var(--space-xs) var(--grid-gutter);
-  border-block-end: 1px solid #e5e5e5;
+  align-items: baseline;
+  padding: var(--space-xs) var(--space-l);
+  font-size: var(--step--2);
 }
 
 .site-name {
-  font-weight: 700;
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.03em;
+  text-decoration: none;
 }
 
 .site-nav {
+  flex: 1;
   display: flex;
-  align-items: center;
+  justify-content: center;
+  align-items: baseline;
   gap: var(--space-s);
 }
 
 .header-action {
-  font-size: var(--step--1);
-  color: #555;
+  color: #bbb;
   text-decoration: none;
+  letter-spacing: 0.03em;
 }
 
 .header-action:hover {
-  color: #1a1a1a;
+  color: #222;
 }
 
 .header-user {
-  font-size: var(--step--1);
-  color: #999;
+  color: #ddd;
   text-decoration: none;
+  letter-spacing: 0.03em;
 }
 
 .header-user:hover {
-  color: #555;
+  color: #999;
 }
 
 .view-link {
-  font-size: var(--step--1);
-  color: #999;
+  color: #bbb;
   text-decoration: none;
+  letter-spacing: 0.03em;
 }
 
 .view-link:hover {
-  color: #555;
+  color: #888;
 }
 
 .view-link--active {
-  color: #1a1a1a;
+  color: #c00;
   font-weight: 600;
 }
 
@@ -100,10 +103,9 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .site-footer {
   margin-block-start: auto;
-  border-block-start: 1px solid #e5e5e5;
-  padding: var(--space-xs) var(--grid-gutter);
-  font-size: var(--step--2);
-  color: #999;
+  padding: var(--space-xs) var(--space-l);
+  font-size: 10px;
+  color: #ddd;
   text-align: center;
 }
 
@@ -119,9 +121,9 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .main-column {
   flex: 1;
-  max-width: 36rem;
+  max-width: 32rem;
   margin-inline: auto;
-  padding: var(--space-m) var(--grid-gutter);
+  padding: var(--space-m) var(--space-l);
 }
 
 /* -------------------- */
@@ -134,11 +136,9 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
+  gap: var(--space-2xs);
   margin-block-end: var(--space-xs);
-  padding-block-end: var(--space-3xs);
-  border-block-end: 1px solid #e5e5e5;
 }
 
 .section-title {
@@ -148,22 +148,29 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .section-title-text {
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #999;
+}
+
+.section-header::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #f0f0f0;
 }
 
 .section-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.4em;
-  height: 1.4em;
-  padding: 0 0.35em;
-  font-size: var(--step--2);
-  font-weight: 600;
-  line-height: 1;
-  color: #fff;
-  background: #c0392b;
-  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #c00;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-header--overdue .section-title-text {
+  color: #c00;
 }
 
 /* -------------------- */
@@ -214,9 +221,9 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .date-label {
-  font-size: var(--step--1);
-  font-weight: 600;
-  color: #555;
+  font-size: 10px;
+  color: #bbb;
+  letter-spacing: 0.03em;
 }
 
 .empty {
@@ -232,39 +239,32 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .task-card {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-xs);
-  padding: var(--space-2xs) var(--space-2xs);
-  border-radius: 6px;
+  padding: 7px 0;
   cursor: pointer;
   transition: background 0.1s;
+  position: relative;
 }
 
 .task-card:hover {
-  background: #f5f5f5;
+  background: #f8f8f8;
+  margin-inline: -6px;
+  padding-inline: 6px;
 }
 
 .task-card--selected {
-  background: #f0f0f0;
-  box-shadow: inset 3px 0 0 #1a1a1a;
+  background: #f5f5f5;
+  margin-inline: -6px;
+  padding-inline: 6px;
 }
 
 .task-card--overdue {
-  padding: var(--space-xs) var(--space-s);
-  margin-inline: calc(-1 * var(--space-2xs));
-  border: 1px solid #f0e0de;
-  border-radius: 8px;
-  background: #fefafa;
+  /* No decorative borders — spacing-driven */
 }
 
 .task-card--overdue:hover {
-  background: #fdf5f5;
-  border-color: #e8d0cd;
-}
-
-.task-card--overdue + .task-item .task-card--overdue,
-.task-item + .task-item .task-card--overdue {
-  margin-block-start: var(--space-3xs);
+  background: #fff5f5;
 }
 
 .task-body {
@@ -272,14 +272,13 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-name {
-  font-weight: 600;
-  font-size: var(--step--1);
+  font-weight: 500;
   display: block;
 }
 
 .task-card--overdue .task-name {
-  color: #c0392b;
-  font-size: var(--step-0);
+  color: #c00;
+  font-weight: 500;
 }
 
 .task-meta {
@@ -290,10 +289,11 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-urgency {
-  font-size: var(--step--1);
-  font-weight: 700;
-  color: #c0392b;
+  font-size: var(--step--2);
+  font-weight: 500;
+  color: #c00;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .task-date {
@@ -311,14 +311,14 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .complete-btn {
-  width: 28px;
-  height: 28px;
+  width: 9px;
+  height: 9px;
   padding: 0;
-  border: 2px solid #ccc;
+  border: 1.5px solid #ccc;
   border-radius: 50%;
   background: transparent;
   color: transparent;
-  font-size: 14px;
+  font-size: 7px;
   line-height: 1;
   cursor: pointer;
   transition: all 0.15s;
@@ -326,25 +326,26 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  top: -1px;
 }
 
 .complete-btn:hover {
-  border-color: #27ae60;
-  color: #27ae60;
-  background: #eafaf1;
+  border-color: #090;
+  color: #090;
+  background: #f0fff0;
 }
 
 .task-card--overdue .complete-btn {
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  border-color: #e0a9a5;
+  width: 10px;
+  height: 10px;
+  border-color: #c00;
 }
 
 .task-card--overdue .complete-btn:hover {
-  border-color: #27ae60;
-  color: #27ae60;
-  background: #eafaf1;
+  border-color: #090;
+  color: #090;
+  background: #f0fff0;
 }
 
 /* -------------------- */
@@ -362,9 +363,9 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   z-index: 100;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-inline-start: 1px solid #e5e5e5;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.06);
+  background: #fcfcfc;
+  border-inline-start: 1px solid #f0f0f0;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.04);
 }
 
 .panel--open {
@@ -396,7 +397,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   justify-content: space-between;
   align-items: center;
   padding: var(--space-s) var(--space-m);
-  border-block-end: 1px solid #e5e5e5;
+  border-block-end: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
 
@@ -732,11 +733,11 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 .focus-urgency {
-  font-size: var(--step--2);
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #c0392b;
+  letter-spacing: 0.12em;
+  color: #c00;
   margin-bottom: var(--space-2xs);
 }
 
@@ -763,16 +764,17 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
   align-items: center;
   gap: var(--space-2xs);
   padding: var(--space-xs) var(--space-xl);
-  background: #1a1a1a;
-  color: #fff;
+  background: #222;
+  color: #fcfcfc;
   border-radius: 99px;
-  font-size: var(--step-1);
-  font-weight: 600;
+  font-size: var(--step-0);
+  font-weight: 500;
   transition: background 0.15s;
+  letter-spacing: 0.03em;
 }
 
 .focus-complete-btn:hover {
-  background: #333;
+  background: #444;
 }
 
 /* -------------------- */
@@ -837,30 +839,30 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 .calendar-day--today {
-  background: #f0f7ff;
-  border-color: #4a90d9;
+  background: #fff8f8;
+  border-color: #c00;
   border-width: 2px;
 }
 
 .calendar-day-num {
   font-size: var(--step--2);
   font-weight: 400;
-  color: #555;
+  color: #999;
   display: block;
   margin-bottom: 2px;
 }
 
 .calendar-day--today .calendar-day-num {
-  font-weight: 700;
-  color: #4a90d9;
+  font-weight: 600;
+  color: #c00;
 }
 
 .calendar-pill {
   display: block;
   font-size: 10px;
   padding: 1px 4px;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #f5f5f5;
+  color: #222;
   border-radius: 3px;
   white-space: nowrap;
   overflow: hidden;
@@ -871,8 +873,8 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 .calendar-pill--overdue {
-  background: #fde8e6;
-  color: #c0392b;
+  background: #fff0f0;
+  color: #c00;
 }
 
 /* -------------------- */
@@ -900,12 +902,12 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 .agenda-column--today {
-  background: #f0f7ff;
-  border-color: #4a90d9;
+  background: #fff8f8;
+  border-color: #c00;
 }
 
 .agenda-overdue {
-  background: #fefafa;
+  background: #fcfcfc;
   border-color: #f0e0de;
 }
 
@@ -919,15 +921,15 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 .agenda-column-header--overdue {
-  color: #c0392b;
+  color: #c00;
 }
 
 .agenda-pill {
   display: block;
   font-size: var(--step--2);
   padding: 3px 6px;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #f5f5f5;
+  color: #222;
   border-radius: 4px;
   margin-bottom: 3px;
   text-decoration: none;
@@ -938,9 +940,9 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 .agenda-pill--overdue {
-  background: #fde8e6;
-  color: #c0392b;
-  font-weight: 600;
+  background: #fff0f0;
+  color: #c00;
+  font-weight: 500;
 }
 
 /* -------------------- */
