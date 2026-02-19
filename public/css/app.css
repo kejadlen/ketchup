@@ -702,6 +702,74 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 /* -------------------- */
+/* Focus view */
+/* -------------------- */
+
+.focus-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--space-xl) var(--space-m);
+  text-align: center;
+}
+
+.focus-progress {
+  font-size: var(--step--1);
+  color: #999;
+  margin-bottom: var(--space-l);
+}
+
+.focus-task {
+  margin-bottom: var(--space-l);
+}
+
+.focus-urgency {
+  font-size: var(--step--2);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #c0392b;
+  margin-bottom: var(--space-2xs);
+}
+
+.focus-name {
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--space-3xs);
+}
+
+.focus-interval {
+  font-size: var(--step-0);
+  color: #888;
+}
+
+.focus-form {
+  display: inline-flex;
+}
+
+.focus-complete-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-xl);
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 99px;
+  font-size: var(--step-1);
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.focus-complete-btn:hover {
+  background: #333;
+}
+
+/* -------------------- */
 /* Mobile responsive */
 /* -------------------- */
 

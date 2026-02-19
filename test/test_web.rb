@@ -557,6 +557,44 @@ class TestWeb < Minitest::Test
     assert_equal 403, last_response.status
   end
 
+  def test_focus_view_shows_overdue_task
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    get "/focus", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "Call Mom"
+    assert_includes last_response.body, "focus-task"
+  end
+
+  def test_focus_view_redirects_when_caught_up
+    get "/focus", {}, auth_headers
+    assert last_response.redirect?
+    assert_includes last_response["Location"], "/"
+  end
+
+  def test_focus_view_shows_most_urgent_first
+    create_series(note: "Low urgency", interval_unit: "month", interval_count: "1",
+                  first_due_date: (Date.today - 1).to_s)
+    create_series(note: "High urgency", interval_unit: "day", interval_count: "1",
+                  first_due_date: (Date.today - 10).to_s)
+
+    get "/focus", {}, auth_headers
+    assert_includes last_response.body, "High urgency"
+  end
+
+  def test_complete_from_focus_redirects_to_focus
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete",
+              { "return_to" => "/focus" }, auth_headers
+    assert last_response.redirect?
+    assert_equal "/focus", last_response["Location"]
+  end
+
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)

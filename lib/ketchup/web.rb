@@ -5,6 +5,7 @@ require "roda"
 
 require_relative "models"
 require_relative "views/dashboard"
+require_relative "views/focus"
 require_relative "views/series/new"
 require_relative "views/series_panel"
 require_relative "views/user_panel"
@@ -41,6 +42,21 @@ class Web < Roda
 
     r.root do
       Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
+    end
+
+    r.get "focus" do
+      overdue = @user.overdue_tasks.all.sort_by { |t| -t.urgency }
+      if overdue.empty?
+        r.redirect "/"
+      else
+        Views::Focus.new(
+          current_user: @user,
+          task: overdue.first,
+          csrf: method(:csrf_token),
+          position: 1,
+          total: overdue.size
+        ).call
+      end
     end
 
     r.on "users", Integer do |user_id|
@@ -155,7 +171,12 @@ class Web < Roda
             r.halt 422 unless @task[:completed_at].nil?
             @task.complete!(today: Date.today)
 
-            r.redirect "/series/#{series_id}"
+            return_to = r.params["return_to"]
+            if return_to && return_to.start_with?("/")
+              r.redirect return_to
+            else
+              r.redirect "/series/#{series_id}"
+            end
           end
 
           r.patch "note" do
