@@ -90,6 +90,16 @@ module Views
           end
 
           unless @series.completed_tasks.empty?
+            stats = @series.completion_stats
+            div(class: "panel-stats") do
+              dl(class: "detail-fields") do
+                dt { "Streak" }
+                dd { stats[:streak].to_s }
+                dt { "On-time" }
+                dd { "#{stats[:on_time_pct]}%" }
+              end
+            end
+
             div(class: "task-history") do
               h3 { "History" }
               ul do

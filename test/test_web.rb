@@ -637,6 +637,18 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "Haircut"
   end
 
+  def test_series_panel_shows_stats
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: (Date.today - 7).to_s)
+
+    series = DB[:series].first
+    task = DB[:tasks].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    get "/series/#{series[:id]}/panel", {}, auth_headers
+    assert_includes last_response.body, "panel-stats"
+  end
+
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)

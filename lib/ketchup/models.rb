@@ -48,6 +48,20 @@ class Series < Sequel::Model
       .all
   end
 
+  def completion_stats
+    completed = completed_tasks
+    return { streak: 0, on_time_pct: 100, total: 0 } if completed.empty?
+
+    streak = 0
+    on_time = 0
+    completed.each_with_index do |t, i|
+      on_time += 1 if t[:completed_at].to_date <= t[:due_date]
+      streak += 1 if i == streak && t[:completed_at].to_date <= t[:due_date]
+    end
+
+    { streak: streak, on_time_pct: (on_time * 100.0 / completed.size).round, total: completed.size }
+  end
+
   def self.create_with_first_task(user:, note:, interval_unit:, interval_count:, first_due_date:)
     DB.transaction do
       series = create(

@@ -550,6 +550,12 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   width: 100%;
 }
 
+.panel-stats {
+  margin-block-start: var(--space-m);
+  padding-block-start: var(--space-s);
+  border-block-start: 1px solid #f0f0f0;
+}
+
 /* -------------------- */
 /* Task history */
 /* -------------------- */
