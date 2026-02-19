@@ -25,7 +25,11 @@ module Views
           ) { "✓" }
         end
         div(class: "task-body") do
-          a(href: "/series/#{@task[:series_id]}", class: "task-name") { name }
+          a(
+            href: "/series/#{@task[:series_id]}",
+            class: "task-name",
+            "x-on:click.prevent": "$dispatch('open-panel', { seriesId: #{@task[:series_id]} })"
+          ) { name }
           if @overdue
             span(class: "task-meta") do
               plain meta_text

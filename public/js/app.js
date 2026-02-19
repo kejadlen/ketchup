@@ -58,22 +58,111 @@ function saveSeriesField(seriesId, field, value) {
 
 OverType.setTheme({ name: "ketchup", colors: { text: "#1a1a1a" } })
 
+function initPanelEditors(container) {
+  const noteDetail = container.querySelector("#series-note-detail")
+  if (noteDetail) {
+    const seriesId = noteDetail.dataset.seriesId
+    const initialNote = noteDetail.dataset.value || ""
+
+    const [editor] = new OverType(noteDetail, {
+      value: initialNote,
+      placeholder: "Series note...",
+      autoResize: true,
+      minHeight: 14,
+      padding: "0 4px",
+    })
+
+    const resizeNote = compactOverType(noteDetail)
+
+    const ta = noteDetail.querySelector("textarea")
+    if (ta) {
+      ta.style.pointerEvents = "none"
+      ta.readOnly = true
+
+      ta.addEventListener("blur", () => {
+        const note = editor.getValue().trim()
+        if (note === (initialNote || "").trim()) return
+        saveSeriesField(seriesId, "note", note).then(() => location.reload())
+      })
+
+      container.addEventListener("start-editing", () => {
+        ta.style.pointerEvents = ""
+        ta.readOnly = false
+        ta.focus()
+        if (resizeNote) requestAnimationFrame(resizeNote)
+      })
+
+      container.addEventListener("stop-editing", () => {
+        const note = editor.getValue().trim()
+        if (note !== (initialNote || "").trim()) {
+          saveSeriesField(seriesId, "note", note).then(() => location.reload())
+          return
+        }
+        ta.style.pointerEvents = "none"
+        ta.readOnly = true
+        if (resizeNote) requestAnimationFrame(resizeNote)
+      })
+    }
+  }
+}
+
 document.addEventListener("alpine:init", () => {
   // Panel open/close
   Alpine.data("panel", () => ({
     open: false,
+    loading: false,
 
     init() {
-      // Open panel if server rendered content into it
-      if (this.$el.querySelector(".panel-inner")) {
-        this.$nextTick(() => { this.open = true })
+      // Auto-open panel if server set data-open-series on the dashboard
+      const dashboard = document.querySelector("[data-open-series]")
+      if (dashboard) {
+        const seriesId = dashboard.dataset.openSeries
+        if (seriesId) this.show(seriesId)
+      }
+
+      // Auto-open user panel
+      const userDash = document.querySelector("[data-open-user]")
+      if (userDash) {
+        const userId = userDash.dataset.openUser
+        if (userId) this.showUser(userId)
+      }
+
+      // Listen for custom event from task cards
+      window.addEventListener("open-panel", (e) => {
+        this.show(e.detail.seriesId)
+      })
+    },
+
+    async show(seriesId) {
+      this.loading = true
+      this.open = true
+      try {
+        const resp = await fetch(`/series/${seriesId}/panel`)
+        if (!resp.ok) return
+        this.$refs.content.innerHTML = await resp.text()
+        initPanelEditors(this.$refs.content)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async showUser(userId) {
+      this.loading = true
+      this.open = true
+      try {
+        const resp = await fetch(`/users/${userId}/panel`)
+        if (!resp.ok) return
+        this.$refs.content.innerHTML = await resp.text()
+      } finally {
+        this.loading = false
       }
     },
 
     close() {
       this.open = false
-      // Navigate back to root after close animation
-      setTimeout(() => { window.location.href = "/" }, 250)
+      setTimeout(() => {
+        if (this.$refs.content) this.$refs.content.innerHTML = ""
+      }, 250)
     },
   }))
 
@@ -176,53 +265,6 @@ document.addEventListener("alpine:init", () => {
       }
     },
   }))
-
-  // Series note detail editor — initialized when a series is selected
-  const noteDetail = document.getElementById("series-note-detail")
-  if (noteDetail) {
-    const seriesId = noteDetail.dataset.seriesId
-    const initialNote = noteDetail.dataset.value || ""
-
-    const [editor] = new OverType(noteDetail, {
-      value: initialNote,
-      placeholder: "Series note...",
-      autoResize: true,
-      minHeight: 14,
-      padding: "0 4px",
-    })
-
-    const resizeNote = compactOverType(noteDetail)
-
-    const ta = noteDetail.querySelector("textarea")
-    if (ta) {
-      ta.style.pointerEvents = "none"
-      ta.readOnly = true
-
-      ta.addEventListener("blur", () => {
-        const note = editor.getValue().trim()
-        if (note === (initialNote || "").trim()) return
-        saveSeriesField(seriesId, "note", note).then(() => location.reload())
-      })
-
-      document.addEventListener("start-editing", () => {
-        ta.style.pointerEvents = ""
-        ta.readOnly = false
-        ta.focus()
-        if (resizeNote) requestAnimationFrame(resizeNote)
-      })
-
-      document.addEventListener("stop-editing", () => {
-        const note = editor.getValue().trim()
-        if (note !== (initialNote || "").trim()) {
-          saveSeriesField(seriesId, "note", note).then(() => location.reload())
-          return
-        }
-        ta.style.pointerEvents = "none"
-        ta.readOnly = true
-        if (resizeNote) requestAnimationFrame(resizeNote)
-      })
-    }
-  }
 
   // New series form editor
   const newNoteEl = document.getElementById("series-note-editor")
