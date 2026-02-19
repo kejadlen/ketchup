@@ -547,8 +547,9 @@ class TestWeb < Minitest::Test
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
-    get "/series/new", {}, headers  # establish session and get CSRF token
-    token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
+    get "/", {}, headers
+    escaped = Regexp.escape(path)
+    token = last_response.body[/action="#{escaped}".*?name="_csrf" value="([^"]+)"/m, 1]
     post path, params.merge("_csrf" => token), headers
   end
 
