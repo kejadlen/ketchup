@@ -4,8 +4,6 @@ require "phlex"
 
 require_relative "layout"
 require_relative "task_list"
-require_relative "series_detail"
-require_relative "user_form"
 
 module Views
   INTERVAL_OPTIONS = Series::INTERVAL_UNITS.map { |u| [u, "#{u}(s)"] }.freeze
@@ -19,16 +17,27 @@ module Views
     end
 
     def view_template
-      has_panel = @series || @panel == :user
-      render Layout.new(current_user: @current_user, panel_open: has_panel) do
-        div(class: "dashboard") do
+      render Layout.new(current_user: @current_user) do
+        div(
+          class: "dashboard",
+          **dashboard_data_attrs
+        ) do
           render_main_column
-          render_panel if has_panel
         end
       end
     end
 
     private
+
+    def dashboard_data_attrs
+      if @series
+        { "data-open-series": @series.id.to_s }
+      elsif @panel == :user
+        { "data-open-user": @current_user[:id].to_s }
+      else
+        {}
+      end
+    end
 
     def render_main_column
       overdue = @current_user.overdue_tasks.all.sort_by { |t| -t.urgency }
@@ -41,25 +50,6 @@ module Views
           selected_series: @series,
           csrf: @csrf
         )
-      end
-    end
-
-    def render_panel
-      div(
-        class: "panel",
-        id: "panel",
-        "x-data": "panel",
-        "x-bind:class": "open && 'panel--open'"
-      ) do
-        div(class: "panel-backdrop", "x-on:click": "close()")
-
-        div(class: "panel-content") do
-          if @series
-            render SeriesDetail.new(series: @series, csrf: @csrf)
-          elsif @panel == :user
-            render UserForm.new(current_user: @current_user, csrf: @csrf)
-          end
-        end
       end
     end
   end

@@ -261,14 +261,14 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, 'name="_csrf"'
   end
 
-  def test_series_sidebar_has_new_link
+  def test_get_series_page_has_data_attribute
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, auth_headers
-    assert_includes last_response.body, "New"
-    assert_includes last_response.body, 'href="/"'
+    assert last_response.ok?
+    assert_includes last_response.body, "data-open-series"
   end
 
   def test_get_series_shows_sidebar
@@ -278,12 +278,11 @@ class TestWeb < Minitest::Test
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, auth_headers
     assert last_response.ok?
-    assert_includes last_response.body, "2 weeks"
-    assert_includes last_response.body, "2026-03-01"
     assert_includes last_response.body, "task-card--selected"
+    assert_includes last_response.body, "data-open-series=\"#{series[:id]}\""
   end
 
-  def test_get_series_shows_completed_history
+  def test_get_series_panel_shows_completed_history
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: "2026-03-01")
 
@@ -293,7 +292,8 @@ class TestWeb < Minitest::Test
 
     completed_task = DB[:tasks].first(id: task[:id])
     patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, auth_headers
-    get "/series/#{series[:id]}", {}, auth_headers
+
+    get "/series/#{series[:id]}/panel", {}, auth_headers
     assert last_response.ok?
     assert_includes last_response.body, "Left a message"
     assert_includes last_response.body, "task-history"
@@ -450,21 +450,31 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
-  def test_get_user_shows_email_form
+  def test_get_user_page_has_data_attribute
     get "/", {}, auth_headers  # create user
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
     get "/users/#{user_id}", {}, auth_headers
     assert last_response.ok?
+    assert_includes last_response.body, "data-open-user=\"#{user_id}\""
+  end
+
+  def test_get_user_panel_shows_email_form
+    get "/", {}, auth_headers  # create user
+    user_id = DB[:users].first(login: "alice@example.com")[:id]
+
+    get "/users/#{user_id}/panel", {}, auth_headers
+    assert last_response.ok?
     assert_includes last_response.body, "alice@example.com"
     assert_includes last_response.body, 'name="email"'
+    refute_includes last_response.body, "<!DOCTYPE"
   end
 
   def test_post_user_email
     get "/", {}, auth_headers  # create user
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
-    get "/users/#{user_id}", {}, auth_headers
+    get "/users/#{user_id}/panel", {}, auth_headers
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/users/#{user_id}/email", { "_csrf" => token, email: "alice@example.org" }, auth_headers
     assert last_response.redirect?
@@ -477,7 +487,7 @@ class TestWeb < Minitest::Test
     get "/", {}, auth_headers
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
-    get "/users/#{user_id}", {}, auth_headers
+    get "/users/#{user_id}/panel", {}, auth_headers
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/users/#{user_id}/email", { "_csrf" => token, email: "" }, auth_headers
 
@@ -517,6 +527,12 @@ class TestWeb < Minitest::Test
     series = DB[:series].first
     get "/series/#{series[:id]}/panel", {}, auth_headers(login: "bob@example.com")
     assert_equal 404, last_response.status
+  end
+
+  def test_layout_includes_panel_shell
+    get "/", {}, auth_headers
+    assert_includes last_response.body, 'id="panel"'
+    assert_includes last_response.body, 'x-data="panel"'
   end
 
   def test_csrf_rejects_post_without_token

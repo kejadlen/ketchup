@@ -7,6 +7,7 @@ require_relative "models"
 require_relative "views/dashboard"
 require_relative "views/series/new"
 require_relative "views/series_panel"
+require_relative "views/user_panel"
 
 class Web < Roda
   plugin :halt
@@ -44,6 +45,10 @@ class Web < Roda
 
     r.on "users", Integer do |user_id|
       r.halt 404 unless @user.id == user_id
+
+      r.get "panel" do
+        Views::UserPanel.new(current_user: @user, csrf: method(:csrf_token)).call
+      end
 
       r.get do
         Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token), panel: :user).call

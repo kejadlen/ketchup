@@ -4,10 +4,9 @@ require "phlex"
 
 module Views
   class Layout < Phlex::HTML
-    def initialize(current_user:, title: "Ketchup", panel_open: false)
+    def initialize(current_user:, title: "Ketchup")
       @current_user = current_user
       @title = title
-      @panel_open = panel_open
     end
 
     def view_template(&)
@@ -32,7 +31,7 @@ module Views
                  integrity: "sha384-LXWjKwDZz29o7TduNe+r/UxaolHh5FsSvy2W7bDHSZ8jJeGgDeuNnsDNHoxpSgDi",
                  crossorigin: "anonymous", defer: true)
         end
-        body(class: @panel_open ? "has-panel" : nil) do
+        body do
           header(class: "site-header") do
             a(href: "/", class: "site-name") { "Ketchup" }
             nav(class: "site-nav") do
@@ -41,6 +40,15 @@ module Views
             end
           end
           yield
+          div(
+            id: "panel",
+            class: "panel",
+            "x-data": "panel",
+            "x-bind:class": "open && 'panel--open'"
+          ) do
+            div(class: "panel-backdrop", "x-show": "open", "x-on:click": "close()")
+            div(class: "panel-content", "x-ref": "content")
+          end
           render_footer
         end
       end
