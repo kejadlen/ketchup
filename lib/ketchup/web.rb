@@ -82,7 +82,7 @@ class Web < Roda
       end
 
       r.get do
-        Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token), panel: :user).call
+        Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token), open_user: true).call
       end
 
       r.post "email" do

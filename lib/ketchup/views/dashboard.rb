@@ -9,11 +9,11 @@ module Views
   INTERVAL_OPTIONS = Series::INTERVAL_UNITS.map { |u| [u, "#{u}(s)"] }.freeze
 
   class Dashboard < Phlex::HTML
-    def initialize(current_user:, csrf:, series: nil, panel: nil)
+    def initialize(current_user:, csrf:, series: nil, open_user: false)
       @current_user = current_user
       @csrf = csrf
       @series = series
-      @panel = panel
+      @open_user = open_user
     end
 
     def view_template
@@ -32,7 +32,7 @@ module Views
     def dashboard_data_attrs
       if @series
         { "data-open-series": @series.id.to_s }
-      elsif @panel == :user
+      elsif @open_user
         { "data-open-user": @current_user[:id].to_s }
       else
         {}
