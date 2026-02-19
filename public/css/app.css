@@ -870,6 +870,74 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 }
 
 /* -------------------- */
+/* Agenda view */
+/* -------------------- */
+
+.agenda-view {
+  padding: var(--space-m);
+  overflow-x: auto;
+}
+
+.agenda-columns {
+  display: grid;
+  grid-template-columns: 120px repeat(7, 1fr);
+  gap: 2px;
+  min-width: 640px;
+}
+
+.agenda-column {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: var(--space-3xs);
+  min-height: 12rem;
+}
+
+.agenda-column--today {
+  background: #f0f7ff;
+  border-color: #4a90d9;
+}
+
+.agenda-overdue {
+  background: #fefafa;
+  border-color: #f0e0de;
+}
+
+.agenda-column-header {
+  font-size: var(--step--2);
+  font-weight: 600;
+  color: #888;
+  text-align: center;
+  padding: var(--space-3xs);
+  margin-bottom: var(--space-3xs);
+}
+
+.agenda-column-header--overdue {
+  color: #c0392b;
+}
+
+.agenda-pill {
+  display: block;
+  font-size: var(--step--2);
+  padding: 3px 6px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 4px;
+  margin-bottom: 3px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.agenda-pill--overdue {
+  background: #fde8e6;
+  color: #c0392b;
+  font-weight: 600;
+}
+
+/* -------------------- */
 /* Mobile responsive */
 /* -------------------- */
 

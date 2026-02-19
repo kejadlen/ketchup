@@ -7,6 +7,7 @@ require_relative "models"
 require_relative "views/dashboard"
 require_relative "views/focus"
 require_relative "views/calendar"
+require_relative "views/agenda"
 require_relative "views/series/new"
 require_relative "views/series_panel"
 require_relative "views/user_panel"
@@ -67,6 +68,10 @@ class Web < Roda
                Date.today
              end
       Views::Calendar.new(current_user: @user, csrf: method(:csrf_token), date: date).call
+    end
+
+    r.get "agenda" do
+      Views::Agenda.new(current_user: @user, csrf: method(:csrf_token)).call
     end
 
     r.on "users", Integer do |user_id|

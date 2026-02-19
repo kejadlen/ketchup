@@ -614,6 +614,29 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "view-link--active"
   end
 
+  def test_agenda_view_renders
+    get "/agenda", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "agenda-view"
+  end
+
+  def test_agenda_shows_overdue_column
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    get "/agenda", {}, auth_headers
+    assert_includes last_response.body, "Call Mom"
+    assert_includes last_response.body, "agenda-overdue"
+  end
+
+  def test_agenda_shows_upcoming_on_day
+    create_series(note: "Haircut", interval_unit: "week", interval_count: "6",
+                  first_due_date: Date.today.to_s)
+
+    get "/agenda", {}, auth_headers
+    assert_includes last_response.body, "Haircut"
+  end
+
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
