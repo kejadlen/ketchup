@@ -4,11 +4,12 @@ require "phlex"
 
 module Views
   class TaskCard < Phlex::HTML
-    def initialize(task:, csrf:, selected: false, overdue: false)
+    def initialize(task:, csrf:, selected: false, overdue: false, date_label: nil)
       @task = task
       @csrf = csrf
       @selected = selected
       @overdue = overdue
+      @date_label = date_label
     end
 
     def view_template
@@ -49,6 +50,8 @@ module Views
         end
         if @overdue && @task.urgency > 0
           span(class: "task-urgency") { "#{format("%.1f", @task.urgency)}×" }
+        elsif @date_label
+          span(class: "task-date-label") { @date_label }
         end
       end
     end

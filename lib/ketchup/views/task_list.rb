@@ -61,17 +61,14 @@ module Views
         if @upcoming.empty?
           p(class: "empty") { "Nothing upcoming." }
         else
-          tasks_by_date = @upcoming.group_by { |t| t[:due_date] }
-
           ul(class: "task-list") do
-            tasks_by_date.each do |date, tasks|
-              li(class: "date-header") do
-                span(class: "date-label") { friendly_date(date) }
-              end
-              tasks.each do |task|
-                li(class: "task-item") do
-                  render TaskCard.new(task: task, csrf: @csrf, selected: selected?(task), overdue: false)
-                end
+            @upcoming.each do |task|
+              li(class: "task-item") do
+                render TaskCard.new(
+                  task: task, csrf: @csrf,
+                  selected: selected?(task), overdue: false,
+                  date_label: friendly_date(task[:due_date])
+                )
               end
             end
           end

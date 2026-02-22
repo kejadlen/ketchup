@@ -180,19 +180,10 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .task-item {
 }
 
-.date-header {
-  padding-block-start: var(--space-s);
-  padding-block-end: var(--space-3xs);
-}
-
-.date-header:first-child {
-  padding-block-start: var(--space-2xs);
-}
-
-.date-label {
-  font-size: 10px;
-  color: #bbb;
-  letter-spacing: 0.03em;
+.task-date-label {
+  font-size: var(--step--2);
+  color: #aaa;
+  white-space: nowrap;
 }
 
 .empty {
@@ -290,7 +281,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1.5px solid #ccc;
+  border: 1.5px solid #999;
   border-radius: 3px;
   background: transparent;
   color: transparent;
