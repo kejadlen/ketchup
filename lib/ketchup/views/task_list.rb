@@ -14,7 +14,7 @@ module Views
     end
 
     def view_template
-      div(class: "task-list-container", "x-data": "sortable") do
+      div(class: "task-list-container", "x-data": "") do
         render_overdue
         render_upcoming
         render_completed_today
@@ -27,21 +27,13 @@ module Views
       section(class: "section section--overdue") do
         div(class: "section-header") do
           h2(class: "section-title") do
-            span(class: "section-title-text") { "Overdue" }
-            span(class: "section-count") { @overdue.size.to_s } unless @overdue.empty?
+            span(class: "section-title-text") do
+              plain "Overdue"
+              unless @overdue.empty?
+                plain " (#{@overdue.size})"
+              end
+            end
           end
-          nav(class: "sort-toggle") do
-            button(
-              "x-on:click": "sort = 'urgency'",
-              "x-bind:class": "sort === 'urgency' && 'sort-active'",
-              "x-bind:disabled": "sort === 'urgency'"
-            ) { "Urgency" }
-            button(
-              "x-on:click": "sort = 'date'",
-              "x-bind:class": "sort === 'date' && 'sort-active'",
-              "x-bind:disabled": "sort === 'date'"
-            ) { "Date" }
-          end unless @overdue.empty?
         end
 
         if @overdue.empty?
@@ -49,11 +41,7 @@ module Views
         else
           ul(class: "task-list") do
             @overdue.each do |task|
-              li(
-                class: "task-item",
-                "data-urgency": format("%.4f", task.urgency),
-                "data-due-date": task[:due_date].to_s
-              ) do
+              li(class: "task-item") do
                 render TaskCard.new(task: task, csrf: @csrf, selected: selected?(task), overdue: true)
               end
             end

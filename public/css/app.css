@@ -124,6 +124,8 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   max-width: 32rem;
   margin-inline: auto;
   padding: var(--space-m) var(--space-l);
+  position: relative;
+  z-index: 100;
 }
 
 /* -------------------- */
@@ -148,54 +150,22 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .section-title-text {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--step--1);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #999;
+  letter-spacing: 0.08em;
+  color: #666;
 }
 
 .section-header::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: #f0f0f0;
-}
-
-.section-count {
-  font-size: 10px;
-  font-weight: 500;
-  color: #c00;
-  font-variant-numeric: tabular-nums;
+  background: #ddd;
 }
 
 .section-header--overdue .section-title-text {
   color: #c00;
-}
-
-/* -------------------- */
-/* Sort toggle */
-/* -------------------- */
-
-.sort-toggle {
-  display: flex;
-  gap: var(--space-2xs);
-  font-size: var(--step--1);
-}
-
-.sort-toggle button {
-  all: unset;
-  color: #999;
-  cursor: default;
-}
-
-.sort-toggle button:hover {
-  color: #1a1a1a;
-}
-
-.sort-toggle button.sort-active {
-  color: #1a1a1a;
-  font-weight: 600;
 }
 
 /* -------------------- */
@@ -208,7 +178,6 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-item {
-  padding-block: var(--space-3xs);
 }
 
 .date-header {
@@ -241,20 +210,20 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
   gap: var(--space-xs);
-  padding: 7px 0;
+  padding: calc(7px + var(--space-3xs)) 0;
   cursor: pointer;
   transition: background 0.1s;
   position: relative;
 }
 
 .task-card:hover {
-  background: #f8f8f8;
+  background: #f0f0f0;
   margin-inline: -6px;
   padding-inline: 6px;
 }
 
 .task-card--selected {
-  background: #f5f5f5;
+  background: #ebebeb;
   margin-inline: -6px;
   padding-inline: 6px;
 }
@@ -264,7 +233,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-card--overdue:hover {
-  background: #fff5f5;
+  background: #ffe5e5;
 }
 
 .task-body {
@@ -274,6 +243,13 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .task-name {
   font-weight: 500;
   display: block;
+}
+
+.stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .task-card--overdue .task-name {
@@ -311,14 +287,14 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .complete-btn {
-  width: 9px;
-  height: 9px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: 1.5px solid #ccc;
-  border-radius: 50%;
+  border-radius: 3px;
   background: transparent;
   color: transparent;
-  font-size: 7px;
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
   transition: all 0.15s;
@@ -328,17 +304,18 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   flex-shrink: 0;
   position: relative;
   top: -1px;
+  z-index: 2;
 }
 
 .complete-btn:hover {
   border-color: #090;
   color: #090;
   background: #f0fff0;
+  font-weight: 900;
+  -webkit-text-stroke: 1px;
 }
 
 .task-card--overdue .complete-btn {
-  width: 10px;
-  height: 10px;
   border-color: #c00;
 }
 

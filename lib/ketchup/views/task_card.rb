@@ -27,8 +27,19 @@ module Views
         div(class: "task-body") do
           a(
             href: "/series/#{@task[:series_id]}",
-            class: "task-name",
-            "x-on:click.prevent": "$dispatch('open-panel', { seriesId: #{@task[:series_id]} })"
+            class: "task-name stretched-link",
+            "x-on:click.prevent": "
+              const panel = Alpine.$data(document.getElementById('panel'));
+              if (panel.open && panel.currentSeriesId === '#{@task[:series_id]}') {
+                panel.close();
+                history.pushState(null, '', '/');
+              } else {
+                panel.show('#{@task[:series_id]}');
+                history.pushState(null, '', '/series/#{@task[:series_id]}');
+              }
+              document.querySelectorAll('.task-card--selected').forEach(el => el.classList.remove('task-card--selected'));
+              if (panel.open) $el.closest('.task-card').classList.add('task-card--selected');
+            "
           ) { name }
           if @overdue
             span(class: "task-meta") do
@@ -37,8 +48,7 @@ module Views
           end
         end
         if @overdue && @task.urgency > 0
-          span(class: "task-urgency", "x-show": "sort === 'urgency'") { "#{format("%.1f", @task.urgency)}×" }
-          span(class: "task-date", "x-show": "sort === 'date'") { @task[:due_date].to_s }
+          span(class: "task-urgency") { "#{format("%.1f", @task.urgency)}×" }
         end
       end
     end
@@ -70,7 +80,7 @@ module Views
               "#{months} #{months == 1 ? "month" : "months"} ago"
             end
 
-      "every #{interval} · #{ago}"
+      "every #{interval} · due #{ago}"
     end
   end
 end

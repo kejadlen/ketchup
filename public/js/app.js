@@ -127,13 +127,14 @@ document.addEventListener("alpine:init", () => {
         if (userId) this.showUser(userId)
       }
 
-      // Listen for custom event from task cards
+      // Listen for custom event from other views (agenda, calendar)
       window.addEventListener("open-panel", (e) => {
         this.show(e.detail.seriesId)
       })
     },
 
     async show(seriesId) {
+      this.currentSeriesId = String(seriesId)
       this.loading = true
       this.open = true
       try {
@@ -147,6 +148,7 @@ document.addEventListener("alpine:init", () => {
     },
 
     async showUser(userId) {
+      this.currentSeriesId = null
       this.loading = true
       this.open = true
       try {
@@ -159,34 +161,11 @@ document.addEventListener("alpine:init", () => {
     },
 
     close() {
+      this.currentSeriesId = null
       this.open = false
       setTimeout(() => {
         if (this.$refs.content) this.$refs.content.innerHTML = ""
       }, 250)
-    },
-  }))
-
-  Alpine.data("sortable", () => ({
-    sort: Alpine.$persist("urgency"),
-
-    init() {
-      this.$watch("sort", () => this.reorder())
-      if (this.sort !== "urgency") {
-        this.$nextTick(() => this.reorder())
-      }
-    },
-
-    reorder() {
-      const ul = this.$el.querySelector(".task-list")
-      if (!ul) return
-
-      const items = [...ul.querySelectorAll("li[data-urgency]")]
-      if (this.sort === "urgency") {
-        items.sort((a, b) => parseFloat(b.dataset.urgency) - parseFloat(a.dataset.urgency))
-      } else {
-        items.sort((a, b) => a.dataset.dueDate.localeCompare(b.dataset.dueDate))
-      }
-      items.forEach((li) => ul.appendChild(li))
     },
   }))
 
