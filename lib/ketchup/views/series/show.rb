@@ -22,7 +22,7 @@ module Views
               section(class: "section") do
                 div(class: "section-header") do
                   h2(class: "section-title") do
-                    span(class: "section-title-text") { note_title }
+                    span(class: "section-title-text") { "Series" }
                   end
                 end
 
@@ -46,14 +46,6 @@ module Views
                 end
 
                 unless @series.completed_tasks.empty?
-                  stats = @series.completion_stats
-                  dl(class: "detail-fields") do
-                    dt { "Streak" }
-                    dd { stats[:streak].to_s }
-                    dt { "On-time" }
-                    dd { "#{stats[:on_time_pct]}%" }
-                  end
-
                   div(class: "task-history") do
                     div(class: "section-header") do
                       h2(class: "section-title") do
