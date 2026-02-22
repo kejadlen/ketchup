@@ -9,6 +9,7 @@ require_relative "views/focus"
 require_relative "views/calendar"
 require_relative "views/agenda"
 require_relative "views/series/new"
+require_relative "views/series/show"
 require_relative "views/series_panel"
 require_relative "views/user_panel"
 
@@ -82,7 +83,7 @@ class Web < Roda
       end
 
       r.get do
-        Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token), open_user: true).call
+        Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
       end
 
       r.post "email" do
@@ -135,7 +136,7 @@ class Web < Roda
 
         r.is do
           r.get do
-            Views::Dashboard.new(current_user: @user, series: @series, csrf: method(:csrf_token)).call
+            Views::Series::Show.new(series: @series, current_user: @user, csrf: method(:csrf_token)).call
           end
 
           r.patch do

@@ -56,7 +56,32 @@ function saveSeriesField(seriesId, field, value) {
   })
 }
 
-OverType.setTheme({ name: "ketchup", colors: { text: "#1a1a1a" } })
+OverType.setTheme({
+  name: "ketchup",
+  colors: {
+    bgPrimary: "transparent",
+    bgSecondary: "transparent",
+    text: "#1a1a1a",
+    textPrimary: "#1a1a1a",
+    textSecondary: "#888",
+    h1: "#c00",
+    h2: "#c00",
+    h3: "#c00",
+    strong: "#1a1a1a",
+    em: "#666",
+    link: "#c00",
+    code: "#888",
+    codeBg: "rgba(0, 0, 0, 0.05)",
+    blockquote: "#666",
+    hr: "#ddd",
+    syntaxMarker: "rgba(0, 0, 0, 0.3)",
+    syntax: "#999",
+    cursor: "#c00",
+    selection: "rgba(204, 0, 0, 0.15)",
+    listMarker: "#c00",
+    border: "#ddd",
+  },
+})
 
 function initPanelEditors(container) {
   const noteDetail = container.querySelector("#series-note-detail")
@@ -107,68 +132,6 @@ function initPanelEditors(container) {
 }
 
 document.addEventListener("alpine:init", () => {
-  // Panel open/close
-  Alpine.data("panel", () => ({
-    open: false,
-    loading: false,
-
-    init() {
-      // Auto-open panel if server set data-open-series on the dashboard
-      const dashboard = document.querySelector("[data-open-series]")
-      if (dashboard) {
-        const seriesId = dashboard.dataset.openSeries
-        if (seriesId) this.show(seriesId)
-      }
-
-      // Auto-open user panel
-      const userDash = document.querySelector("[data-open-user]")
-      if (userDash) {
-        const userId = userDash.dataset.openUser
-        if (userId) this.showUser(userId)
-      }
-
-      // Listen for custom event from other views (agenda, calendar)
-      window.addEventListener("open-panel", (e) => {
-        this.show(e.detail.seriesId)
-      })
-    },
-
-    async show(seriesId) {
-      this.currentSeriesId = String(seriesId)
-      this.loading = true
-      this.open = true
-      try {
-        const resp = await fetch(`/series/${seriesId}/panel`)
-        if (!resp.ok) return
-        this.$refs.content.innerHTML = await resp.text()
-        initPanelEditors(this.$refs.content)
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async showUser(userId) {
-      this.currentSeriesId = null
-      this.loading = true
-      this.open = true
-      try {
-        const resp = await fetch(`/users/${userId}/panel`)
-        if (!resp.ok) return
-        this.$refs.content.innerHTML = await resp.text()
-      } finally {
-        this.loading = false
-      }
-    },
-
-    close() {
-      this.currentSeriesId = null
-      this.open = false
-      setTimeout(() => {
-        if (this.$refs.content) this.$refs.content.innerHTML = ""
-      }, 250)
-    },
-  }))
-
   Alpine.data("intervalEditor", (seriesId, initialCount, initialUnit) => ({
     count: initialCount,
     unit: initialUnit,
@@ -215,7 +178,7 @@ document.addEventListener("alpine:init", () => {
         placeholder: "Add a note...",
         autoResize: true,
         minHeight: 14,
-        fontSize: "11px",
+        fontSize: "14px",
         padding: "0 4px",
       })
 
@@ -244,6 +207,9 @@ document.addEventListener("alpine:init", () => {
       }
     },
   }))
+
+  // Series detail page editor
+  initPanelEditors(document)
 
   // New series form editor
   const newNoteEl = document.getElementById("series-note-editor")

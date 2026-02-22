@@ -261,25 +261,15 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, 'name="_csrf"'
   end
 
-  def test_get_series_page_has_data_attribute
+  def test_get_series_page_shows_detail
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, auth_headers
     assert last_response.ok?
-    assert_includes last_response.body, "data-open-series"
-  end
-
-  def test_get_series_shows_sidebar
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: "2026-03-01")
-
-    series = DB[:series].first
-    get "/series/#{series[:id]}", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "task-card--selected"
-    assert_includes last_response.body, "data-open-series=\"#{series[:id]}\""
+    assert_includes last_response.body, "Call Mom"
+    assert_includes last_response.body, "2 weeks"
   end
 
   def test_get_series_panel_shows_completed_history
@@ -450,13 +440,13 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
-  def test_get_user_page_has_data_attribute
+  def test_get_user_page_shows_dashboard
     get "/", {}, auth_headers  # create user
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
     get "/users/#{user_id}", {}, auth_headers
     assert last_response.ok?
-    assert_includes last_response.body, "data-open-user=\"#{user_id}\""
+    assert_includes last_response.body, "alice@example.com"
   end
 
   def test_get_user_panel_shows_email_form
@@ -529,10 +519,9 @@ class TestWeb < Minitest::Test
     assert_equal 404, last_response.status
   end
 
-  def test_layout_includes_panel_shell
+  def test_layout_includes_footer
     get "/", {}, auth_headers
-    assert_includes last_response.body, 'id="panel"'
-    assert_includes last_response.body, 'x-data="panel"'
+    assert_includes last_response.body, "site-footer"
   end
 
   def test_header_shows_view_nav

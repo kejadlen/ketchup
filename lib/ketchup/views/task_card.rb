@@ -4,10 +4,9 @@ require "phlex"
 
 module Views
   class TaskCard < Phlex::HTML
-    def initialize(task:, csrf:, selected: false, overdue: false, date_label: nil)
+    def initialize(task:, csrf:, overdue: false, date_label: nil)
       @task = task
       @csrf = csrf
-      @selected = selected
       @overdue = overdue
       @date_label = date_label
     end
@@ -28,19 +27,7 @@ module Views
         div(class: "task-body") do
           a(
             href: "/series/#{@task[:series_id]}",
-            class: "task-name stretched-link",
-            "x-on:click.prevent": "
-              const panel = Alpine.$data(document.getElementById('panel'));
-              if (panel.open && panel.currentSeriesId === '#{@task[:series_id]}') {
-                panel.close();
-                history.pushState(null, '', '/');
-              } else {
-                panel.show('#{@task[:series_id]}');
-                history.pushState(null, '', '/series/#{@task[:series_id]}');
-              }
-              document.querySelectorAll('.task-card--selected').forEach(el => el.classList.remove('task-card--selected'));
-              if (panel.open) $el.closest('.task-card').classList.add('task-card--selected');
-            "
+            class: "task-name stretched-link"
           ) { name }
           if @overdue
             span(class: "task-meta") do
@@ -61,7 +48,7 @@ module Views
     def task_classes
       classes = ["task-card"]
       classes << "task-card--overdue" if @overdue
-      classes << "task-card--selected" if @selected
+
       classes
     end
 

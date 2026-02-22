@@ -54,15 +54,6 @@ module Views
             a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
           end
           yield
-          div(
-            id: "panel",
-            class: "panel",
-            "x-data": "panel",
-            "x-bind:class": "open && 'panel--open'"
-          ) do
-            div(class: "panel-backdrop", "x-show": "open", "x-on:click": "close()")
-            div(class: "panel-content", "x-ref": "content")
-          end
           render_footer
         end
       end

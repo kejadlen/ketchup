@@ -130,8 +130,6 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   max-width: 32rem;
   margin-inline: auto;
   padding: var(--space-m) var(--space-l);
-  position: relative;
-  z-index: 100;
 }
 
 /* -------------------- */
@@ -587,7 +585,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-history-note-editor {
-  margin-top: 2px;
+  margin-top: var(--space-3xs);
   margin-left: 16px;
   border: 1px solid transparent;
   border-radius: 4px;

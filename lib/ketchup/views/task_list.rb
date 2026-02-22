@@ -6,15 +6,14 @@ require_relative "task_card"
 
 module Views
   class TaskList < Phlex::HTML
-    def initialize(overdue:, upcoming:, csrf:, selected_series: nil)
+    def initialize(overdue:, upcoming:, csrf:)
       @overdue = overdue
       @upcoming = upcoming
       @csrf = csrf
-      @selected_series = selected_series
     end
 
     def view_template
-      div(class: "task-list-container", "x-data": "") do
+      div(class: "task-list-container") do
         render_overdue
         render_upcoming
         render_completed_today
@@ -42,7 +41,7 @@ module Views
           ul(class: "task-list") do
             @overdue.each do |task|
               li(class: "task-item") do
-                render TaskCard.new(task: task, csrf: @csrf, selected: selected?(task), overdue: true)
+                render TaskCard.new(task: task, csrf: @csrf, overdue: true)
               end
             end
           end
@@ -66,7 +65,7 @@ module Views
               li(class: "task-item") do
                 render TaskCard.new(
                   task: task, csrf: @csrf,
-                  selected: selected?(task), overdue: false,
+                  overdue: false,
                   date_label: friendly_date(task[:due_date])
                 )
               end
@@ -94,8 +93,6 @@ module Views
       end
     end
 
-    def selected?(task)
-      @selected_series && @selected_series.id == task[:series_id]
-    end
+
   end
 end

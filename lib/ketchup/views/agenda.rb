@@ -70,8 +70,7 @@ module Views
       name = task[:note].lines.first&.strip || task[:note]
       a(
         href: "/series/#{task[:series_id]}",
-        class: ["agenda-pill", ("agenda-pill--overdue" if overdue)],
-        "x-on:click.prevent": "$dispatch('open-panel', { seriesId: #{task[:series_id]} })"
+        class: ["agenda-pill", ("agenda-pill--overdue" if overdue)]
       ) { name }
     end
   end
