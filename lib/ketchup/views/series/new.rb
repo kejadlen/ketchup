@@ -13,7 +13,7 @@ module Views
       end
 
       def view_template
-        render Layout.new(current_user: @current_user, title: "New Series — Ketchup") do
+        render Layout.new(current_user: @current_user, title: "New Series — Ketchup", active_view: :new) do
           div(class: "wrapper flow") do
             h1 { "New Series" }
 

@@ -46,9 +46,12 @@ module Views
                   class: ["view-link", ("view-link--active" if @active_view == view_key)]
                 ) { label }
               end
-              a(href: "/series/new", class: "header-action") { "+ New" }
-              a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
+              a(
+                href: "/series/new",
+                class: ["header-action", ("header-action--active" if @active_view == :new)]
+              ) { "+New" }
             end
+            a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
           end
           yield
           div(

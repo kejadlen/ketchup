@@ -45,6 +45,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   align-items: baseline;
   padding: var(--space-xs) var(--space-l);
   font-size: var(--step--2);
+  border-block-end: 1px solid #ddd;
 }
 
 .site-name {
@@ -63,7 +64,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .header-action {
-  color: #bbb;
+  color: #888;
   text-decoration: none;
   letter-spacing: 0.03em;
 }
@@ -72,8 +73,13 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #222;
 }
 
+.header-action--active {
+  color: #c00;
+  font-weight: 600;
+}
+
 .header-user {
-  color: #ddd;
+  color: #888;
   text-decoration: none;
   letter-spacing: 0.03em;
 }
@@ -83,7 +89,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .view-link {
-  color: #bbb;
+  color: #888;
   text-decoration: none;
   letter-spacing: 0.03em;
 }
