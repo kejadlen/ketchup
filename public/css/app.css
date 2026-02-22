@@ -433,10 +433,13 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .series-note {
   color: #444;
-  margin-block-end: var(--space-m);
   line-height: 1.4;
   border: 1px solid transparent;
   border-radius: 4px;
+}
+
+.panel .series-note {
+  margin-block-end: var(--space-m);
 }
 
 .series-note--editable {
