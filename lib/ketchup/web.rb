@@ -10,7 +10,6 @@ require_relative "views/calendar"
 require_relative "views/agenda"
 require_relative "views/series/new"
 require_relative "views/series/show"
-require_relative "views/series_panel"
 require_relative "views/user_panel"
 
 class Web < Roda
@@ -129,10 +128,6 @@ class Web < Roda
 
       r.on Integer do |series_id|
         @series = @user.series_dataset.where(id: series_id).sole
-
-        r.get "panel" do
-          Views::SeriesPanel.new(series: @series, csrf: method(:csrf_token)).call
-        end
 
         r.is do
           r.get do

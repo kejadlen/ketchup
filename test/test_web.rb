@@ -272,23 +272,6 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "2 weeks"
   end
 
-  def test_get_series_panel_shows_completed_history
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
-                  first_due_date: "2026-03-01")
-
-    task = DB[:tasks].first
-    series = DB[:series].first
-    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
-
-    completed_task = DB[:tasks].first(id: task[:id])
-    patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Left a message" }, auth_headers
-
-    get "/series/#{series[:id]}/panel", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "Left a message"
-    assert_includes last_response.body, "task-history"
-  end
-
   def test_get_series_requires_own_series
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
@@ -491,31 +474,6 @@ class TestWeb < Minitest::Test
     bob_id = DB[:users].first(login: "bob@example.com")[:id]
 
     get "/users/#{bob_id}", {}, auth_headers
-    assert_equal 404, last_response.status
-  end
-
-  def test_get_series_panel_returns_fragment
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: "2026-03-01")
-
-    series = DB[:series].first
-    get "/series/#{series[:id]}/panel", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "Call Mom"
-    assert_includes last_response.body, "panel-inner"
-    # Fragment — no <html>, no Layout wrapper
-    refute_includes last_response.body, "<!DOCTYPE"
-  end
-
-  def test_get_series_panel_requires_own_series
-    create_series(
-      note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01",
-      headers: auth_headers(login: "alice@example.com")
-    )
-
-    series = DB[:series].first
-    get "/series/#{series[:id]}/panel", {}, auth_headers(login: "bob@example.com")
     assert_equal 404, last_response.status
   end
 
