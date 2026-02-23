@@ -5,9 +5,6 @@ require "roda"
 
 require_relative "models"
 require_relative "views/dashboard"
-require_relative "views/focus"
-require_relative "views/calendar"
-require_relative "views/agenda"
 require_relative "views/series/new"
 require_relative "views/series/show"
 require_relative "views/user/show"
@@ -47,31 +44,15 @@ class Web < Roda
     end
 
     r.get "focus" do
-      overdue = @user.overdue_tasks.all.sort_by { |t| -t.urgency }
-      if overdue.empty?
-        r.redirect "/"
-      else
-        Views::Focus.new(
-          current_user: @user,
-          task: overdue.first,
-          csrf: method(:csrf_token),
-          position: 1,
-          total: overdue.size
-        ).call
-      end
+      r.redirect "/"
     end
 
     r.get "calendar" do
-      date = begin
-               Date.parse(r.params["date"].to_s)
-             rescue Date::Error
-               Date.today
-             end
-      Views::Calendar.new(current_user: @user, csrf: method(:csrf_token), date: date).call
+      r.redirect "/"
     end
 
     r.get "agenda" do
-      Views::Agenda.new(current_user: @user, csrf: method(:csrf_token)).call
+      r.redirect "/"
     end
 
     r.on "users", Integer do |user_id|

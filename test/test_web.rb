@@ -34,27 +34,36 @@ class TestWeb < Minitest::Test
   def test_root_shows_empty_state
     get "/", {}, auth_headers
     assert_includes last_response.body, "All caught up!"
-    assert_includes last_response.body, "Nothing upcoming."
   end
 
-  def test_root_shows_active_tasks
-    create_series(note: "Call Mom", first_due_date: "2026-03-01", interval_unit: "week", interval_count: "2")
+  def test_root_shows_overdue_task_in_focus
+    create_series(note: "Call Mom", first_due_date: (Date.today - 3).to_s,
+                  interval_unit: "week", interval_count: "2")
 
     get "/", {}, auth_headers
     assert_includes last_response.body, "Call Mom"
-    assert_includes last_response.body, "Mar 1"
+    assert_includes last_response.body, "Next up"
+  end
+
+  def test_root_shows_upcoming_task_in_agenda
+    create_series(note: "Call Mom", first_due_date: Date.today.to_s,
+                  interval_unit: "week", interval_count: "2")
+
+    get "/", {}, auth_headers
+    assert_includes last_response.body, "Call Mom"
+    assert_includes last_response.body, "agenda-day-pill"
   end
 
   def test_root_only_shows_own_tasks
     create_series(
       note: "Alice task", interval_unit: "week", interval_count: "1",
-      first_due_date: "2026-03-01",
+      first_due_date: (Date.today - 1).to_s,
       headers: auth_headers(login: "alice@example.com")
     )
 
     create_series(
       note: "Bob task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01",
+      first_due_date: (Date.today - 1).to_s,
       headers: auth_headers(login: "bob@example.com")
     )
 
@@ -164,7 +173,7 @@ class TestWeb < Minitest::Test
 
   def test_complete_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: "2026-03-01")
+                  first_due_date: (Date.today - 3).to_s)
 
     task = DB[:tasks].first
     series = DB[:series].first
@@ -207,7 +216,7 @@ class TestWeb < Minitest::Test
   def test_complete_task_requires_own_task
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01",
+      first_due_date: (Date.today - 1).to_s,
       headers: auth_headers(login: "alice@example.com")
     )
 
@@ -235,7 +244,7 @@ class TestWeb < Minitest::Test
 
   def test_task_card_links_to_series
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: "2026-03-01")
+                  first_due_date: (Date.today - 3).to_s)
 
     series = DB[:series].first
     get "/", {}, auth_headers
@@ -245,17 +254,17 @@ class TestWeb < Minitest::Test
 
   def test_task_card_has_complete_form
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: "2026-03-01")
+                  first_due_date: (Date.today - 3).to_s)
 
     task = DB[:tasks].first
-    get "/", {}, auth_headers
     series = DB[:series].first
+    get "/", {}, auth_headers
     assert_includes last_response.body, "action=\"/series/#{series[:id]}/tasks/#{task[:id]}/complete\""
   end
 
   def test_task_card_has_csrf_token
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: "2026-03-01")
+                  first_due_date: (Date.today - 3).to_s)
 
     get "/", {}, auth_headers
     assert_includes last_response.body, 'name="_csrf"'
@@ -291,7 +300,7 @@ class TestWeb < Minitest::Test
 
   def test_patch_note_saves_on_completed_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
-                  first_due_date: "2026-03-01")
+                  first_due_date: (Date.today - 3).to_s)
 
     task = DB[:tasks].first
     series = DB[:series].first
@@ -319,7 +328,7 @@ class TestWeb < Minitest::Test
   def test_patch_note_requires_own_task
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01",
+      first_due_date: (Date.today - 1).to_s,
       headers: auth_headers(login: "alice@example.com")
     )
 
@@ -473,17 +482,10 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "site-footer"
   end
 
-  def test_header_shows_view_nav
+  def test_header_links_home_and_new
     get "/", {}, auth_headers
     assert_includes last_response.body, 'href="/"'
-    assert_includes last_response.body, 'href="/focus"'
-    assert_includes last_response.body, 'href="/calendar"'
-    assert_includes last_response.body, 'href="/agenda"'
-  end
-
-  def test_header_highlights_active_view
-    get "/", {}, auth_headers
-    assert_includes last_response.body, "view-link--active"
+    assert_includes last_response.body, 'href="/series/new"'
   end
 
   def test_csrf_rejects_post_without_token
@@ -495,84 +497,56 @@ class TestWeb < Minitest::Test
     assert_equal 403, last_response.status
   end
 
-  def test_focus_view_shows_overdue_task
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: (Date.today - 3).to_s)
-
-    get "/focus", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "Call Mom"
-    assert_includes last_response.body, "focus-task"
-  end
-
-  def test_focus_view_redirects_when_caught_up
+  def test_focus_redirects_to_root
     get "/focus", {}, auth_headers
     assert last_response.redirect?
     assert_includes last_response["Location"], "/"
   end
 
-  def test_focus_view_shows_most_urgent_first
+  def test_calendar_redirects_to_root
+    get "/calendar", {}, auth_headers
+    assert last_response.redirect?
+    assert_includes last_response["Location"], "/"
+  end
+
+  def test_agenda_redirects_to_root
+    get "/agenda", {}, auth_headers
+    assert last_response.redirect?
+    assert_includes last_response["Location"], "/"
+  end
+
+  def test_dashboard_shows_most_urgent_in_focus
     create_series(note: "Low urgency", interval_unit: "month", interval_count: "1",
                   first_due_date: (Date.today - 1).to_s)
     create_series(note: "High urgency", interval_unit: "day", interval_count: "1",
                   first_due_date: (Date.today - 10).to_s)
 
-    get "/focus", {}, auth_headers
-    assert_includes last_response.body, "High urgency"
+    get "/", {}, auth_headers
+    body = last_response.body
+    # Focus section (first task card) should be the most urgent
+    focus_pos = body.index("Next up")
+    high_pos = body.index("High urgency")
+    low_pos = body.index("Low urgency")
+    assert focus_pos, "Expected Next up section"
+    assert high_pos, "Expected High urgency task"
+    assert low_pos, "Expected Low urgency task"
+    assert high_pos < low_pos, "High urgency should appear before Low urgency"
   end
 
-  def test_complete_from_focus_redirects_to_focus
+  def test_dashboard_agenda_shows_week_strip
+    get "/", {}, auth_headers
+    assert_includes last_response.body, "agenda-week"
+  end
+
+  def test_complete_from_dashboard_redirects_to_series
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
     task = DB[:tasks].first
     series = DB[:series].first
-    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete",
-              { "return_to" => "/focus" }, auth_headers
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
     assert last_response.redirect?
-    assert_equal "/focus", last_response["Location"]
-  end
-
-  def test_calendar_view_renders
-    get "/calendar", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "calendar-grid"
-  end
-
-  def test_calendar_shows_tasks_on_due_date
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: Date.today.to_s)
-
-    get "/calendar", {}, auth_headers
-    assert_includes last_response.body, "Call Mom"
-  end
-
-  def test_calendar_view_highlights_active
-    get "/calendar", {}, auth_headers
-    assert_includes last_response.body, "view-link--active"
-  end
-
-  def test_agenda_view_renders
-    get "/agenda", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "agenda-view"
-  end
-
-  def test_agenda_shows_overdue_column
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: (Date.today - 3).to_s)
-
-    get "/agenda", {}, auth_headers
-    assert_includes last_response.body, "Call Mom"
-    assert_includes last_response.body, "agenda-overdue"
-  end
-
-  def test_agenda_shows_upcoming_on_day
-    create_series(note: "Haircut", interval_unit: "week", interval_count: "6",
-                  first_due_date: Date.today.to_s)
-
-    get "/agenda", {}, auth_headers
-    assert_includes last_response.body, "Haircut"
+    assert_includes last_response["Location"], "/series/#{series[:id]}"
   end
 
   private

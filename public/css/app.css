@@ -128,11 +128,133 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   flex: 1;
 }
 
+.dashboard:has(.column-overdue) {
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
 .main-column {
   flex: 1;
   max-width: 32rem;
   margin-inline: auto;
   padding: var(--space-m) var(--space-l);
+}
+
+.column-overdue {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--space-m) var(--space-l);
+}
+
+.column-agenda {
+  width: 24rem;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: var(--space-m) var(--space-l);
+}
+
+/* -------------------- */
+/* Focus row (minimal) */
+/* -------------------- */
+
+.section--focus {
+}
+
+/* -------------------- */
+/* Agenda (day-by-day) */
+/* -------------------- */
+
+.agenda-week {
+  display: flex;
+  margin-block-end: var(--space-m);
+  border: 1px solid #eee;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.agenda-week-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: var(--space-3xs) 0 var(--space-2xs);
+  border-inline-end: 1px solid #eee;
+}
+
+.agenda-week-day:last-child {
+  border-inline-end: none;
+}
+
+.agenda-week-label {
+  font-size: 9px;
+  color: #aaa;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding-block-end: var(--space-3xs);
+  margin-block-end: var(--space-3xs);
+  border-block-end: 1px solid #eee;
+  width: 100%;
+  text-align: center;
+}
+
+.agenda-week-count {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: #666;
+}
+
+.agenda-week-day--today .agenda-week-count {
+  color: #222;
+}
+
+.agenda-week-day--overdue .agenda-week-label {
+  color: #c00;
+}
+
+.agenda-week-day--overdue .agenda-week-count {
+  color: #c00;
+}
+
+.agenda-day {
+  margin-block-end: var(--space-s);
+}
+
+.agenda-day-header {
+  font-size: var(--step--2);
+  font-weight: 600;
+  color: #888;
+  margin-block-end: var(--space-3xs);
+}
+
+.agenda-day--today .agenda-day-header {
+  color: #222;
+}
+
+.agenda-day-empty {
+  font-size: var(--step--2);
+  color: #ccc;
+  padding-block: 2px;
+}
+
+.agenda-day-pill {
+  display: block;
+  font-size: var(--step--2);
+  padding: 3px 6px;
+  background: #f0f0f0;
+  color: #222;
+  border-radius: 4px;
+  margin-block-end: 3px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agenda-day-pill:hover {
+  background: #e8e8e8;
 }
 
 /* -------------------- */
@@ -168,17 +290,34 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   all: unset;
   order: 1;
   font-size: var(--step--1);
-  color: #999;
+  color: #666;
   cursor: pointer;
 }
 
 .section-edit-btn:hover {
-  color: #444;
+  color: #222;
+}
+
+.section-edit-btn--cancel {
+  color: #aaa;
+}
+
+.section-edit-btn--cancel:hover {
+  color: #666;
+}
+
+.section-edit-btn:disabled {
+  color: #ccc;
+  cursor: default;
+  pointer-events: none;
 }
 
 .section-header::after {
   content: "";
   flex: 1;
+}
+
+.main-column .section-header::after {
   height: 1px;
   background: #ddd;
 }
@@ -220,22 +359,20 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
   gap: var(--space-xs);
-  padding: calc(7px + var(--space-3xs)) 0;
+  padding: var(--space-2xs) var(--space-xs);
+  margin-inline: calc(-1 * var(--space-xs));
   cursor: pointer;
   transition: background 0.1s;
   position: relative;
+  border-radius: 6px;
 }
 
 .task-card:hover {
   background: #f0f0f0;
-  margin-inline: -6px;
-  padding-inline: 6px;
 }
 
 .task-card--selected {
   background: #ebebeb;
-  margin-inline: -6px;
-  padding-inline: 6px;
 }
 
 .task-card--overdue {
@@ -464,9 +601,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   border-color: #999;
 }
 
-.series-note:hover {
-  border-color: transparent;
-}
+
 
 .series-note:focus-within {
   border-color: #999;
@@ -947,6 +1082,21 @@ button[type="submit"]:not(.complete-btn):not(.panel-action):hover {
 
   .main-column {
     padding-inline: var(--space-s);
+  }
+
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .column-overdue {
+    padding-inline: var(--space-s);
+    padding-block-end: 0;
+  }
+
+  .column-agenda {
+    width: auto;
+    border-inline-start: none;
+    padding: 0 var(--space-s) var(--space-m);
   }
 
   .panel {

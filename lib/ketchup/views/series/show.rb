@@ -32,8 +32,17 @@ module Views
                     plain "Edit"
                   end
                   button(
+                    class: "section-edit-btn section-edit-btn--cancel",
+                    "x-show": "editing",
+                    "x-cloak": true,
+                    "x-on:click": "editing = false; location.reload()"
+                  ) do
+                    plain "Cancel"
+                  end
+                  button(
                     class: "section-edit-btn",
                     "x-show": "editing",
+                    "x-cloak": true,
                     "x-on:click": "editing = false; $dispatch('stop-editing')"
                   ) do
                     plain "Save"
@@ -41,6 +50,7 @@ module Views
                 end
 
                 div(class: "series-note", id: "series-note-detail",
+                    "x-bind:class": "{ 'series-note--editable': editing }",
                     "data-value": @series.note || "",
                     "data-series-id": @series.id.to_s)
 

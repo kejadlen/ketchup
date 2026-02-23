@@ -21,9 +21,15 @@ module Views
                   h2(class: "section-title") do
                     span(class: "section-title-text") { "New series" }
                   end
+                  button(
+                    class: "section-edit-btn",
+                    id: "create-series-btn",
+                    disabled: true,
+                    "x-on:click": "document.getElementById('new-series-form').requestSubmit()"
+                  ) { "Create" }
                 end
 
-                form(method: "post", action: "/series", class: "new-series-form") do
+                form(method: "post", action: "/series", id: "new-series-form", class: "new-series-form") do
                   input(type: "hidden", name: "_csrf", value: @csrf.call("/series"))
                   div(class: "field") do
                     label(for: "series-note-editor") { "Note" }
@@ -50,8 +56,6 @@ module Views
                       value: Date.today.to_s, required: true
                     )
                   end
-
-                  button(type: "submit", id: "create-series-btn", disabled: true) { "Create" }
                 end
               end
             end
