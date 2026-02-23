@@ -10,7 +10,7 @@ require_relative "views/calendar"
 require_relative "views/agenda"
 require_relative "views/series/new"
 require_relative "views/series/show"
-require_relative "views/user_panel"
+require_relative "views/user/show"
 
 class Web < Roda
   plugin :halt
@@ -77,12 +77,8 @@ class Web < Roda
     r.on "users", Integer do |user_id|
       r.halt 404 unless @user.id == user_id
 
-      r.get "panel" do
-        Views::UserPanel.new(current_user: @user, csrf: method(:csrf_token)).call
-      end
-
       r.get do
-        Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
+        Views::User::Show.new(current_user: @user, csrf: method(:csrf_token)).call
       end
 
       r.post "email" do

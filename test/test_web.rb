@@ -423,31 +423,22 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
-  def test_get_user_page_shows_dashboard
+  def test_get_user_page_shows_settings
     get "/", {}, auth_headers  # create user
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
     get "/users/#{user_id}", {}, auth_headers
     assert last_response.ok?
     assert_includes last_response.body, "alice@example.com"
-  end
-
-  def test_get_user_panel_shows_email_form
-    get "/", {}, auth_headers  # create user
-    user_id = DB[:users].first(login: "alice@example.com")[:id]
-
-    get "/users/#{user_id}/panel", {}, auth_headers
-    assert last_response.ok?
-    assert_includes last_response.body, "alice@example.com"
+    assert_includes last_response.body, "Settings"
     assert_includes last_response.body, 'name="email"'
-    refute_includes last_response.body, "<!DOCTYPE"
   end
 
   def test_post_user_email
     get "/", {}, auth_headers  # create user
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
-    get "/users/#{user_id}/panel", {}, auth_headers
+    get "/users/#{user_id}", {}, auth_headers
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/users/#{user_id}/email", { "_csrf" => token, email: "alice@example.org" }, auth_headers
     assert last_response.redirect?
@@ -460,7 +451,7 @@ class TestWeb < Minitest::Test
     get "/", {}, auth_headers
     user_id = DB[:users].first(login: "alice@example.com")[:id]
 
-    get "/users/#{user_id}/panel", {}, auth_headers
+    get "/users/#{user_id}", {}, auth_headers
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/users/#{user_id}/email", { "_csrf" => token, email: "" }, auth_headers
 

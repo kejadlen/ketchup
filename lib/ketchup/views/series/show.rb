@@ -36,7 +36,7 @@ module Views
                     "x-show": "editing",
                     "x-on:click": "editing = false; $dispatch('stop-editing')"
                   ) do
-                    plain "Done"
+                    plain "Save"
                   end
                 end
 
