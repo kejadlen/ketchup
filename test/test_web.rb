@@ -298,7 +298,7 @@ class TestWeb < Minitest::Test
     assert_equal 404, last_response.status
   end
 
-  def test_patch_note_saves_on_completed_task
+  def test_patch_task_saves_note
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: (Date.today - 3).to_s)
 
@@ -307,7 +307,7 @@ class TestWeb < Minitest::Test
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
     completed_task = DB[:tasks].first(id: task[:id])
-    patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "Called, all good" }, auth_headers
+    patch_task series[:id], completed_task[:id], { note: "Called, all good" }
     assert last_response.ok?
 
     body = JSON.parse(last_response.body)
@@ -315,17 +315,68 @@ class TestWeb < Minitest::Test
     assert_equal "Called, all good", DB[:tasks].first(id: completed_task[:id])[:note]
   end
 
-  def test_patch_note_rejects_active_task
+  def test_patch_task_saves_completed_at
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch_task series[:id], completed_task[:id], { completed_at: "2026-01-15" }
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    assert_equal "2026-01-15", body["completed_at"]
+    assert_equal Date.new(2026, 1, 15), DB[:tasks].first(id: completed_task[:id])[:completed_at].to_date
+  end
+
+  def test_patch_task_saves_both_note_and_completed_at
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch_task series[:id], completed_task[:id], { note: "Backdated", completed_at: "2026-02-01" }
+    assert last_response.ok?
+
+    body = JSON.parse(last_response.body)
+    assert_equal "Backdated", body["note"]
+    assert_equal "2026-02-01", body["completed_at"]
+
+    updated = DB[:tasks].first(id: completed_task[:id])
+    assert_equal "Backdated", updated[:note]
+    assert_equal Date.new(2026, 2, 1), updated[:completed_at].to_date
+  end
+
+  def test_patch_task_rejects_invalid_completed_at
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    patch_task series[:id], completed_task[:id], { completed_at: "not-a-date" }
+    assert_equal 422, last_response.status
+  end
+
+  def test_patch_task_rejects_active_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
     series = DB[:series].first
-    patch "/series/#{series[:id]}/tasks/#{task[:id]}/note", { note: "nope" }, auth_headers
+    patch_task series[:id], task[:id], { note: "nope" }
     assert_equal 422, last_response.status
   end
 
-  def test_patch_note_requires_own_task
+  def test_patch_task_requires_own_task
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
@@ -337,7 +388,7 @@ class TestWeb < Minitest::Test
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "alice@example.com")
 
     completed_task = DB[:tasks].first(id: task[:id])
-    patch "/series/#{series[:id]}/tasks/#{completed_task[:id]}/note", { note: "hacked" }, auth_headers(login: "bob@example.com")
+    patch_task series[:id], completed_task[:id], { note: "hacked" }, login: "bob@example.com"
     assert_equal 404, last_response.status
   end
 
@@ -548,6 +599,12 @@ class TestWeb < Minitest::Test
       note: note, interval_unit: interval_unit, interval_count: interval_count,
       first_due_date: first_due_date
     }, headers
+  end
+
+  def patch_task(series_id, task_id, data, login: "alice@example.com")
+    patch "/series/#{series_id}/tasks/#{task_id}",
+      data.to_json,
+      auth_headers(login: login).merge("CONTENT_TYPE" => "application/json")
   end
 
   def auth_headers(login: "alice@example.com")

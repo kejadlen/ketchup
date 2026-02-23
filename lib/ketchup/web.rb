@@ -155,14 +155,40 @@ class Web < Roda
             end
           end
 
-          r.patch "note" do
-            r.halt 422 if @task[:completed_at].nil?
+          r.is do
+            r.patch do
+              r.halt 422 if @task[:completed_at].nil?
 
-            note = r.params["note"].to_s.strip
-            Task.where(id: task_id).update(note: note.empty? ? nil : note)
+              begin
+                body = JSON.parse(r.body.read)
+              rescue JSON::ParserError
+                r.halt 422
+              end
 
-            response["content-type"] = "application/json"
-            { note: note }.to_json
+              updates = {}
+              result = {}
+
+              if body.key?("note")
+                note = body["note"].to_s.strip
+                updates[:note] = note.empty? ? nil : note
+                result["note"] = note
+              end
+
+              if body.key?("completed_at")
+                begin
+                  completed_date = Date.parse(body["completed_at"].to_s)
+                rescue Date::Error
+                  r.halt 422
+                end
+                updates[:completed_at] = Time.new(completed_date.year, completed_date.month, completed_date.day)
+                result["completed_at"] = completed_date.to_s
+              end
+
+              Task.where(id: task_id).update(updates) unless updates.empty?
+
+              response["content-type"] = "application/json"
+              result.to_json
+            end
           end
         end
       end

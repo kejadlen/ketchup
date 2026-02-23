@@ -116,13 +116,30 @@ module Views
                     end
                     ul do
                       @series.completed_tasks.each do |ct|
+                        completed_date = ct[:completed_at].strftime("%Y-%m-%d")
                         li(
                           class: "task-history-item",
-                          "x-data": "historyNote(#{@series.id}, #{ct[:id]}, #{ct[:note] ? "true" : "false"})"
+                          "x-data": "{ ...historyNote(#{@series.id}, #{ct[:id]}, #{ct[:note] ? "true" : "false"}), ...completedDateEditor(#{@series.id}, #{ct[:id]}, '#{completed_date}') }"
                         ) do
                           div(class: "task-history-row") do
                             span(class: "task-history-check") { "✓" }
-                            span(class: "task-history-date") { ct[:completed_at].strftime("%Y-%m-%d") }
+                            span(
+                              class: "task-history-date",
+                              "x-show": "!editingDate",
+                              "x-on:click": "editingDate = true; $nextTick(() => $refs.dateInput.focus())",
+                              "x-text": "new Date(completedDate + 'T00:00').toLocaleDateString()"
+                            ) { completed_date }
+                            input(
+                              type: "date",
+                              class: "task-history-date-input",
+                              "x-show": "editingDate",
+                              "x-cloak": true,
+                              "x-model": "completedDate",
+                              "x-ref": "dateInput",
+                              "x-on:blur": "save()",
+                              "x-on:keydown.enter": "$el.blur()",
+                              "x-on:keydown.escape": "completedDate = '#{completed_date}'; editingDate = false"
+                            )
                             span(
                               class: "task-history-add-note",
                               "x-show": "!hasNote && !editing",

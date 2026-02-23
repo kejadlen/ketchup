@@ -563,6 +563,25 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #27ae60;
 }
 
+.task-history-date {
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+}
+
+.task-history-date:hover {
+  border-bottom-color: #999;
+}
+
+.task-history-date-input {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid #999;
+  border-radius: 3px;
+  padding: 0 var(--space-3xs);
+}
+
 .task-history-add-note {
   font-size: var(--step--2);
   color: #ccc;

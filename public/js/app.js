@@ -168,6 +168,14 @@ document.addEventListener("alpine:init", () => {
       this.$nextTick(() => this._initEditor())
     },
 
+    _patchTask(data) {
+      return fetch(`/series/${seriesId}/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+    },
+
     _initEditor() {
       const el = this.$refs.editor
       if (!el || this._editor) return
@@ -195,16 +203,34 @@ document.addEventListener("alpine:init", () => {
             return
           }
 
-          fetch(`/series/${seriesId}/tasks/${taskId}/note`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `note=${encodeURIComponent(note)}`,
-          })
+          this._patchTask({ note })
           el.dataset.value = note
           this.hasNote = !!note
           this.editing = false
         })
       }
+    },
+  }))
+
+  Alpine.data("completedDateEditor", (seriesId, taskId, initialDate) => ({
+    editingDate: false,
+    completedDate: initialDate,
+
+    save() {
+      if (this.completedDate === initialDate) {
+        this.editingDate = false
+        return
+      }
+      fetch(`/series/${seriesId}/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed_at: this.completedDate }),
+      }).then((r) => {
+        if (r.ok) {
+          initialDate = this.completedDate
+          this.editingDate = false
+        }
+      })
     },
   }))
 
