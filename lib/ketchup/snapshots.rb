@@ -302,13 +302,11 @@ module Ketchup
         end
       end
 
-      def snap(name, selector: nil, area: nil)
+      def snap(name, selector: nil)
         yield if block_given?
 
         file = @viewport_dir / "#{name}.png"
-        if area
-          @browser.screenshot(path: file.to_s, area: area)
-        elsif selector && element_visible?(selector)
+        if selector && element_visible?(selector)
           @browser.execute("document.querySelector(#{selector.to_json}).style.padding = '1.5rem'")
           @browser.screenshot(path: file.to_s, selector: selector)
           @browser.execute("document.querySelector(#{selector.to_json}).style.padding = ''")
@@ -340,15 +338,7 @@ module Ketchup
         unit_select.select(interval_unit)
       end
 
-      # Temporarily resize the viewport to the full page height so
-      # headless Chrome paints everything, then restore after the block.
-      def with_rendered_page(width, height)
-        page_h = @browser.evaluate("document.body.scrollHeight")
-        @browser.resize(width: width, height: page_h) if page_h > height
-        yield
-      ensure
-        @browser.resize(width: width, height: height) if page_h > height
-      end
+
     end
   end
 end

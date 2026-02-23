@@ -497,24 +497,6 @@ class TestWeb < Minitest::Test
     assert_equal 403, last_response.status
   end
 
-  def test_focus_redirects_to_root
-    get "/focus", {}, auth_headers
-    assert last_response.redirect?
-    assert_includes last_response["Location"], "/"
-  end
-
-  def test_calendar_redirects_to_root
-    get "/calendar", {}, auth_headers
-    assert last_response.redirect?
-    assert_includes last_response["Location"], "/"
-  end
-
-  def test_agenda_redirects_to_root
-    get "/agenda", {}, auth_headers
-    assert last_response.redirect?
-    assert_includes last_response["Location"], "/"
-  end
-
   def test_dashboard_shows_most_urgent_in_focus
     create_series(note: "Low urgency", interval_unit: "month", interval_count: "1",
                   first_due_date: (Date.today - 1).to_s)

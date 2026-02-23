@@ -43,18 +43,6 @@ class Web < Roda
       Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
     end
 
-    r.get "focus" do
-      r.redirect "/"
-    end
-
-    r.get "calendar" do
-      r.redirect "/"
-    end
-
-    r.get "agenda" do
-      r.redirect "/"
-    end
-
     r.on "users", Integer do |user_id|
       r.halt 404 unless @user.id == user_id
 
