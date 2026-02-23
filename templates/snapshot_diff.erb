@@ -9,69 +9,368 @@
   <link rel="stylesheet" href="snapshots.css">
 </head>
 <body>
-  <h1>Ketchup Snapshot Diff</h1>
-  <div class="tab-bar">
-    <% snapshots_by_viewport.each_with_index do |(viewport, _), i| -%>
-    <button class="tab<%= " active" if i == 0 %>" data-viewport="<%= viewport %>"><%= viewport.capitalize %></button>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">Snapshots</div>
+    <% snapshots_by_viewport.each_with_index do |(viewport, snapshots), i| -%>
+    <ul class="sidebar-list<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
+      <% snapshots.each do |snap| -%>
+      <li>
+        <a href="#<%= viewport %>-<%= snap.name %>" class="sidebar-link">
+          <%= snap.name.tr("-", " ") %>
+          <% unless snap.baseline %><span class="sidebar-badge new"><svg width="8" height="8" viewBox="0 0 8 8"><path d="M4 1v6M1 4h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><% end -%>
+          <% unless snap.current %><span class="sidebar-badge removed"><svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><% end -%>
+        </a>
+      </li>
+      <% end -%>
+    </ul>
     <% end -%>
-  </div>
-  <% snapshots_by_viewport.each_with_index do |(viewport, snapshots), i| -%>
-  <div class="viewport-group<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
-    <% snapshots.each do |snap| %>
-    <% entry = snap.current || snap.baseline -%>
-    <div class="snapshot">
-      <h2>
-        <%= snap.name %>
-        <% unless snap.baseline %>
-        <span class="label new">new</span>
-        <% end -%>
-        <% unless snap.current %>
-        <span class="label removed">removed</span>
-        <% end -%>
-      </h2>
-      <code class="path"><%= entry.path %><%= " #{entry.selector}" if entry.selector %></code>
-      <div class="pair">
-        <div class="side">
-          <h3>Baseline</h3>
-          <% if snap.baseline %>
-          <img src="baseline/<%= viewport %>/<%= snap.name %>.png" alt="baseline <%= snap.name %>">
+  </nav>
+
+  <main class="content">
+    <header class="toolbar">
+      <h1>Snapshot Diff</h1>
+      <div class="toolbar-controls">
+        <div class="tab-bar">
+          <% snapshots_by_viewport.each_with_index do |(viewport, _), i| -%>
+          <button class="tab<%= " active" if i == 0 %>" data-viewport="<%= viewport %>"><%= viewport.capitalize %></button>
+          <% end -%>
+        </div>
+        <div class="mode-bar">
+          <button class="mode active" data-mode="side-by-side" title="Side by side (1)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="6" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="6" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+            Side by Side
+          </button>
+          <button class="mode" data-mode="slider" title="Slider overlay (2)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+            Slider
+          </button>
+          <button class="mode" data-mode="toggle" title="Toggle (3)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Toggle
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <% snapshots_by_viewport.each_with_index do |(viewport, snapshots), i| -%>
+    <div class="viewport-group<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
+      <% snapshots.each do |snap| %>
+      <% entry = snap.current || snap.baseline -%>
+      <div class="snapshot" id="<%= viewport %>-<%= snap.name %>" data-name="<%= snap.name %>" data-has-baseline="<%= !!snap.baseline %>" data-has-current="<%= !!snap.current %>">
+        <div class="snapshot-header">
+          <h2>
+            <%= snap.name.tr("-", " ") %>
+            <% unless snap.baseline %>
+            <span class="label new">new</span>
+            <% end -%>
+            <% unless snap.current %>
+            <span class="label removed">removed</span>
+            <% end -%>
+          </h2>
+          <code class="path"><%= entry.path %><%= " #{entry.selector}" if entry.selector %></code>
+        </div>
+
+        <%# Side-by-side mode %>
+        <div class="pair view-side-by-side">
+          <div class="side">
+            <h3>Baseline</h3>
+            <% if snap.baseline %>
+            <img src="baseline/<%= viewport %>/<%= snap.name %>.png" alt="baseline <%= snap.name %>" loading="lazy">
+            <% else %>
+            <div class="placeholder">No baseline</div>
+            <% end %>
+          </div>
+          <div class="side">
+            <h3>Current</h3>
+            <% if snap.current %>
+            <img src="current/<%= viewport %>/<%= snap.name %>.png" alt="current <%= snap.name %>" loading="lazy">
+            <% else %>
+            <div class="placeholder">Removed</div>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Slider mode %>
+        <div class="view-slider hidden">
+          <% if snap.baseline && snap.current %>
+          <div class="slider-container">
+            <div class="slider-img slider-baseline">
+              <img src="baseline/<%= viewport %>/<%= snap.name %>.png" alt="baseline" loading="lazy">
+            </div>
+            <div class="slider-img slider-current">
+              <img src="current/<%= viewport %>/<%= snap.name %>.png" alt="current" loading="lazy">
+            </div>
+            <div class="slider-handle" aria-label="Drag to compare">
+              <div class="slider-line"></div>
+              <div class="slider-grip">
+                <svg width="12" height="24" viewBox="0 0 12 24" fill="none"><path d="M4 6v12M8 6v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="slider-labels">
+              <span>Baseline</span>
+              <span>Current</span>
+            </div>
+          </div>
           <% else %>
-          <div class="placeholder">No baseline</div>
+          <div class="single-image">
+            <% img = snap.current || snap.baseline -%>
+            <img src="<%= snap.current ? "current" : "baseline" %>/<%= viewport %>/<%= snap.name %>.png" alt="<%= snap.name %>" loading="lazy">
+            <div class="single-label"><%= snap.current ? "New — no baseline" : "Removed — no current" %></div>
+          </div>
           <% end %>
         </div>
-        <div class="side">
-          <h3>Current</h3>
-          <% if snap.current %>
-          <img src="current/<%= viewport %>/<%= snap.name %>.png" alt="current <%= snap.name %>">
+
+        <%# Toggle mode %>
+        <div class="view-toggle hidden">
+          <% if snap.baseline && snap.current %>
+          <div class="toggle-container" data-showing="current">
+            <img class="toggle-baseline" src="baseline/<%= viewport %>/<%= snap.name %>.png" alt="baseline" loading="lazy">
+            <img class="toggle-current" src="current/<%= viewport %>/<%= snap.name %>.png" alt="current" loading="lazy">
+            <div class="toggle-label">Current</div>
+          </div>
           <% else %>
-          <div class="placeholder">Removed</div>
+          <div class="single-image">
+            <% img = snap.current || snap.baseline -%>
+            <img src="<%= snap.current ? "current" : "baseline" %>/<%= viewport %>/<%= snap.name %>.png" alt="<%= snap.name %>" loading="lazy">
+            <div class="single-label"><%= snap.current ? "New — no baseline" : "Removed — no current" %></div>
+          </div>
           <% end %>
         </div>
       </div>
+      <% end %>
     </div>
-    <% end %>
+    <% end -%>
+  </main>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-chrome">
+      <div class="lightbox-title"></div>
+      <button class="lightbox-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="lightbox-body">
+      <img>
+    </div>
   </div>
-  <% end -%>
-  <div class="lightbox" id="lightbox"><img></div>
+
+  <div class="shortcuts-hint" id="shortcuts-hint">
+    <kbd>j</kbd><kbd>k</kbd> navigate &nbsp;
+    <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> mode &nbsp;
+    <kbd>t</kbd> toggle &nbsp;
+    <kbd>?</kbd> help
+  </div>
+
   <script>
+    // ── State ──
+    var currentMode = "side-by-side";
+    var currentViewport = document.querySelector(".tab.active").dataset.viewport;
+
+    // ── Viewport tabs ──
     document.querySelector(".tab-bar").addEventListener("click", function(e) {
       if (!e.target.matches(".tab")) return;
-      var viewport = e.target.dataset.viewport;
-      document.querySelectorAll(".tab").forEach(function(t) { t.classList.toggle("active", t.dataset.viewport === viewport); });
-      document.querySelectorAll(".viewport-group").forEach(function(g) { g.classList.toggle("hidden", g.dataset.viewport !== viewport); });
+      currentViewport = e.target.dataset.viewport;
+      document.querySelectorAll(".tab").forEach(function(t) { t.classList.toggle("active", t.dataset.viewport === currentViewport); });
+      document.querySelectorAll(".viewport-group").forEach(function(g) { g.classList.toggle("hidden", g.dataset.viewport !== currentViewport); });
+      document.querySelectorAll(".sidebar-list").forEach(function(l) { l.classList.toggle("hidden", l.dataset.viewport !== currentViewport); });
     });
 
-    var lightbox = document.getElementById("lightbox");
+    // ── Comparison modes ──
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll(".mode").forEach(function(b) { b.classList.toggle("active", b.dataset.mode === mode); });
+
+      document.querySelectorAll(".snapshot").forEach(function(snap) {
+        snap.querySelector(".view-side-by-side").classList.toggle("hidden", mode !== "side-by-side");
+        snap.querySelector(".view-slider").classList.toggle("hidden", mode !== "slider");
+        snap.querySelector(".view-toggle").classList.toggle("hidden", mode !== "toggle");
+      });
+
+      // Initialize sliders when entering slider mode
+      if (mode === "slider") initSliders();
+    }
+
+    document.querySelector(".mode-bar").addEventListener("click", function(e) {
+      var btn = e.target.closest(".mode");
+      if (btn) setMode(btn.dataset.mode);
+    });
+
+    // ── Slider logic ──
+    function initSliders() {
+      document.querySelectorAll(".slider-container").forEach(function(container) {
+        if (container._initialized) return;
+        container._initialized = true;
+
+        var handle = container.querySelector(".slider-handle");
+        var currentLayer = container.querySelector(".slider-current");
+        var pct = 50;
+
+        function update(x) {
+          var rect = container.getBoundingClientRect();
+          pct = Math.max(0, Math.min(100, ((x - rect.left) / rect.width) * 100));
+          currentLayer.style.clipPath = "inset(0 0 0 " + pct + "%)";
+          handle.style.left = pct + "%";
+        }
+
+        update(0); // start at 0% — showing full baseline
+        // Then set to 50%
+        setTimeout(function() {
+          var rect = container.getBoundingClientRect();
+          update(rect.left + rect.width * 0.5);
+        }, 50);
+
+        var dragging = false;
+
+        handle.addEventListener("mousedown", function(e) { dragging = true; e.preventDefault(); });
+        container.addEventListener("mousedown", function(e) {
+          if (e.target === handle || handle.contains(e.target)) return;
+          dragging = true;
+          update(e.clientX);
+        });
+        document.addEventListener("mousemove", function(e) { if (dragging) update(e.clientX); });
+        document.addEventListener("mouseup", function() { dragging = false; });
+
+        // Touch support
+        handle.addEventListener("touchstart", function(e) { dragging = true; e.preventDefault(); }, { passive: false });
+        container.addEventListener("touchstart", function(e) {
+          if (e.target === handle || handle.contains(e.target)) return;
+          dragging = true;
+          update(e.touches[0].clientX);
+        });
+        document.addEventListener("touchmove", function(e) { if (dragging) update(e.touches[0].clientX); });
+        document.addEventListener("touchend", function() { dragging = false; });
+      });
+    }
+
+    // ── Toggle logic ──
     document.addEventListener("click", function(e) {
-      if (e.target.matches(".snapshot img, .side img")) {
-        lightbox.querySelector("img").src = e.target.src;
-        lightbox.classList.add("open");
-      } else if (lightbox.classList.contains("open")) {
-        lightbox.classList.remove("open");
+      var container = e.target.closest(".toggle-container");
+      if (!container) return;
+
+      var showing = container.dataset.showing;
+      var next = showing === "current" ? "baseline" : "current";
+      container.dataset.showing = next;
+      container.querySelector(".toggle-label").textContent = next.charAt(0).toUpperCase() + next.slice(1);
+    });
+
+    // ── Lightbox ──
+    var lightbox = document.getElementById("lightbox");
+
+    function openLightbox(src, title) {
+      lightbox.querySelector("img").src = src;
+      lightbox.querySelector(".lightbox-title").textContent = title || "";
+      lightbox.classList.add("open");
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+    }
+
+    document.addEventListener("click", function(e) {
+      if (e.target.closest(".toggle-container")) return; // toggle clicks don't open lightbox
+
+      var img = e.target.closest(".snapshot img");
+      if (img) {
+        var snap = img.closest(".snapshot");
+        var name = snap ? snap.dataset.name : "";
+        var which = img.alt || "";
+        openLightbox(img.src, name + (which ? " — " + which : ""));
+        return;
+      }
+
+      if (lightbox.classList.contains("open") && !e.target.closest(".lightbox-body")) {
+        closeLightbox();
       }
     });
+
+    lightbox.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
+
+    // ── Keyboard navigation ──
+    function visibleSnapshots() {
+      var group = document.querySelector('.viewport-group:not(.hidden)');
+      return group ? Array.from(group.querySelectorAll(".snapshot")) : [];
+    }
+
+    function currentIndex() {
+      var snaps = visibleSnapshots();
+      var scrollY = window.scrollY + 120;
+      for (var i = snaps.length - 1; i >= 0; i--) {
+        if (snaps[i].offsetTop <= scrollY) return i;
+      }
+      return 0;
+    }
+
+    function navigateTo(index) {
+      var snaps = visibleSnapshots();
+      if (index < 0) index = 0;
+      if (index >= snaps.length) index = snaps.length - 1;
+      snaps[index].scrollIntoView({ behavior: "smooth", block: "start" });
+      highlightSidebarLink(snaps[index].id);
+    }
+
+    function highlightSidebarLink(id) {
+      document.querySelectorAll(".sidebar-link").forEach(function(a) {
+        a.classList.toggle("active", a.getAttribute("href") === "#" + id);
+      });
+    }
+
+    var shortcutsHint = document.getElementById("shortcuts-hint");
+
     document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape") lightbox.classList.remove("open");
+      if (lightbox.classList.contains("open")) {
+        if (e.key === "Escape") closeLightbox();
+        return;
+      }
+
+      switch (e.key) {
+        case "j": navigateTo(currentIndex() + 1); break;
+        case "k": navigateTo(currentIndex() - 1); break;
+        case "1": setMode("side-by-side"); break;
+        case "2": setMode("slider"); break;
+        case "3": setMode("toggle"); break;
+        case "t":
+          // Toggle visible toggle-containers
+          document.querySelectorAll('.viewport-group:not(.hidden) .toggle-container').forEach(function(c) {
+            var next = c.dataset.showing === "current" ? "baseline" : "current";
+            c.dataset.showing = next;
+            c.querySelector(".toggle-label").textContent = next.charAt(0).toUpperCase() + next.slice(1);
+          });
+          break;
+        case "?":
+          shortcutsHint.classList.toggle("expanded");
+          break;
+        case "Escape":
+          shortcutsHint.classList.remove("expanded");
+          break;
+      }
+    });
+
+    // ── Sidebar scroll tracking ──
+    var ticking = false;
+    window.addEventListener("scroll", function() {
+      if (!ticking) {
+        requestAnimationFrame(function() {
+          var snaps = visibleSnapshots();
+          var scrollY = window.scrollY + 120;
+          var activeId = null;
+          for (var i = snaps.length - 1; i >= 0; i--) {
+            if (snaps[i].offsetTop <= scrollY) { activeId = snaps[i].id; break; }
+          }
+          if (activeId) highlightSidebarLink(activeId);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    // Sidebar link clicks
+    document.getElementById("sidebar").addEventListener("click", function(e) {
+      var link = e.target.closest(".sidebar-link");
+      if (!link) return;
+      e.preventDefault();
+      var target = document.getElementById(link.getAttribute("href").slice(1));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        highlightSidebarLink(target.id);
+      }
     });
   </script>
 </body>

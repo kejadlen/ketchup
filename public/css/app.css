@@ -674,6 +674,7 @@ button[type="submit"]:not(.complete-btn):hover {
   }
 
   .main-column {
+    flex: none;
     align-self: stretch;
     padding-inline: var(--space-s);
   }

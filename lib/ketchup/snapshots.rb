@@ -278,6 +278,9 @@ module Ketchup
 
         file = @viewport_dir / "#{name}.png"
         if selector && element_visible?(selector)
+          # Ferrum's selector screenshot captures the element's exact bounding
+          # box, which sits flush against the edges. Temporary padding gives the
+          # screenshot some breathing room so it doesn't look cropped.
           @browser.execute("document.querySelector(#{selector.to_json}).style.padding = '1.5rem'")
           @browser.screenshot(path: file.to_s, selector: selector)
           @browser.execute("document.querySelector(#{selector.to_json}).style.padding = ''")
