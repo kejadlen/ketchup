@@ -123,101 +123,77 @@ module Ketchup
 
       private
 
-      # Snapshots grouped by flow:
+      # Snapshots cover every page and its interactive states:
       #
-      # Dashboard
-      #   full page (overdue + upcoming, single column)
-      #   complete a task, return to dashboard
-      #   overdue sorted by urgency (main column)
-      #   overdue sorted by date (main column)
+      # Dashboard (/)
+      #   default view with seed data
+      #   after completing the focus task
       #
-      # New series (panel)
-      #   panel with empty form
-      #   panel with filled-in note + interval
-      #   panel after submission (series detail)
-      #   panel in editing mode
+      # New series (/series/new)
+      #   empty form
+      #   form filled in
       #
-      # Series detail (panel)
+      # Series detail (/series/:id)
+      #   newly created series (no history)
+      #   series in editing mode
       #   series with task history
-      #   add a task note
-      #   edit existing task note
+      #   adding a note to a completed task
       #
-      # User settings (panel)
-      #   user detail
-      #   user editing
+      # User settings (/users/:id)
+      #   viewing
+      #   editing
       def run_capture(width:, height:)
         entries = []
 
-        # 1. Dashboard — full page
+        # ── Dashboard ──
+
         entries << snap("dashboard") do
           goto @base
           wait_for(".dashboard")
         end
 
-        # 2. Dashboard after completing a task
         wait_for(".complete-btn").click
         wait_for("#series-note-detail")
         goto @base
         wait_for(".dashboard")
         entries << snap("dashboard-after-complete")
 
-        # 3. Overdue sorted by urgency
-        # Explicitly select Urgency — Alpine.$persist may carry "date"
-        # from a previous viewport run.
-        sortable_sel = '[x-data="sortable"]'
-        urgency_btn = @browser.at_css("#{sortable_sel} .sort-toggle button:last-child") ||
-                      @browser.at_css("#{sortable_sel} .sort-toggle button:nth-child(1)")
-        urgency_btn.click if urgency_btn
-        entries << snap("overdue-urgency", selector: ".main-column")
+        # ── New series ──
 
-        # 4. Overdue sorted by date
-        date_btn = @browser.at_css("#{sortable_sel} .sort-toggle button:first-child") ||
-                   @browser.at_css("#{sortable_sel} .sort-toggle button:nth-child(2)")
-        date_btn.click if date_btn
-        entries << snap("overdue-date", selector: ".main-column")
-
-        # Reset to urgency sort
-        urgency_btn = @browser.at_css("#{sortable_sel} .sort-toggle button:last-child") ||
-                      @browser.at_css("#{sortable_sel} .sort-toggle button:nth-child(1)")
-        urgency_btn.click if urgency_btn
-
-        # 5. New series — navigate to standalone page
-        entries << snap("new-series") do
+        entries << snap("new-series", selector: ".main-column") do
           goto "#{@base}/series/new"
           wait_for("form[action='/series']")
         end
 
-        # 6. New series form filled in
-        fill_new_series_standalone(
+        fill_new_series_form(
           note: "Call the vet\n\nAsk about *vaccination schedule*\n- Bring **shot records**\n- Check flea meds",
           interval_count: 2,
           interval_unit: "week"
         )
-        entries << snap("new-series-editing")
+        entries << snap("new-series-filled", selector: ".main-column")
 
-        # 7. Series detail after creation — submit the form
-        wait_for("#create-series-btn:not([disabled])").click
+        # ── Series detail (newly created) ──
+
+        # Submit the new series form directly — the create button
+        # triggers requestSubmit(), but we can do it ourselves.
+        @browser.evaluate('document.getElementById("new-series-form").requestSubmit()')
         wait_for("#series-note-detail")
-        # Wait for panel to be visible
-        wait_for(".panel-inner")
-        entries << snap("series-created")
+        entries << snap("series-created", selector: ".main-column")
 
-        # 8. Series detail in editing mode
-        wait_for("button.panel-action").click
-        entries << snap("series-editing")
+        # Toggle editing mode
+        wait_for(".section-edit-btn").click
+        wait_for(".series-note--editable")
+        entries << snap("series-editing", selector: ".main-column")
 
-        # 9. Series detail with task history
-        noted_ids = Task.exclude(completed_at: nil).where(Sequel.like(:note, "%*%")).select(:series_id)
-        unnoted_ids = Task.exclude(completed_at: nil).where(note: nil).select(:series_id)
-        series_with_history = Series.first(
-          Sequel.&({ id: noted_ids }, { id: unnoted_ids })
-        ) || Series.first
-        entries << snap("series-detail") do
+        # ── Series detail (with history) ──
+
+        series_with_history = find_series_with_mixed_history
+        entries << snap("series-history", selector: ".main-column") do
           goto "#{@base}/series/#{series_with_history.id}"
           wait_for(".task-history")
         end
 
-        # 10. Add a task note
+        # Click "add a note" on a completed task that has no note
         @browser.evaluate(<<~JS)
           document.querySelector('.task-history-item:has(.task-history-note-editor[data-value=""]) .task-history-add-note').click()
         JS
@@ -225,24 +201,19 @@ module Ketchup
         note_text = "Checked *both* lines\n- Front needs **new filter**\n- Back is fine"
         textarea.evaluate("this.value = #{note_text.to_json}")
         textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
-        entries << snap("task-add-note", selector: ".panel-content")
+        entries << snap("series-add-note", selector: ".main-column")
 
-        # 11. Edit existing task note
-        existing = @browser.at_css('.task-history-note-editor:not([data-value=""]) textarea')
-        existing.focus
-        entries << snap("task-edit-note", selector: ".panel-content")
+        # ── User settings ──
 
-        # 12. User detail
         user = User.first(login: "snapshot@example.com")
-        entries << snap("user-detail") do
+        entries << snap("user-settings", selector: ".main-column") do
           goto "#{@base}/users/#{user.id}"
-          wait_for(".panel-inner")
+          wait_for(".detail-fields")
         end
 
-        # 13. User editing
-        @browser.at_css('[x-on\\:click="editing = true"]').click
+        wait_for(".section-edit-btn").click
         wait_for('input[name="email"]')
-        entries << snap("user-editing")
+        entries << snap("user-editing", selector: ".main-column")
 
         entries
       end
@@ -323,11 +294,13 @@ module Ketchup
           &.then { |rect| rect["width"] > 0 && rect["height"] > 0 } || false
       end
 
-      def fill_new_series_standalone(note:, interval_count: 1, interval_unit: "day")
+      def fill_new_series_form(note:, interval_count: 1, interval_unit: "day")
         textarea = wait_for("#series-note-editor textarea")
         textarea.focus
-        textarea.evaluate("this.value = #{note.to_json}")
-        textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
+        note.each_line(chomp: true).with_index do |line, i|
+          @browser.keyboard.type(:Enter) if i > 0
+          @browser.keyboard.type(line) unless line.empty?
+        end
 
         count_input = @browser.at_css("input#interval_count")
         count_input.focus
@@ -336,6 +309,14 @@ module Ketchup
 
         unit_select = @browser.at_css("select#interval_unit")
         unit_select.select(interval_unit)
+      end
+
+      # Find a series that has both noted and un-noted completed tasks,
+      # so the history screenshot shows both states.
+      def find_series_with_mixed_history
+        noted_ids = Task.exclude(completed_at: nil).where(Sequel.like(:note, "%*%")).select(:series_id)
+        unnoted_ids = Task.exclude(completed_at: nil).where(note: nil).select(:series_id)
+        Series.first(Sequel.&({ id: noted_ids }, { id: unnoted_ids })) || Series.first
       end
 
 

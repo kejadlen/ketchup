@@ -119,6 +119,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 
 .main-column {
   flex: 1;
+  align-self: start;
   max-width: 32rem;
   margin-inline: auto;
   padding: var(--space-m) var(--space-l);
@@ -673,6 +674,7 @@ button[type="submit"]:not(.complete-btn):hover {
   }
 
   .main-column {
+    align-self: stretch;
     padding-inline: var(--space-s);
   }
 
@@ -691,10 +693,6 @@ button[type="submit"]:not(.complete-btn):hover {
     width: auto;
     border-inline-start: none;
     padding: 0 var(--space-s) var(--space-m);
-  }
-
-  .panel {
-    width: 100vw;
   }
 
   .task-card--overdue {
