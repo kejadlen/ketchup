@@ -40,7 +40,7 @@ module Views
 
       div(class: "focus-task") do
         div(class: "focus-urgency") do
-          plain "#{format("%.1f", @task.urgency)}× overdue"
+          plain "#{format("%.1f", @task.urgency)}x overdue"
         end
         h1(class: "focus-name") { name }
         p(class: "focus-interval") { "every #{interval}" }

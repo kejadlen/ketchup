@@ -92,7 +92,7 @@ module Views
 
                     if active_task.urgency > 0
                       dt(class: "detail-overdue") { "Urgency" }
-                      dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}×" }
+                      dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}x" }
                     end
                   end
                 end

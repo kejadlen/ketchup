@@ -36,7 +36,7 @@ module Views
           end
         end
         if @overdue && @task.urgency > 0
-          span(class: "task-urgency") { "#{format("%.1f", @task.urgency)}×" }
+          span(class: "task-urgency") { "#{format("%.1f", @task.urgency)}x" }
         elsif @date_label
           span(class: "task-date-label") { @date_label }
         end
