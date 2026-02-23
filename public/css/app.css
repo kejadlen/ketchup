@@ -681,6 +681,8 @@ button[type="submit"]:not(.complete-btn):hover {
   }
 
   .column-overdue {
+    flex: none;
+    overflow-y: visible;
     padding-inline: var(--space-s);
     padding-block-end: 0;
   }
