@@ -161,6 +161,18 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #666;
 }
 
+.section-edit-btn {
+  all: unset;
+  order: 1;
+  font-size: var(--step--1);
+  color: #999;
+  cursor: pointer;
+}
+
+.section-edit-btn:hover {
+  color: #444;
+}
+
 .section-header::after {
   content: "";
   flex: 1;
@@ -464,7 +476,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .detail-fields {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-3xs) var(--space-s);
+  gap: var(--space-2xs) var(--space-s);
   font-size: var(--step--2);
 }
 
@@ -477,8 +489,12 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #444;
 }
 
+.detail-fields .detail-overdue {
+  color: #c00;
+}
+
 .detail-input {
-  font-size: var(--step--1);
+  font-size: inherit;
   padding: 2px 6px;
   margin: -3px -7px;
   border: 1px solid #ddd;
@@ -503,12 +519,14 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .detail-edit-interval {
-  display: flex;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 3.5em 1fr;
+  gap: var(--space-2xs);
 }
 
 .detail-input-count {
-  width: 3.5em;
+  width: 100%;
+  min-width: 0;
   -moz-appearance: textfield;
 }
 
@@ -519,7 +537,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .detail-input-unit {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 

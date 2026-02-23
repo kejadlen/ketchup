@@ -19,10 +19,24 @@ module Views
         render Layout.new(current_user: @current_user, title: "#{note_title} — Ketchup", active_view: nil) do
           div(class: "dashboard") do
             div(class: "main-column") do
-              section(class: "section") do
+              section(class: "section", "x-data": "{ editing: false }") do
                 div(class: "section-header") do
                   h2(class: "section-title") do
                     span(class: "section-title-text") { "Series" }
+                  end
+                  button(
+                    class: "section-edit-btn",
+                    "x-show": "!editing",
+                    "x-on:click": "editing = true; $dispatch('start-editing')"
+                  ) do
+                    plain "Edit"
+                  end
+                  button(
+                    class: "section-edit-btn",
+                    "x-show": "editing",
+                    "x-on:click": "editing = false; $dispatch('stop-editing')"
+                  ) do
+                    plain "Done"
                   end
                 end
 
@@ -32,15 +46,53 @@ module Views
 
                 dl(class: "detail-fields") do
                   dt { "Repeat every" }
-                  dd { interval_text(@series.interval_count, @series.interval_unit) }
+                  dd("x-show": "!editing") do
+                    plain interval_text(@series.interval_count, @series.interval_unit)
+                  end
+                  dd(
+                    class: "detail-edit-interval",
+                    "x-show": "editing",
+                    "x-cloak": true,
+                    "x-data": "intervalEditor(#{@series.id}, #{@series.interval_count}, '#{@series.interval_unit}')"
+                  ) do
+                    input(
+                      type: "number",
+                      class: "detail-input detail-input-count",
+                      min: 1,
+                      "x-model.number": "count",
+                      "x-on:change": "save()"
+                    )
+                    select(
+                      class: "detail-input detail-input-unit",
+                      "x-model": "unit",
+                      "x-on:change": "save()"
+                    ) do
+                      INTERVAL_OPTIONS.each { |val, label| option(value: val) { label } }
+                    end
+                  end
 
                   if active_task
-                    dt { "Due date" }
-                    dd { active_task[:due_date].to_s }
+                    dt { "Next due date" }
+                    dd(
+                      "x-show": "!editing",
+                      "x-text": "new Date('#{active_task[:due_date]}T00:00').toLocaleDateString()"
+                    ) { active_task[:due_date].to_s }
+                    dd(
+                      "x-show": "editing",
+                      "x-cloak": true,
+                      "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')"
+                    ) do
+                      input(
+                        type: "date",
+                        class: "detail-input detail-input-date",
+                        "x-model": "dueDate",
+                        "x-on:change": "save()"
+                      )
+                    end
 
                     if active_task.urgency > 0
-                      dt { "Urgency" }
-                      dd { "#{format("%.1f", active_task.urgency)}×" }
+                      dt(class: "detail-overdue") { "Urgency" }
+                      dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}×" }
                     end
                   end
                 end
