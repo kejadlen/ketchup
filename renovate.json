@@ -5,6 +5,10 @@
     {
       "matchManagers": ["bundler", "dockerfile", "github-actions"],
       "schedule": ["every weekend"]
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "groupName": "CDN dependencies"
     }
   ],
   "customManagers": [
