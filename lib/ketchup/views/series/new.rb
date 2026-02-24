@@ -24,12 +24,11 @@ module Views
                   button(
                     class: "section-edit-btn",
                     id: "create-series-btn",
-                    disabled: true,
-                    "x-on:click": "document.getElementById('new-series-form').requestSubmit()"
+                    disabled: true
                   ) { "Create" }
                 end
 
-                form(method: "post", action: "/series", id: "new-series-form", class: "new-series-form") do
+                form(method: "post", action: "/series", id: "new-series-form", class: "new-series-form", novalidate: true) do
                   input(type: "hidden", name: "_csrf", value: @csrf.call("/series"))
                   div(class: "field") do
                     label(for: "series-note-editor") { "Note" }

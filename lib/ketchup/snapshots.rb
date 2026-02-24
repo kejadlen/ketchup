@@ -174,9 +174,8 @@ module Ketchup
 
         # ── Series detail (newly created) ──
 
-        # Submit the new series form directly — the create button
-        # triggers requestSubmit(), but we can do it ourselves.
-        @browser.evaluate('document.getElementById("new-series-form").requestSubmit()')
+        # Submit via the Create button to exercise the JS click handler
+        wait_for("#create-series-btn").click
         wait_for("#series-note-detail")
         entries << snap("series-created", selector: ".main-column")
 

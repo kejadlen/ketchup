@@ -246,9 +246,13 @@ document.addEventListener("alpine:init", () => {
       autoResize: true,
     })
     const createBtn = document.getElementById("create-series-btn")
-    if (createBtn) {
+    const newForm = document.getElementById("new-series-form")
+    if (createBtn && newForm) {
       newNoteEl.addEventListener("input", () => {
         createBtn.disabled = !editor.getValue().trim()
+      })
+      createBtn.addEventListener("click", () => {
+        newForm.requestSubmit()
       })
     }
   }
