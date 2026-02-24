@@ -34,7 +34,7 @@ module Views
           link(rel: "stylesheet",
                href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap")
           script(src: "https://unpkg.com/overtype@2.3.4/dist/overtype.min.js",
-                 integrity: "sha384-zp8RL0j4VLfaFKgqehca9l8rfcE4Jh0Nt1CFoVyUBn+qa4velUokXJXsW2h0J5xT",
+                 integrity: "sha384-oO6wSYxEDXeZSOcEf28Yv/b18PqYxmhTbhc9Qfn8PSQJxv82nH/6Awq3eCof6VcA",
                  crossorigin: "anonymous")
           script(src: asset_path("/js/app.js"), defer: true)
           script(src: "https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.15.0/dist/cdn.min.js",
