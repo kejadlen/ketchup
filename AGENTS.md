@@ -98,7 +98,15 @@ Output goes to `~/.cache/ketchup/snapshots/` (or `$XDG_CACHE_HOME`). Templates f
 - **Migrations:** Sequel migrations in `db/migrate/`, numbered sequentially (`001_`, `002_`, …). Migrations auto-run on boot.
 - **User identification:** Current user from a single auth header (`AUTH_HEADER` env var, defaults to `Remote-User`). Set `AUTH_HEADER=Tailscale-User-Login` for Tailscale deployments.
 - **Testing:** Minitest with `Rack::Test`. Fake auth headers via helper.
-- **Client-side:** Alpine.js for reactivity, Alpine Persist for state persistence, OverType for markdown editing. No build step — all loaded via CDN with pinned versions and SRI hashes in `views/layout.rb`. To update a dependency: fetch the new versioned URL, generate a hash with `curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A`, and update both the `src` and `integrity` attributes.
+- **Client-side:** Alpine.js for reactivity, Alpine Persist for state persistence, OverType for markdown editing. No build step — all loaded via CDN with pinned versions and SRI hashes in `views/layout.rb`. See [Updating CDN dependencies](#updating-cdn-dependencies) below.
 - **Ownership scoping:** User has `many_through_many :tasks` through `:series`. Routes use `@user.tasks_dataset` and `@user.series_dataset` to scope lookups.
 - **Changelog:** This project does not maintain a changelog. Do not create or update one.
 - **Observability:** OpenTelemetry with Rack instrumentation, gated on `OTEL_EXPORTER_OTLP_ENDPOINT`. The SDK reads standard `OTEL_EXPORTER_OTLP_*` env vars directly — no app-level proxying. No-op when unset.
+
+## Updating CDN dependencies
+
+CDN scripts in `lib/ketchup/views/layout.rb` use [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) hashes. Renovate bumps the version in the `src` URL but cannot update the SRI hash. Before merging a Renovate CDN PR, run:
+
+```sh
+rake cdn:rehash
+```
