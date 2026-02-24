@@ -124,7 +124,7 @@ jobs:
           tar xzf snapshots.tar.gz -C gallery
           bundle exec rake "snapshots:gallery[gallery,gallery/index.html]"
           cp public/favicon.svg gallery/
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: gallery
       - id: deployment
