@@ -105,8 +105,8 @@ Output goes to `~/.cache/ketchup/snapshots/` (or `$XDG_CACHE_HOME`). Templates f
 
 ## Updating CDN dependencies
 
-CDN scripts in `lib/ketchup/views/layout.rb` use [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) hashes. Renovate bumps the version in the `src` URL but cannot update the SRI hash. Before merging a Renovate CDN PR, run:
+CDN scripts in `lib/ketchup/views/layout.rb` use [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) hashes. Renovate bumps the version in the `src` URL but cannot update the SRI hash. To complete a Renovate CDN PR:
 
-```sh
-rake cdn:rehash
-```
+1. Check out the Renovate branch: `jj new <bookmark>`
+2. Run `rake cdn:rehash` to regenerate integrity hashes
+3. Commit, push to the branch, and merge the PR
