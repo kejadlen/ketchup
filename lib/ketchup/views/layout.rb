@@ -7,9 +7,14 @@ module Views
   class Layout < Phlex::HTML
     ASSET_VERSIONS = begin
       root = File.expand_path("../../../public", __dir__)
-      %w[/css/reset.css /css/utopia.css /css/app.css /js/app.js].to_h do |path|
+      %w[
+        /css/reset.css
+        /css/utopia.css
+        /css/app.css
+        /js/app.js
+      ].to_h {|path|
         [path, Digest::MD5.file(File.join(root, path)).hexdigest[0, 10]]
-      end.freeze
+      }.freeze
     end
 
     def initialize(current_user:, title: "Ketchup", active_view: nil)
