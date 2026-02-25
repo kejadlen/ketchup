@@ -51,14 +51,14 @@ module Views
         end
         body do
           header(class: "site-header") do
-            a(href: "/", class: "site-name") { "Ketchup" }
+            a(href: "/", class: "site-name", aria_label: "Ketchup home") { "🍅" }
             nav(class: "site-nav") do
               a(
                 href: "/series/new",
                 class: ["header-action", ("header-action--active" if @active_view == :new)]
               ) { "+New" }
             end
-            a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
+            a(href: "/users/#{@current_user[:id]}", class: "header-user", aria_label: @current_user[:login]) { "👤" }
           end
           yield
           render_footer
