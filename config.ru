@@ -40,6 +40,13 @@ end
 if CONFIG.default_user
   require_relative "lib/ketchup/dev_auth"
   use Ketchup::DevAuth, CONFIG.default_user
+
+  require_relative "lib/ketchup/seed"
+  user = User.find_or_create(login: CONFIG.default_user)
+  if user.series_dataset.empty?
+    Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
+    $stderr.puts "Seeded #{Ketchup::Seed::DATA.length} series for #{user.login}"
+  end
 end
 
 require_relative "lib/ketchup/web"
