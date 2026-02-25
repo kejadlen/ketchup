@@ -18,9 +18,7 @@ module Views
 
     def view_template
       overdue = @current_user.overdue_tasks.all.sort_by { |t| -t.urgency }
-      upcoming = @current_user.upcoming_tasks
-        .where { due_date <= Date.today + AGENDA_DAYS }
-        .all
+      upcoming = @current_user.upcoming_tasks.all
 
       render Layout.new(current_user: @current_user) do
         div(class: "dashboard") do
@@ -108,13 +106,12 @@ module Views
           end
         end
 
-        AGENDA_DAYS.times do |i|
-          date = today + i
-          day_tasks = tasks_by_date[date] || []
-          next if day_tasks.empty?
+        tasks_by_date.keys.sort.each do |date|
+          day_tasks = tasks_by_date[date]
+          offset = (date - today).to_i
 
-          div(class: ["agenda-day", ("agenda-day--today" if i == 0)]) do
-            div(class: "agenda-day-header") { friendly_day(date, i) }
+          div(class: ["agenda-day", ("agenda-day--today" if offset == 0)]) do
+            div(class: "agenda-day-header") { friendly_day(date, offset) }
             day_tasks.each do |task|
               task_name = task[:note].lines.first&.strip || task[:note]
               a(
