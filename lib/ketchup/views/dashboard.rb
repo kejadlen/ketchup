@@ -42,7 +42,7 @@ module Views
 
       undo_path = @flash["undo_path"]
 
-      div(class: "flash-bar", "x-data": true) do
+      div(class: "flash-bar", "x-data": "{ show: true }", "x-show": "show", "x-transition.opacity": true) do
         span(class: "flash-message") { @flash["message"] }
         if undo_path
           button(
@@ -50,6 +50,11 @@ module Views
             "x-on:click": "fetch('#{undo_path}', {method: 'DELETE'}).then(() => location.reload())"
           ) { "Undo" }
         end
+        button(
+          class: "flash-close-btn",
+          "x-on:click": "show = false",
+          **{ "aria-label": "Dismiss" }
+        ) { "\u00d7" }
       end
     end
 
