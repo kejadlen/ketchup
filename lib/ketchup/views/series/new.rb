@@ -7,13 +7,14 @@ require_relative "../layout"
 module Views
   module Series
     class New < Phlex::HTML
-      def initialize(current_user:, csrf:)
+      def initialize(current_user:, csrf:, flash: nil)
         @current_user = current_user
         @csrf = csrf
+        @flash = flash
       end
 
       def view_template
-        render Layout.new(current_user: @current_user, title: "New Series — Ketchup", active_view: :new) do
+        render Layout.new(current_user: @current_user, title: "New Series — Ketchup", active_view: :new, flash: @flash, csrf: @csrf) do
           div(class: "dashboard") do
             div(class: "main-column") do
               section(class: "section") do

@@ -40,14 +40,16 @@ class Web < Roda
     check_csrf!
 
     r.root do
-      Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token)).call
+      flash = session.delete("flash")
+      Views::Dashboard.new(current_user: @user, csrf: method(:csrf_token), flash: flash).call
     end
 
     r.on "users", Integer do |user_id|
       r.halt 404 unless @user.id == user_id
 
       r.get do
-        Views::User::Show.new(current_user: @user, csrf: method(:csrf_token)).call
+        flash = session.delete("flash")
+        Views::User::Show.new(current_user: @user, csrf: method(:csrf_token), flash: flash).call
       end
 
       r.post "email" do
@@ -59,7 +61,8 @@ class Web < Roda
 
     r.on "series" do
       r.get "new" do
-        Views::Series::New.new(current_user: @user, csrf: method(:csrf_token)).call
+        flash = session.delete("flash")
+        Views::Series::New.new(current_user: @user, csrf: method(:csrf_token), flash: flash).call
       end
 
       r.is do
@@ -96,7 +99,8 @@ class Web < Roda
 
         r.is do
           r.get do
-            Views::Series::Show.new(series: @series, current_user: @user, csrf: method(:csrf_token)).call
+            flash = session.delete("flash")
+            Views::Series::Show.new(series: @series, current_user: @user, csrf: method(:csrf_token), flash: flash).call
           end
 
           r.patch do
@@ -147,12 +151,22 @@ class Web < Roda
             r.halt 422 unless @task[:completed_at].nil?
             @task.complete!(today: Date.today)
 
+            note_title = @series.note.lines.first&.strip || @series.note
+            undo_path = "/series/#{series_id}/tasks/#{@task.id}/undo_complete"
+            session["flash"] = { "message" => "Completed \u201c#{note_title}\u201d", "undo_path" => undo_path }
+
             return_to = r.params["return_to"]
             if return_to && return_to.start_with?("/")
               r.redirect return_to
             else
-              r.redirect "/series/#{series_id}"
+              r.redirect "/"
             end
+          end
+
+          r.post "undo_complete" do
+            r.halt 422 if @task[:completed_at].nil?
+            @task.undo_complete!
+            r.redirect "/"
           end
 
           r.is do

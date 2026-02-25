@@ -7,16 +7,17 @@ require_relative "../layout"
 module Views
   module User
     class Show < Phlex::HTML
-      def initialize(current_user:, csrf:)
+      def initialize(current_user:, csrf:, flash: nil)
         @current_user = current_user
         @csrf = csrf
+        @flash = flash
       end
 
       def view_template
         email_path = "/users/#{@current_user[:id]}/email"
         email = @current_user[:email]
 
-        render Layout.new(current_user: @current_user, title: "Settings — Ketchup", active_view: nil) do
+        render Layout.new(current_user: @current_user, title: "Settings — Ketchup", active_view: nil, flash: @flash, csrf: @csrf) do
           div(class: "dashboard") do
             div(class: "main-column") do
               section(class: "section", "x-data": "{ editing: false }") do

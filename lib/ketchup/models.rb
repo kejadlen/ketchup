@@ -122,4 +122,12 @@ class Task < Sequel::Model
       Task.create(series_id: series.id, due_date: next_date)
     end
   end
+
+  def undo_complete!
+    DB.transaction do
+      next_task = series.active_task
+      next_task.destroy if next_task
+      update(completed_at: nil)
+    end
+  end
 end

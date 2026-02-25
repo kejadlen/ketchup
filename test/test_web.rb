@@ -181,7 +181,7 @@ class TestWeb < Minitest::Test
     csrf_post complete_path, {}, auth_headers
     assert last_response.redirect?
 
-    assert_includes last_response["Location"], "/series/#{series[:id]}"
+    assert_equal "/", URI.parse(last_response["Location"]).path
 
     old_task = DB[:tasks].first(id: task[:id])
     refute_nil old_task[:completed_at]
@@ -571,7 +571,7 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "agenda-week"
   end
 
-  def test_complete_from_dashboard_redirects_to_series
+  def test_complete_from_dashboard_redirects_home
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
@@ -579,7 +579,83 @@ class TestWeb < Minitest::Test
     series = DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
     assert last_response.redirect?
-    assert_includes last_response["Location"], "/series/#{series[:id]}"
+    assert_equal "/", URI.parse(last_response["Location"]).path
+  end
+
+  def test_complete_shows_flash_with_undo
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    get "/", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "Completed"
+    assert_includes last_response.body, "Call Mom"
+    assert_includes last_response.body, "Undo"
+    assert_includes last_response.body, "undo_complete"
+  end
+
+  def test_flash_is_cleared_after_display
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    get "/", {}, auth_headers
+    assert_includes last_response.body, "Undo"
+
+    get "/", {}, auth_headers
+    refute_includes last_response.body, "flash-bar"
+  end
+
+  def test_undo_complete_restores_task
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    assert_equal 2, DB[:tasks].where(series_id: series[:id]).count
+    refute_nil DB[:tasks].first(id: task[:id])[:completed_at]
+
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/undo_complete", {}, auth_headers
+    assert last_response.redirect?
+
+    assert_nil DB[:tasks].first(id: task[:id])[:completed_at]
+    assert_equal 1, DB[:tasks].where(series_id: series[:id]).count
+  end
+
+  def test_undo_complete_rejects_active_task
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/undo_complete", {}, auth_headers
+    # No undo form exists for an active task, so CSRF rejects (403) before
+    # the route-level 422 check. Either way, the request is blocked.
+    assert_includes [403, 422], last_response.status
+  end
+
+  def test_undo_complete_requires_own_task
+    create_series(
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: (Date.today - 1).to_s,
+      headers: auth_headers(login: "alice@example.com")
+    )
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "alice@example.com")
+
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/undo_complete", {}, auth_headers(login: "bob@example.com")
+    assert_includes [403, 404], last_response.status
   end
 
   private
