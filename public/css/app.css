@@ -102,6 +102,14 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   text-align: center;
 }
 
+.site-footer a {
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
 /* -------------------- */
 /* Dashboard layout */
 /* -------------------- */

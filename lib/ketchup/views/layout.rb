@@ -75,12 +75,23 @@ module Views
 
     def render_footer
       config = CONFIG
-      parts = []
-      parts << config.change_id if config.change_id
-      parts << config.commit_sha if config.commit_sha
-      parts << config.build_date if config.build_date
       footer(class: "site-footer") do
-        plain parts.join(" \u00b7 ")
+        sep = ""
+        if config.change_id
+          plain config.change_id
+          sep = " \u00b7 "
+        end
+        if config.commit_sha
+          plain sep
+          a(href: "https://github.com/kejadlen/ketchup/commit/#{config.commit_sha}") do
+            plain config.commit_sha[0, 7]
+          end
+          sep = " \u00b7 "
+        end
+        if config.build_date
+          plain sep
+          plain config.build_date
+        end
       end
     end
   end
