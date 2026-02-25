@@ -539,6 +539,34 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, 'href="/series/new"'
   end
 
+  def test_metrics_returns_prometheus_format
+    get "/metrics"
+    assert last_response.ok?
+    assert_includes last_response["content-type"], "text/plain"
+    assert_includes last_response.body, "ketchup_users_total"
+    assert_includes last_response.body, "ketchup_series_total"
+    assert_includes last_response.body, "ketchup_tasks_active"
+    assert_includes last_response.body, "ketchup_tasks_overdue"
+    assert_includes last_response.body, "ketchup_tasks_completed_total"
+  end
+
+  def test_metrics_reflects_data
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    get "/metrics"
+    assert_includes last_response.body, "ketchup_users_total 1"
+    assert_includes last_response.body, "ketchup_series_total 1"
+    assert_includes last_response.body, "ketchup_tasks_active 1"
+    assert_includes last_response.body, "ketchup_tasks_overdue 1"
+    assert_includes last_response.body, "ketchup_tasks_completed_total 0"
+  end
+
+  def test_metrics_does_not_require_auth
+    get "/metrics"
+    assert last_response.ok?
+  end
+
   def test_csrf_rejects_post_without_token
     get "/", {}, auth_headers  # establish session
     post "/series", {

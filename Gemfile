@@ -12,10 +12,6 @@ gem "sentry-ruby"
 gem "sequel"
 gem "sqlite3"
 
-gem "opentelemetry-sdk"
-gem "opentelemetry-exporter-otlp"
-gem "opentelemetry-instrumentation-rack"
-
 group :development do
   gem "ferrum"
   gem "minitest"

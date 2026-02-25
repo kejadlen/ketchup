@@ -101,7 +101,7 @@ Output goes to `~/.cache/ketchup/snapshots/` (or `$XDG_CACHE_HOME`). Templates f
 - **Client-side:** Alpine.js for reactivity, Alpine Persist for state persistence, OverType for markdown editing. No build step — all loaded via CDN with pinned versions and SRI hashes in `views/layout.rb`. See [Updating CDN dependencies](#updating-cdn-dependencies) below.
 - **Ownership scoping:** User has `many_through_many :tasks` through `:series`. Routes use `@user.tasks_dataset` and `@user.series_dataset` to scope lookups.
 - **Changelog:** This project does not maintain a changelog. Do not create or update one.
-- **Observability:** OpenTelemetry with Rack instrumentation, gated on `OTEL_EXPORTER_OTLP_ENDPOINT`. The SDK reads standard `OTEL_EXPORTER_OTLP_*` env vars directly — no app-level proxying. No-op when unset.
+- **Observability:** `GET /metrics` exposes Prometheus-format gauges (users, series, active/overdue/completed tasks). No authentication required — placed before the auth check in the route tree.
 
 ## Updating CDN dependencies
 

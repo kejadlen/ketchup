@@ -34,6 +34,34 @@ class Web < Roda
   end
 
   route do |r|
+    r.get "metrics" do
+      response["content-type"] = "text/plain; version=0.0.4; charset=utf-8"
+
+      users = DB[:users].count
+      series = DB[:series].count
+      active = DB[:tasks].where(completed_at: nil).count
+      overdue = DB[:tasks].where(completed_at: nil).where { due_date < Date.today }.count
+      completed = DB[:tasks].exclude(completed_at: nil).count
+
+      <<~PROMETHEUS
+        # HELP ketchup_users_total Total number of users
+        # TYPE ketchup_users_total gauge
+        ketchup_users_total #{users}
+        # HELP ketchup_series_total Total number of series
+        # TYPE ketchup_series_total gauge
+        ketchup_series_total #{series}
+        # HELP ketchup_tasks_active Number of active (incomplete) tasks
+        # TYPE ketchup_tasks_active gauge
+        ketchup_tasks_active #{active}
+        # HELP ketchup_tasks_overdue Number of overdue tasks
+        # TYPE ketchup_tasks_overdue gauge
+        ketchup_tasks_overdue #{overdue}
+        # HELP ketchup_tasks_completed_total Total number of completed tasks
+        # TYPE ketchup_tasks_completed_total gauge
+        ketchup_tasks_completed_total #{completed}
+      PROMETHEUS
+    end
+
     @user = current_user
     r.halt 403 unless @user
 

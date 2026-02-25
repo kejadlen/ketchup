@@ -10,19 +10,6 @@ end
 
 require_relative "lib/ketchup/config"
 
-if CONFIG.otel
-  require "opentelemetry/sdk"
-  require "opentelemetry/exporter/otlp"
-  require "opentelemetry/instrumentation/rack"
-
-  OpenTelemetry::SDK.configure do |c|
-    c.service_name = "ketchup"
-    c.use "OpenTelemetry::Instrumentation::Rack"
-  end
-
-  use(*OpenTelemetry::Instrumentation::Rack::Instrumentation.instance.middleware_args)
-end
-
 $stderr.puts CONFIG
 
 if CONFIG.sentry
