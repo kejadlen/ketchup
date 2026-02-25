@@ -48,8 +48,7 @@ class Web < Roda
       r.halt 404 unless @user.id == user_id
 
       r.get do
-        flash = session.delete("flash")
-        Views::User::Show.new(current_user: @user, csrf: method(:csrf_token), flash: flash).call
+        Views::User::Show.new(current_user: @user, csrf: method(:csrf_token)).call
       end
 
       r.post "email" do
@@ -61,8 +60,7 @@ class Web < Roda
 
     r.on "series" do
       r.get "new" do
-        flash = session.delete("flash")
-        Views::Series::New.new(current_user: @user, csrf: method(:csrf_token), flash: flash).call
+        Views::Series::New.new(current_user: @user, csrf: method(:csrf_token)).call
       end
 
       r.is do
@@ -99,8 +97,7 @@ class Web < Roda
 
         r.is do
           r.get do
-            flash = session.delete("flash")
-            Views::Series::Show.new(series: @series, current_user: @user, csrf: method(:csrf_token), flash: flash).call
+            Views::Series::Show.new(series: @series, current_user: @user, csrf: method(:csrf_token)).call
           end
 
           r.patch do

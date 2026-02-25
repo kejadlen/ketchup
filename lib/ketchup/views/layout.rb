@@ -17,12 +17,10 @@ module Views
       }.freeze
     end
 
-    def initialize(current_user:, title: "Ketchup", active_view: nil, flash: nil, csrf: nil)
+    def initialize(current_user:, title: "Ketchup", active_view: nil)
       @current_user = current_user
       @title = title
       @active_view = active_view
-      @flash = flash
-      @csrf = csrf
     end
 
     def view_template(&)
@@ -62,7 +60,6 @@ module Views
             end
             a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
           end
-          render_flash
           yield
           render_footer
         end
@@ -70,22 +67,6 @@ module Views
     end
 
     private
-
-    def render_flash
-      return unless @flash
-
-      undo_path = @flash["undo_path"]
-
-      div(class: "flash-bar") do
-        span(class: "flash-message") { @flash["message"] }
-        if undo_path && @csrf
-          form(method: "post", action: undo_path, class: "flash-undo-form") do
-            input(type: "hidden", name: "_csrf", value: @csrf.call(undo_path))
-            button(type: "submit", class: "flash-undo-btn") { "Undo" }
-          end
-        end
-      end
-    end
 
     def asset_path(path)
       version = ASSET_VERSIONS[path]

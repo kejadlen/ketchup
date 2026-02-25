@@ -21,7 +21,8 @@ module Views
       overdue = @current_user.overdue_tasks.all.sort_by { |t| -t.urgency }
       upcoming = @current_user.upcoming_tasks.all
 
-      render Layout.new(current_user: @current_user, flash: @flash, csrf: @csrf) do
+      render Layout.new(current_user: @current_user) do
+        render_flash
         div(class: "dashboard") do
           div(class: "column-overdue") do
             render_focus(overdue)
@@ -35,6 +36,22 @@ module Views
     end
 
     private
+
+    def render_flash
+      return unless @flash
+
+      undo_path = @flash["undo_path"]
+
+      div(class: "flash-bar") do
+        span(class: "flash-message") { @flash["message"] }
+        if undo_path
+          form(method: "post", action: undo_path, class: "flash-undo-form") do
+            input(type: "hidden", name: "_csrf", value: @csrf.call(undo_path))
+            button(type: "submit", class: "flash-undo-btn") { "Undo" }
+          end
+        end
+      end
+    end
 
     def render_focus(overdue)
       if overdue.empty?

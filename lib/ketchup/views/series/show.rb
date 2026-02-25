@@ -7,17 +7,16 @@ require_relative "../layout"
 module Views
   module Series
     class Show < Phlex::HTML
-      def initialize(series:, current_user:, csrf:, flash: nil)
+      def initialize(series:, current_user:, csrf:)
         @series = series
         @current_user = current_user
         @csrf = csrf
-        @flash = flash
       end
 
       def view_template
         active_task = @series.active_task
 
-        render Layout.new(current_user: @current_user, title: "#{note_title} — Ketchup", active_view: nil, flash: @flash, csrf: @csrf) do
+        render Layout.new(current_user: @current_user, title: "#{note_title} — Ketchup", active_view: nil) do
           div(class: "dashboard") do
             div(class: "main-column") do
               section(class: "section", "x-data": "{ editing: false }") do
