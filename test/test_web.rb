@@ -595,7 +595,7 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "Completed"
     assert_includes last_response.body, "Call Mom"
     assert_includes last_response.body, "Undo"
-    assert_includes last_response.body, "undo_complete"
+    assert_includes last_response.body, "/complete"
   end
 
   def test_flash_is_cleared_after_display
@@ -613,7 +613,7 @@ class TestWeb < Minitest::Test
     refute_includes last_response.body, "flash-bar"
   end
 
-  def test_undo_complete_restores_task
+  def test_delete_complete_restores_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
@@ -624,26 +624,24 @@ class TestWeb < Minitest::Test
     assert_equal 2, DB[:tasks].where(series_id: series[:id]).count
     refute_nil DB[:tasks].first(id: task[:id])[:completed_at]
 
-    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/undo_complete", {}, auth_headers
+    delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
     assert last_response.redirect?
 
     assert_nil DB[:tasks].first(id: task[:id])[:completed_at]
     assert_equal 1, DB[:tasks].where(series_id: series[:id]).count
   end
 
-  def test_undo_complete_rejects_active_task
+  def test_delete_complete_rejects_active_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
     task = DB[:tasks].first
     series = DB[:series].first
-    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/undo_complete", {}, auth_headers
-    # No undo form exists for an active task, so CSRF rejects (403) before
-    # the route-level 422 check. Either way, the request is blocked.
-    assert_includes [403, 422], last_response.status
+    delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+    assert_equal 422, last_response.status
   end
 
-  def test_undo_complete_requires_own_task
+  def test_delete_complete_requires_own_task
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
@@ -654,7 +652,7 @@ class TestWeb < Minitest::Test
     series = DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "alice@example.com")
 
-    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/undo_complete", {}, auth_headers(login: "bob@example.com")
+    delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "bob@example.com")
     assert_includes [403, 404], last_response.status
   end
 

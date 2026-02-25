@@ -144,26 +144,28 @@ class Web < Roda
         r.on "tasks", Integer do |task_id|
           @task = @series.tasks_dataset.where(id: task_id).sole
 
-          r.post "complete" do
-            r.halt 422 unless @task[:completed_at].nil?
-            @task.complete!(today: Date.today)
+          r.on "complete" do
+            r.post do
+              r.halt 422 unless @task[:completed_at].nil?
+              @task.complete!(today: Date.today)
 
-            note_title = @series.note.lines.first&.strip || @series.note
-            undo_path = "/series/#{series_id}/tasks/#{@task.id}/undo_complete"
-            session["flash"] = { "message" => "Completed \u201c#{note_title}\u201d", "undo_path" => undo_path }
+              note_title = @series.note.lines.first&.strip || @series.note
+              complete_path = "/series/#{series_id}/tasks/#{@task.id}/complete"
+              session["flash"] = { "message" => "Completed \u201c#{note_title}\u201d", "undo_path" => complete_path }
 
-            return_to = r.params["return_to"]
-            if return_to && return_to.start_with?("/")
-              r.redirect return_to
-            else
+              return_to = r.params["return_to"]
+              if return_to && return_to.start_with?("/")
+                r.redirect return_to
+              else
+                r.redirect "/"
+              end
+            end
+
+            r.delete do
+              r.halt 422 if @task[:completed_at].nil?
+              @task.undo_complete!
               r.redirect "/"
             end
-          end
-
-          r.post "undo_complete" do
-            r.halt 422 if @task[:completed_at].nil?
-            @task.undo_complete!
-            r.redirect "/"
           end
 
           r.is do

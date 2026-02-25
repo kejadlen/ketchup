@@ -45,10 +45,10 @@ module Views
       div(class: "flash-bar") do
         span(class: "flash-message") { @flash["message"] }
         if undo_path
-          form(method: "post", action: undo_path, class: "flash-undo-form") do
-            input(type: "hidden", name: "_csrf", value: @csrf.call(undo_path))
-            button(type: "submit", class: "flash-undo-btn") { "Undo" }
-          end
+          button(
+            class: "flash-undo-btn",
+            "x-on:click": "fetch('#{undo_path}', {method: 'DELETE'}).then(() => location.reload())"
+          ) { "Undo" }
         end
       end
     end
