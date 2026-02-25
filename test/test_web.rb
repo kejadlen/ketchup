@@ -625,7 +625,7 @@ class TestWeb < Minitest::Test
     refute_nil DB[:tasks].first(id: task[:id])[:completed_at]
 
     delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
-    assert last_response.redirect?
+    assert_equal 204, last_response.status
 
     assert_nil DB[:tasks].first(id: task[:id])[:completed_at]
     assert_equal 1, DB[:tasks].where(series_id: series[:id]).count

@@ -164,7 +164,8 @@ class Web < Roda
             r.delete do
               r.halt 422 if @task[:completed_at].nil?
               @task.undo_complete!
-              r.redirect "/"
+              response.status = 204
+              ""
             end
           end
 
