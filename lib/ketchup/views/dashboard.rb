@@ -42,7 +42,7 @@ module Views
 
       undo_path = @flash["undo_path"]
 
-      div(class: "flash-bar") do
+      div(class: "flash-bar", "x-data": true) do
         span(class: "flash-message") { @flash["message"] }
         if undo_path
           button(
