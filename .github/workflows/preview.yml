@@ -19,6 +19,22 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v6
+
+      - if: github.event.action != 'closed'
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Capture snapshot diff
+        if: github.event.action != 'closed'
+        run: |
+          rake snapshots:diff
+          snapshot_dir="${XDG_CACHE_HOME:-$HOME/.cache}/ketchup/snapshots"
+          cp -r "$snapshot_dir" public/snapshots
+          cp public/favicon.svg public/snapshots/
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy preview
         id: deploy
         uses: superfly/fly-pr-review-apps@1.5.0

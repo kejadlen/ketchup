@@ -11,7 +11,7 @@ require_relative "views/user/show"
 
 class Web < Roda
   plugin :halt
-  plugin :static, %w[ /css /js /favicon.svg ]
+  plugin :static, %w[ /css /js /favicon.svg /snapshots ]
   plugin :all_verbs
   plugin :sessions, secret: CONFIG.session_secret
   plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]

@@ -96,10 +96,13 @@ module Ketchup
         FileUtils.rm_rf(@output_dir)
         @output_dir.mkpath
 
+        browser_options = { "force-device-scale-factor" => 2 }
+        browser_options["no-sandbox"] = nil if ENV["CI"]
+
         @browser = Ferrum::Browser.new(
           headless: true,
           window_size: VIEWPORTS.fetch("desktop"),
-          browser_options: { "force-device-scale-factor" => 2 }
+          browser_options: browser_options
         )
 
         @server.call(@browser) do |url|
