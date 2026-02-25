@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
+      image: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
     steps:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
@@ -49,7 +50,6 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}-${{ steps.short-sha.outputs.sha }}
-            type=raw,value=demo
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy
+      - run: flyctl deploy --image ${{ needs.build.outputs.image }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 

@@ -6,9 +6,6 @@
 app = 'ketchup-t1zvtw'
 primary_region = 'sjc'
 
-[build]
-  image = 'ghcr.io/kejadlen/ketchup:demo'
-
 [http_service]
   internal_port = 9292
   force_https = true
