@@ -43,6 +43,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 .site-header {
   display: flex;
   align-items: baseline;
+  gap: var(--space-s);
   padding: var(--space-xs) var(--space-l);
   font-size: var(--step--1);
   border-block-end: 1px solid #ddd;
