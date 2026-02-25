@@ -55,6 +55,9 @@ namespace :snapshots do
   desc "Capture screenshots of the app in key states"
   task :capture do
     ENV["DATABASE_URL"] = ":memory:"
+    ENV["CHANGE_ID"] ||= "abcd1234"
+    ENV["COMMIT_SHA"] ||= "abc1234"
+    ENV["BUILD_DATE"] ||= "2025-01-01"
     require "ketchup/snapshots"
 
     output_dir = File.join(cache_dir, "current")
