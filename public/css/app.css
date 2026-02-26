@@ -698,8 +698,6 @@ button[type="submit"]:not(.complete-btn):hover {
   .site-name,
   .header-user {
     font-size: 0;
-    display: grid;
-    cursor: pointer;
   }
 
   .site-name::after {
