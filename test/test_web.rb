@@ -591,11 +591,38 @@ class TestWeb < Minitest::Test
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
     get "/", {}, auth_headers
+    body = last_response.body
     assert last_response.ok?
-    assert_includes last_response.body, "Completed"
-    assert_includes last_response.body, "Call Mom"
-    assert_includes last_response.body, "Undo"
-    assert_includes last_response.body, "/complete"
+    assert_includes body, "Completed"
+    assert_includes body, "Call Mom"
+
+    # Flash bar structure: data attribute carries the undo path
+    undo_path = "/series/#{series[:id]}/tasks/#{task[:id]}/complete"
+    assert_includes body, "data-undo-path=\"#{undo_path}\""
+    assert_includes body, "flash-undo-btn"
+    assert_includes body, "flash-close-btn"
+
+    # Inline script wires up click handlers (no Alpine dependency)
+    assert_includes body, "addEventListener"
+    assert_includes body, "fetch(path"
+  end
+
+  def test_complete_flash_without_undo_path
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+
+    # Simulate a flash with no undo_path (message only)
+    env "rack.session", {"flash" => {"message" => "Something happened"}}
+    get "/", {}, auth_headers
+    body = last_response.body
+    assert_includes body, "flash-bar"
+    assert_includes body, "Something happened"
+    assert_includes body, "flash-close-btn"
+    refute_includes body, "data-undo-path"
+    assert_match(/hidden/, body[/flash-undo-btn[^>]*/])
   end
 
   def test_flash_is_cleared_after_display
