@@ -32,6 +32,14 @@ module Views
                     plain "Edit"
                   end
                   button(
+                    class: "section-edit-btn section-edit-btn--cancel",
+                    "x-show": "editing",
+                    "x-cloak": true,
+                    "x-on:click": "editing = false; location.reload()"
+                  ) do
+                    plain "Cancel"
+                  end
+                  button(
                     class: "section-edit-btn",
                     "x-show": "editing",
                     "x-cloak": true,

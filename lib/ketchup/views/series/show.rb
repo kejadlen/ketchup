@@ -156,7 +156,7 @@ module Views
                               "x-ref": "dateInput",
                               "x-on:blur": "save()",
                               "x-on:keydown.enter": "$el.blur()",
-                              "x-on:keydown.escape": "completedDate = '#{completed_date}'; editingDate = false"
+                              "x-on:keydown.escape": "cancel()"
                             )
                             span(
                               class: "task-history-add-note",

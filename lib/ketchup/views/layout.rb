@@ -43,9 +43,6 @@ module Views
                  integrity: "sha384-oO6wSYxEDXeZSOcEf28Yv/b18PqYxmhTbhc9Qfn8PSQJxv82nH/6Awq3eCof6VcA",
                  crossorigin: "anonymous")
           script(src: asset_path("/js/app.js"), defer: true)
-          script(src: "https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.15.0/dist/cdn.min.js",
-                 integrity: "sha384-6WOLkykwLb3YWzXZ6lAq+GI0p3V+enUm9jY6yIXGpIriiAUOSF5dgNJLoSSNam4j",
-                 crossorigin: "anonymous", defer: true)
           script(src: "https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js",
                  integrity: "sha384-LXWjKwDZz29o7TduNe+r/UxaolHh5FsSvy2W7bDHSZ8jJeGgDeuNnsDNHoxpSgDi",
                  crossorigin: "anonymous", defer: true)

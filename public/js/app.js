@@ -107,7 +107,7 @@ function initPanelEditors(container) {
       ta.addEventListener("blur", () => {
         const note = editor.getValue().trim()
         if (note === (initialNote || "").trim()) return
-        saveSeriesField(seriesId, "note", note).then(() => location.reload())
+        saveSeriesField(seriesId, "note", note).then((r) => { if (r.ok) location.reload() })
       })
 
       container.addEventListener("start-editing", () => {
@@ -120,7 +120,7 @@ function initPanelEditors(container) {
       container.addEventListener("stop-editing", () => {
         const note = editor.getValue().trim()
         if (note !== (initialNote || "").trim()) {
-          saveSeriesField(seriesId, "note", note).then(() => location.reload())
+          saveSeriesField(seriesId, "note", note).then((r) => { if (r.ok) location.reload() })
           return
         }
         ta.style.pointerEvents = "none"
@@ -141,7 +141,7 @@ document.addEventListener("alpine:init", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `interval_count=${encodeURIComponent(this.count)}&interval_unit=${encodeURIComponent(this.unit)}`,
-      }).then(() => location.reload())
+      }).then((r) => { if (r.ok) location.reload() })
     },
   }))
 
@@ -158,7 +158,7 @@ document.addEventListener("alpine:init", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ due_date: this.dueDate }),
-      }).then(() => location.reload())
+      }).then((r) => { if (r.ok) location.reload() })
     },
   }))
 
@@ -169,6 +169,13 @@ document.addEventListener("alpine:init", () => {
 
     init() {
       if (this.hasNote) this._initEditor()
+    },
+
+    destroy() {
+      if (this._editor) {
+        this._editor.destroy()
+        this._editor = null
+      }
     },
 
     edit() {
@@ -211,10 +218,12 @@ document.addEventListener("alpine:init", () => {
             return
           }
 
-          this._patchTask({ note })
-          el.dataset.value = note
-          this.hasNote = !!note
-          this.editing = false
+          this._patchTask({ note }).then((r) => {
+            if (!r.ok) return
+            el.dataset.value = note
+            this.hasNote = !!note
+            this.editing = false
+          })
         })
       }
     },
@@ -223,6 +232,11 @@ document.addEventListener("alpine:init", () => {
   Alpine.data("completedDateEditor", (seriesId, taskId, initialDate) => ({
     editingDate: false,
     completedDate: initialDate,
+
+    cancel() {
+      this.completedDate = initialDate
+      this.editingDate = false
+    },
 
     save() {
       if (this.completedDate === initialDate) {
@@ -233,7 +247,7 @@ document.addEventListener("alpine:init", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed_at: this.completedDate }),
-      }).then(() => location.reload())
+      }).then((r) => { if (r.ok) location.reload() })
     },
   }))
 
