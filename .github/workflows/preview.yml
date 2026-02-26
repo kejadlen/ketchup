@@ -10,8 +10,30 @@ env:
   FLY_ORG: personal
 
 jobs:
-  preview:
+  snapshots:
+    if: github.event.action != 'closed'
     runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Capture snapshot diff
+        run: |
+          bundle exec rake snapshots:diff
+          snapshot_dir="${XDG_CACHE_HOME:-$HOME/.cache}/ketchup/snapshots"
+          tar czf snapshots.tar.gz -C "$snapshot_dir" .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapshots
+          path: snapshots.tar.gz
+
+  preview:
+    needs: snapshots
+    if: always()
+    runs-on: ubuntu-latest
     concurrency:
       group: pr-${{ github.event.number }}
     environment:
@@ -21,19 +43,16 @@ jobs:
       - uses: actions/checkout@v6
 
       - if: github.event.action != 'closed'
-        uses: ruby/setup-ruby@v1
+        uses: actions/download-artifact@v4
         with:
-          bundler-cache: true
+          name: snapshots
 
-      - name: Capture snapshot diff
+      - name: Unpack snapshots into public/
         if: github.event.action != 'closed'
         run: |
-          bundle exec rake snapshots:diff
-          snapshot_dir="${XDG_CACHE_HOME:-$HOME/.cache}/ketchup/snapshots"
-          cp -r "$snapshot_dir" public/snapshots
+          mkdir -p public/snapshots
+          tar xzf snapshots.tar.gz -C public/snapshots
           cp public/favicon.svg public/snapshots/
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
