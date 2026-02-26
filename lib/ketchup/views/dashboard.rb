@@ -42,22 +42,31 @@ module Views
 
       undo_path = @flash["undo_path"]
 
-      div(class: "flash-wrap") do
-        div(class: "flash-bar", "x-data": true) do
+      div(class: "flash-wrap", data: { undo_path: undo_path }.compact) do
+        div(class: "flash-bar") do
           span(class: "flash-message") { @flash["message"] }
-          if undo_path
-            button(
-              class: "flash-undo-btn",
-              "x-on:click": "fetch('#{undo_path}', {method: 'DELETE'}).then(() => location.reload())"
-            ) { "Undo" }
-          end
-          button(
-            class: "flash-close-btn",
-            "x-on:click": "$el.closest('.flash-wrap').remove()",
-            **{ "aria-label": "Dismiss" }
-          ) { "\u00d7" }
+          button(class: "flash-undo-btn", hidden: !undo_path) { "Undo" }
+          button(class: "flash-close-btn", **{ "aria-label": "Dismiss" }) { "\u00d7" }
         end
+        script { raw safe(flash_script) }
       end
+    end
+
+    def flash_script
+      <<~JS
+        (function() {
+          var wrap = document.currentScript.parentElement;
+          var undo = wrap.querySelector('.flash-undo-btn');
+          var close = wrap.querySelector('.flash-close-btn');
+          var path = wrap.dataset.undoPath;
+          if (undo && path) {
+            undo.addEventListener('click', function() {
+              fetch(path, {method: 'DELETE'}).then(function() { location.reload(); });
+            });
+          }
+          close.addEventListener('click', function() { wrap.remove(); });
+        })();
+      JS
     end
 
     def render_focus(overdue)
