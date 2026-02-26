@@ -51,20 +51,14 @@ module Views
         end
         body do
           header(class: "site-header") do
-            a(href: "/", class: "site-name") do
-              span(class: "hide-mobile") { "Ketchup" }
-              span(class: "show-mobile", aria_hidden: "true") { "🍅" }
-            end
+            a(href: "/", class: "site-name") { "Ketchup" }
             nav(class: "site-nav") do
               a(
                 href: "/series/new",
                 class: ["header-action", ("header-action--active" if @active_view == :new)]
               ) { "+New" }
             end
-            a(href: "/users/#{@current_user[:id]}", class: "header-user") do
-              span(class: "hide-mobile") { @current_user[:login] }
-              span(class: "show-mobile", aria_hidden: "true") { "👤" }
-            end
+            a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
           end
           yield
           render_footer

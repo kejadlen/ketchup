@@ -12,8 +12,6 @@
   margin-inline: auto;
 }
 
-.show-mobile { display: none; }
-
 /* -------------------- */
 /* Global styles */
 /* -------------------- */
@@ -697,8 +695,20 @@ button[type="submit"]:not(.complete-btn):hover {
     align-items: center;
   }
 
-  .hide-mobile { display: none; }
-  .show-mobile { display: inline; }
+  .site-name,
+  .header-user {
+    font-size: 0;
+  }
+
+  .site-name::after {
+    content: "🍅";
+    font-size: var(--step--1);
+  }
+
+  .header-user::after {
+    content: "👤";
+    font-size: var(--step--1);
+  }
 
   .main-column {
     flex: none;
