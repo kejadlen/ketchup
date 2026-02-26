@@ -107,9 +107,11 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 /* -------------------- */
 
 .flash-wrap {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-xs) var(--space-l);
+  position: fixed;
+  bottom: var(--space-m);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
 }
 
 .flash-bar {
