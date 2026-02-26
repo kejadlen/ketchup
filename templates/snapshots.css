@@ -339,8 +339,13 @@ body:has(.sidebar) {
 
 /* ── Toggle mode ── */
 
+/* Grid overlay lets both images size naturally — the taller one sets
+   the container height, avoiding stretch when dimensions differ. */
 .toggle-container {
+  display: grid;
   position: relative;
+  max-width: 640px;
+  margin-inline: auto;
   border-radius: 4px;
   border: 1px solid #333;
   overflow: hidden;
@@ -348,17 +353,18 @@ body:has(.sidebar) {
 }
 
 .toggle-container img {
+  grid-area: 1 / 1;
   display: block;
-  width: 100%;
+  max-width: 100%;
   border: none;
   border-radius: 0;
   cursor: pointer;
 }
 
-.toggle-container[data-showing="baseline"] .toggle-baseline { display: block; }
-.toggle-container[data-showing="baseline"] .toggle-current { display: none; }
-.toggle-container[data-showing="current"] .toggle-baseline { display: none; }
-.toggle-container[data-showing="current"] .toggle-current { display: block; }
+.toggle-container[data-showing="baseline"] .toggle-baseline { visibility: visible; }
+.toggle-container[data-showing="baseline"] .toggle-current { visibility: hidden; }
+.toggle-container[data-showing="current"] .toggle-baseline { visibility: hidden; }
+.toggle-container[data-showing="current"] .toggle-current { visibility: visible; }
 
 .toggle-label {
   position: absolute;
