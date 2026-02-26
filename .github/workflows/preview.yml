@@ -28,12 +28,14 @@ jobs:
       - name: Capture snapshot diff
         if: github.event.action != 'closed'
         run: |
-          rake snapshots:diff
+          bundle exec rake snapshots:diff
           snapshot_dir="${XDG_CACHE_HOME:-$HOME/.cache}/ketchup/snapshots"
           cp -r "$snapshot_dir" public/snapshots
           cp public/favicon.svg public/snapshots/
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy preview
         id: deploy
