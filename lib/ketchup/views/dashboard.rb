@@ -21,8 +21,7 @@ module Views
       overdue = @current_user.overdue_tasks.all.sort_by { |t| -t.urgency }
       upcoming = @current_user.upcoming_tasks.all
 
-      render Layout.new(current_user: @current_user) do
-        render_flash
+      render Layout.new(current_user: @current_user, flash: @flash) do
         div(class: "dashboard") do
           div(class: "column-overdue") do
             render_focus(overdue)
@@ -36,38 +35,6 @@ module Views
     end
 
     private
-
-    def render_flash
-      return unless @flash
-
-      undo_path = @flash["undo_path"]
-
-      div(class: "flash-wrap", data: { undo_path: undo_path }.compact) do
-        div(class: "flash-bar") do
-          span(class: "flash-message") { @flash["message"] }
-          button(class: "flash-undo-btn", hidden: !undo_path) { "Undo" }
-          button(class: "flash-close-btn", **{ "aria-label": "Dismiss" }) { "\u00d7" }
-        end
-        script { raw safe(flash_script) }
-      end
-    end
-
-    def flash_script
-      <<~JS
-        (function() {
-          var wrap = document.currentScript.parentElement;
-          var undo = wrap.querySelector('.flash-undo-btn');
-          var close = wrap.querySelector('.flash-close-btn');
-          var path = wrap.dataset.undoPath;
-          if (undo && path) {
-            undo.addEventListener('click', function() {
-              fetch(path, {method: 'DELETE'}).then(function() { location.reload(); });
-            });
-          }
-          close.addEventListener('click', function() { wrap.remove(); });
-        })();
-      JS
-    end
 
     def render_focus(overdue)
       if overdue.empty?

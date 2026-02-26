@@ -17,10 +17,11 @@ module Views
       }.freeze
     end
 
-    def initialize(current_user:, title: "Ketchup", active_view: nil)
+    def initialize(current_user:, title: "Ketchup", active_view: nil, flash: nil)
       @current_user = current_user
       @title = title
       @active_view = active_view
+      @flash = flash
     end
 
     def view_template(&)
@@ -52,11 +53,15 @@ module Views
         body do
           header(class: "site-header") do
             a(href: "/", class: "site-name") { "Ketchup" }
-            nav(class: "site-nav") do
-              a(
-                href: "/series/new",
-                class: ["header-action", ("header-action--active" if @active_view == :new)]
-              ) { "+New" }
+            if @flash
+              render_flash
+            else
+              nav(class: "site-nav") do
+                a(
+                  href: "/series/new",
+                  class: ["header-action", ("header-action--active" if @active_view == :new)]
+                ) { "+New" }
+              end
             end
             a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
           end
@@ -67,6 +72,39 @@ module Views
     end
 
     private
+
+    def render_flash
+      undo_path = @flash["undo_path"]
+
+      div(class: "flash-bar", data: { undo_path: undo_path }.compact) do
+        span(class: "flash-message") { @flash["message"] }
+        button(class: "flash-undo-btn", hidden: !undo_path) { "Undo" }
+        button(class: "flash-close-btn", **{ "aria-label": "Dismiss" }) { "\u00d7" }
+        script { raw safe(flash_script) }
+      end
+    end
+
+    def flash_script
+      <<~JS
+        (function() {
+          var bar = document.currentScript.parentElement;
+          var nav = document.createElement('nav');
+          nav.className = 'site-nav';
+          nav.innerHTML = '<a href="/series/new" class="header-action">+New</a>';
+          var undo = bar.querySelector('.flash-undo-btn');
+          var close = bar.querySelector('.flash-close-btn');
+          var path = bar.dataset.undoPath;
+          function dismiss() { bar.replaceWith(nav); }
+          if (undo && path) {
+            undo.addEventListener('click', function() {
+              fetch(path, {method: 'DELETE'}).then(function() { location.reload(); });
+            });
+          }
+          close.addEventListener('click', dismiss);
+          setTimeout(dismiss, 8000);
+        })();
+      JS
+    end
 
     def asset_path(path)
       version = ASSET_VERSIONS[path]

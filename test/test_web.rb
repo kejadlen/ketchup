@@ -602,9 +602,14 @@ class TestWeb < Minitest::Test
     assert_includes body, "flash-undo-btn"
     assert_includes body, "flash-close-btn"
 
-    # Inline script wires up click handlers (no Alpine dependency)
+    # Flash replaces +New nav in the header
+    assert_includes body, "site-header"
+    refute_match(/<nav\b/, body)
+
+    # Inline script wires up click handlers and restores nav on dismiss
     assert_includes body, "addEventListener"
     assert_includes body, "fetch(path"
+    assert_includes body, "replaceWith(nav)"
   end
 
   def test_complete_flash_without_undo_path
