@@ -113,15 +113,20 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   right: var(--space-s);
   z-index: 100;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-l);
+  padding: var(--space-xs) var(--space-s);
   color: #333;
   font-size: var(--step--2);
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 20rem;
+}
+
+.flash-message {
+  flex: 1;
 }
 
 
@@ -257,22 +262,35 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #222;
 }
 
+.agenda-task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-block-end: 3px;
+}
+
+.agenda-task .complete-btn {
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  border-width: 1px;
+  top: 0;
+}
+
 .agenda-day-pill {
   display: block;
   font-size: var(--step--2);
-  padding: 3px 6px;
-  background: #f0f0f0;
+  padding: 3px 0;
   color: #222;
-  border-radius: 4px;
-  margin-block-end: 3px;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .agenda-day-pill:hover {
-  background: #e8e8e8;
+  color: #555;
 }
 
 /* -------------------- */

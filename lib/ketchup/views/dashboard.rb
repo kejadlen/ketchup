@@ -115,10 +115,17 @@ module Views
             div(class: "agenda-day-header") { friendly_day(date, offset) }
             day_tasks.each do |task|
               task_name = task[:note].lines.first&.strip || task[:note]
-              a(
-                href: "/series/#{task[:series_id]}",
-                class: "agenda-day-pill"
-              ) { task_name }
+              complete_path = "/series/#{task[:series_id]}/tasks/#{task[:id]}/complete"
+
+              div(class: "agenda-task") do
+                form(method: "post", action: complete_path, class: "complete-form") do
+                  input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
+                  input(type: "hidden", name: "return_to", value: "/")
+                  button(type: "submit", title: "Complete", class: "complete-btn",
+                         **{ "aria-label": "Complete #{task_name}" }) { "\u2713" }
+                end
+                a(href: "/series/#{task[:series_id]}", class: "agenda-day-pill") { task_name }
+              end
             end
           end
         end
