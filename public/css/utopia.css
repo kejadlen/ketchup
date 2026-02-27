@@ -63,3 +63,21 @@
 :root {
   --fluid-16-48: clamp(1rem, 0.1818rem + 3.6364vw, 3rem);
 }
+
+/* -------------------- */
+/* Semantic color tokens */
+/* -------------------- */
+
+:root {
+  --color-text: #222;
+  --color-text-secondary: #555;
+  --color-text-tertiary: #767676;
+  --color-border: #ddd;
+  --color-border-light: #eee;
+  --color-surface: #fcfcfc;
+  --color-surface-hover: #f0f0f0;
+  --color-accent: #c00;
+  --color-success: #27ae60;
+  --color-success-bg: #f0fff0;
+  --color-accent-bg: #ffe5e5;
+}

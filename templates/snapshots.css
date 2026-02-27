@@ -22,7 +22,7 @@ body:has(.sidebar) {
   bottom: 0;
   width: 14rem;
   background: #151525;
-  border-right: 1px solid #2a2a44;
+  border-inline-end: 1px solid #2a2a44;
   overflow-y: auto;
   z-index: 100;
   padding: var(--space-s) 0;
@@ -53,7 +53,7 @@ body:has(.sidebar) {
   color: #888;
   text-decoration: none;
   font-size: var(--step--2);
-  border-left: 2px solid transparent;
+  border-inline-start: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
   text-transform: capitalize;
 }
@@ -65,7 +65,7 @@ body:has(.sidebar) {
 
 .sidebar-link.active {
   color: #fff;
-  border-left-color: #5e81ac;
+  border-inline-start-color: #5e81ac;
   background: #1e1e36;
 }
 
@@ -75,7 +75,7 @@ body:has(.sidebar) {
   display: inline-grid;
   place-content: center;
   border-radius: 50%;
-  margin-left: auto;
+  margin-inline-start: auto;
   flex-shrink: 0;
 }
 
@@ -85,7 +85,7 @@ body:has(.sidebar) {
 /* ── Content ── */
 
 .content {
-  margin-left: 14rem;
+  margin-inline-start: 14rem;
   padding: var(--space-l);
 }
 
@@ -96,14 +96,14 @@ body:has(.sidebar) {
   top: 0;
   z-index: 50;
   background: #1a1a2e;
-  padding-bottom: var(--space-s);
-  margin-bottom: var(--space-l);
+  padding-block-end: var(--space-s);
+  margin-block-end: var(--space-l);
   border-bottom: 1px solid #2a2a44;
 }
 
 .toolbar h1 {
   color: #fff;
-  margin-bottom: var(--space-s);
+  margin-block-end: var(--space-s);
   font-size: var(--step-2);
 }
 
@@ -165,16 +165,16 @@ body:has(.sidebar) {
 /* ── Snapshot cards ── */
 
 .snapshot {
-  margin-bottom: var(--space-xl);
+  margin-block-end: var(--space-xl);
   scroll-margin-top: 7rem;
 }
 
 .snapshot-header {
-  margin-bottom: var(--space-xs);
+  margin-block-end: var(--space-xs);
 }
 
 .snapshot h2 {
-  margin-bottom: 0;
+  margin-block-end: 0;
   color: #ccc;
   font-size: var(--step-1);
   text-transform: capitalize;
@@ -182,8 +182,8 @@ body:has(.sidebar) {
 
 .snapshot .path {
   display: block;
-  margin-top: var(--space-3xs);
-  margin-bottom: var(--space-s);
+  margin-block-start: var(--space-3xs);
+  margin-block-end: var(--space-s);
   font-size: var(--step--2);
   color: #666;
 }
@@ -223,7 +223,7 @@ body:has(.sidebar) {
 }
 
 .side h3 {
-  margin-bottom: var(--space-xs);
+  margin-block-end: var(--space-xs);
   color: #999;
   font-size: var(--step--1);
   text-transform: uppercase;
@@ -526,14 +526,14 @@ body:has(.sidebar) {
 
 body > h1 {
   color: #fff;
-  margin-bottom: var(--space-l);
+  margin-block-end: var(--space-l);
 }
 
 /* Gallery tab-bar sits at top level */
 body > .tab-bar {
-  margin-bottom: var(--space-l);
+  margin-block-end: var(--space-l);
   border-bottom: 1px solid #333;
-  padding-bottom: var(--space-xs);
+  padding-block-end: var(--space-xs);
 }
 
 /* Gallery images at intrinsic size instead of stretching to fill the

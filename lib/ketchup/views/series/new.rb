@@ -28,7 +28,7 @@ module Views
                   ) { "Create" }
                 end
 
-                form(method: "post", action: "/series", id: "new-series-form", class: "new-series-form", novalidate: true) do
+                form(method: "post", action: "/series", id: "new-series-form", class: "form new-series-form", novalidate: true) do
                   input(type: "hidden", name: "_csrf", value: @csrf.call("/series"))
                   div(class: "field") do
                     label(for: "series-note-editor") { "Note" }
