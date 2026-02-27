@@ -602,14 +602,14 @@ class TestWeb < Minitest::Test
     assert_includes body, "flash-undo-btn"
     assert_includes body, "flash-close-btn"
 
-    # Flash replaces +New nav in the header
+    # Flash toast appears after the main content
     assert_includes body, "site-header"
-    refute_match(/<nav\b/, body)
+    assert body.index("flash-bar") > body.index("site-header")
 
-    # Inline script wires up click handlers and restores nav on dismiss
+    # Inline script wires up click handlers and removes flash on dismiss
     assert_includes body, "addEventListener"
     assert_includes body, "fetch(path"
-    assert_includes body, "replaceWith(nav)"
+    assert_includes body, "bar.remove()"
   end
 
   def test_complete_flash_without_undo_path

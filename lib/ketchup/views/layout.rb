@@ -53,19 +53,16 @@ module Views
         body do
           header(class: "site-header") do
             a(href: "/", class: "site-name") { "Ketchup" }
-            if @flash
-              render_flash
-            else
-              nav(class: "site-nav") do
-                a(
-                  href: "/series/new",
-                  class: ["header-action", ("header-action--active" if @active_view == :new)]
-                ) { "+New" }
-              end
+            nav(class: "site-nav") do
+              a(
+                href: "/series/new",
+                class: ["header-action", ("header-action--active" if @active_view == :new)]
+              ) { "+New" }
             end
             a(href: "/users/#{@current_user[:id]}", class: "header-user") { @current_user[:login] }
           end
           yield
+          render_flash if @flash
           render_footer
         end
       end
@@ -77,8 +74,8 @@ module Views
       undo_path = @flash["undo_path"]
 
       div(class: "flash-bar", data: { undo_path: undo_path }.compact) do
-        span(class: "flash-message") { @flash["message"] }
         button(class: "flash-undo-btn", hidden: !undo_path) { "Undo" }
+        span(class: "flash-message") { @flash["message"] }
         button(class: "flash-close-btn", **{ "aria-label": "Dismiss" }) { "\u00d7" }
         script { raw safe(flash_script) }
       end
@@ -88,13 +85,10 @@ module Views
       <<~JS
         (function() {
           var bar = document.currentScript.parentElement;
-          var nav = document.createElement('nav');
-          nav.className = 'site-nav';
-          nav.innerHTML = '<a href="/series/new" class="header-action">+New</a>';
           var undo = bar.querySelector('.flash-undo-btn');
           var close = bar.querySelector('.flash-close-btn');
           var path = bar.dataset.undoPath;
-          function dismiss() { bar.replaceWith(nav); }
+          function dismiss() { bar.remove(); }
           if (undo && path) {
             undo.addEventListener('click', function() {
               fetch(path, {method: 'DELETE'}).then(function() { location.reload(); });

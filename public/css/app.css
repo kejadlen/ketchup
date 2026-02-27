@@ -107,13 +107,22 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 /* -------------------- */
 
 .flash-bar {
-  flex: 1;
+  position: fixed;
+  bottom: var(--space-s);
+  right: var(--space-s);
+  z-index: 100;
   display: flex;
   align-items: baseline;
-  justify-content: center;
   gap: var(--space-xs);
-  color: #666;
+  padding: var(--space-xs) var(--space-l);
+  color: #333;
+  font-size: var(--step--2);
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
 
 .flash-undo-btn {
   all: unset;
@@ -130,7 +139,8 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: #aaa;
   cursor: pointer;
   font-size: var(--step-0);
-  line-height: 1;
+  vertical-align: middle;
+  line-height: 0;
 }
 
 .flash-close-btn:hover {
@@ -269,7 +279,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 /* -------------------- */
 
 .section + .section {
-  margin-block-start: var(--space-l);
+  margin-block-start: var(--space-s);
 }
 
 .section-header {
@@ -731,11 +741,16 @@ button[type="submit"]:not(.complete-btn):hover {
   .main-column {
     flex: none;
     align-self: stretch;
+    max-width: none;
+    margin-inline: 0;
     padding-inline: var(--space-s);
   }
 
-  .dashboard {
+  .dashboard,
+  .dashboard:has(.column-overdue) {
     flex-direction: column;
+    max-width: none;
+    margin-inline: 0;
   }
 
   .column-overdue {
@@ -747,12 +762,28 @@ button[type="submit"]:not(.complete-btn):hover {
 
   .column-agenda {
     width: auto;
+    align-self: stretch;
     border-inline-start: none;
-    padding: 0 var(--space-s) var(--space-m);
+    padding: var(--space-xs) var(--space-s) var(--space-m);
   }
 
   .task-card--overdue {
     margin-inline: 0;
+  }
+
+  .flash-bar {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: var(--space-s) var(--space-s);
+    border-radius: 0;
+    border-inline: none;
+    border-block-end: none;
+  }
+
+  .flash-message {
+    flex: 1;
+    text-align: center;
   }
 }
 
