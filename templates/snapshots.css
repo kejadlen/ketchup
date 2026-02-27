@@ -259,6 +259,7 @@ body:has(.sidebar) {
   cursor: ew-resize;
   user-select: none;
   position: relative;
+  margin-inline: auto;
 }
 
 .slider-baseline,
@@ -344,7 +345,6 @@ body:has(.sidebar) {
 .toggle-container {
   display: grid;
   position: relative;
-  max-width: 640px;
   margin-inline: auto;
   border-radius: 4px;
   border: 1px solid #333;
@@ -407,6 +407,14 @@ body:has(.sidebar) {
   background: rgba(26, 26, 46, 0.8);
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
+}
+
+/* ── Selector snapshots (component captures at 2x) ── */
+
+.snapshot--selector .slider-container,
+.snapshot--selector .toggle-container,
+.snapshot--selector .single-image {
+  max-width: 640px;
 }
 
 /* ── Lightbox ── */

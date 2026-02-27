@@ -56,7 +56,7 @@
     <div class="viewport-group<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
       <% snapshots.each do |snap| %>
       <% entry = snap.current || snap.baseline -%>
-      <div class="snapshot" id="<%= viewport %>-<%= snap.name %>" data-name="<%= snap.name %>" data-has-baseline="<%= !!snap.baseline %>" data-has-current="<%= !!snap.current %>">
+      <div class="snapshot<%= " snapshot--selector" if entry.selector %>" id="<%= viewport %>-<%= snap.name %>" data-name="<%= snap.name %>" data-has-baseline="<%= !!snap.baseline %>" data-has-current="<%= !!snap.current %>">
         <div class="snapshot-header">
           <h2>
             <%= snap.name.tr("-", " ") %>
