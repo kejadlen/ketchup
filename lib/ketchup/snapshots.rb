@@ -156,9 +156,7 @@ module Ketchup
         end
 
         wait_for(".complete-btn").click
-        wait_for("#series-note-detail")
-        goto @base
-        wait_for(".dashboard")
+        wait_for(".flash-bar")
         entries << snap("dashboard-after-complete")
 
         # ── New series ──

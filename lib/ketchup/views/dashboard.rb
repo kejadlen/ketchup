@@ -11,16 +11,17 @@ module Views
   AGENDA_DAYS = 7
 
   class Dashboard < Phlex::HTML
-    def initialize(current_user:, csrf:)
+    def initialize(current_user:, csrf:, flash: nil)
       @current_user = current_user
       @csrf = csrf
+      @flash = flash
     end
 
     def view_template
       overdue = @current_user.overdue_tasks.all.sort_by { |t| -t.urgency }
       upcoming = @current_user.upcoming_tasks.all
 
-      render Layout.new(current_user: @current_user) do
+      render Layout.new(current_user: @current_user, flash: @flash) do
         div(class: "dashboard") do
           div(class: "column-overdue") do
             render_focus(overdue)
