@@ -25,7 +25,7 @@ module Views
           if @overdue
             button(
               type: "submit", title: "Backdate",
-              name: "backdate", value: "1",
+              name: "backdate", value: @task[:due_date].to_s,
               class: "backdate-btn",
               **{ "aria-label": "Backdate #{name}" }
             ) { "↩" }

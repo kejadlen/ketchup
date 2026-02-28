@@ -107,6 +107,24 @@ module Views
                   end
                 end
 
+                if active_task&.urgency&.positive?
+                  complete_path = "/series/#{@series.id}/tasks/#{active_task[:id]}/complete"
+
+                  form(method: "post", action: complete_path, class: "backdate-form") do
+                    input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
+                    input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
+                    label(for: "backdate") { "Backdate" }
+                    div(class: "backdate-fields") do
+                      input(
+                        type: "date", name: "backdate", id: "backdate",
+                        value: active_task[:due_date].to_s,
+                        class: "detail-input detail-input-date"
+                      )
+                      button(type: "submit") { "Complete" }
+                    end
+                  end
+                end
+
                 unless @series.completed_tasks.empty?
                   div(class: "task-history") do
                     div(class: "section-header") do
