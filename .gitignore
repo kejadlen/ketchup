@@ -1,3 +1,5 @@
 db/*.db
 sig/generated/
 coverage/
+.bundle/
+vendor/bundle/
