@@ -697,17 +697,16 @@ class TestWeb < Minitest::Test
     assert_equal 422, last_response.status
   end
 
-  def test_series_show_has_complete_form
+  def test_series_show_no_complete_form_when_not_overdue
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: Date.today.to_s)
 
     series = DB[:series].first
     get "/series/#{series[:id]}", {}, auth_headers
-    assert_includes last_response.body, "complete-task-form"
-    refute_includes last_response.body, 'name="backdate"'
+    refute_includes last_response.body, "complete-task-form"
   end
 
-  def test_series_show_has_backdate_input_when_overdue
+  def test_series_show_has_backdate_form_when_overdue
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
@@ -716,24 +715,6 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "complete-task-form"
     assert_includes last_response.body, 'name="backdate"'
     assert_includes last_response.body, (Date.today - 3).to_s
-  end
-
-  def test_series_show_complete_from_series_page
-    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
-                  first_due_date: Date.today.to_s)
-
-    series = DB[:series].first
-    task = DB[:tasks].first
-    complete_path = "/series/#{series[:id]}/tasks/#{task[:id]}/complete"
-
-    get "/series/#{series[:id]}", {}, auth_headers
-    token = last_response.body[/action="#{Regexp.escape(complete_path)}".*?name="_csrf" value="([^"]+)"/m, 1]
-    post complete_path, { "_csrf" => token, "return_to" => "/series/#{series[:id]}" }, auth_headers
-    assert last_response.redirect?
-    assert_includes last_response.headers["Location"], "/series/#{series[:id]}"
-
-    new_task = DB[:tasks].where(completed_at: nil).first
-    assert_equal Date.today + 14, new_task[:due_date]
   end
 
   def test_delete_complete_restores_task

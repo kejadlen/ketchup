@@ -103,28 +103,22 @@ module Views
                     if active_task.urgency > 0
                       dt(class: "detail-overdue") { "Urgency" }
                       dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}x" }
-                    end
-                  end
-                end
 
-                if active_task
-                  complete_path = "/series/#{@series.id}/tasks/#{active_task[:id]}/complete"
-                  overdue = active_task.urgency > 0
-
-                  form(method: "post", action: complete_path, class: "complete-task-form") do
-                    input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
-                    input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
-                    if overdue
-                      div(class: "complete-task-fields") do
-                        label(for: "backdate") { "Backdate" }
-                        input(
-                          type: "date", name: "backdate", id: "backdate",
-                          value: active_task[:due_date].to_s,
-                          class: "detail-input detail-input-date"
-                        )
+                      complete_path = "/series/#{@series.id}/tasks/#{active_task[:id]}/complete"
+                      dt(class: "detail-overdue") { "Backdate" }
+                      dd(class: "detail-overdue detail-complete") do
+                        form(method: "post", action: complete_path, class: "complete-task-form") do
+                          input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
+                          input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
+                          input(
+                            type: "date", name: "backdate", id: "backdate",
+                            value: active_task[:due_date].to_s,
+                            class: "detail-input detail-input-date"
+                          )
+                          button(type: "submit", class: "complete-task-btn") { "Complete" }
+                        end
                       end
                     end
-                    button(type: "submit") { "Complete" }
                   end
                 end
 
