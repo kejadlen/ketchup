@@ -23,5 +23,6 @@ group :development do
   gem "rake"
   gem "rbs-inline", require: false
   gem "ruby-lsp"
+  gem "simplecov", require: false
   gem "steep"
 end
