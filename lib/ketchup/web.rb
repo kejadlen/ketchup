@@ -147,7 +147,7 @@ class Web < Roda
           r.on "complete" do
             r.post do
               r.halt 422 unless @task[:completed_at].nil?
-              advance_from = r.params["back_complete"] ? @task.due_date : Date.today
+              advance_from = r.params["backdate"] ? @task.due_date : Date.today
               @task.complete!(today: advance_from)
 
               note_title = @series.note.lines.first&.strip || @series.note

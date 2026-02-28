@@ -24,10 +24,10 @@ module Views
           ) { "✓" }
           if @overdue
             button(
-              type: "submit", title: "Complete from due date",
-              name: "back_complete", value: "1",
-              class: "back-complete-btn",
-              **{ "aria-label": "Back-complete #{name}" }
+              type: "submit", title: "Backdate",
+              name: "backdate", value: "1",
+              class: "backdate-btn",
+              **{ "aria-label": "Backdate #{name}" }
             ) { "↩" }
           end
         end

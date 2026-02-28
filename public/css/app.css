@@ -502,10 +502,10 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 /* -------------------- */
-/* Back-complete button */
+/* Backdate button */
 /* -------------------- */
 
-.back-complete-btn {
+.backdate-btn {
   width: 18px;
   height: 18px;
   padding: 0;
@@ -526,7 +526,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   z-index: 2;
 }
 
-.back-complete-btn:hover {
+.backdate-btn:hover {
   border-color: var(--color-success);
   color: var(--color-success);
   background: var(--color-success-bg);
