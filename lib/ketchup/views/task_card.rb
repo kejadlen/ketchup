@@ -22,6 +22,14 @@ module Views
             class: "complete-btn",
             **{ "aria-label": "Complete #{name}" }
           ) { "✓" }
+          if @overdue
+            button(
+              type: "submit", title: "Complete from due date",
+              name: "back_complete", value: "1",
+              class: "back-complete-btn",
+              **{ "aria-label": "Back-complete #{name}" }
+            ) { "↩" }
+          end
         end
         div(class: "task-body") do
           a(

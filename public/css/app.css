@@ -410,6 +410,10 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   background: var(--color-surface-hover);
 }
 
+.task-card--overdue {
+  grid-template-columns: auto auto 1fr auto;
+}
+
 .task-card--overdue:hover {
   background: var(--color-accent-bg);
 }
@@ -492,6 +496,37 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .task-card--overdue .complete-btn:hover {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+/* -------------------- */
+/* Back-complete button */
+/* -------------------- */
+
+.back-complete-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid var(--color-text-tertiary);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  top: -1px;
+  z-index: 2;
+}
+
+.back-complete-btn:hover {
   border-color: var(--color-success);
   color: var(--color-success);
   background: var(--color-success-bg);

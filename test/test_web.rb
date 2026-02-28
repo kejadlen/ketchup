@@ -645,6 +645,41 @@ class TestWeb < Minitest::Test
     refute_includes last_response.body, "flash-bar"
   end
 
+  def test_back_complete_advances_from_due_date
+    due = Date.today - 5
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: due.to_s)
+
+    task = DB[:tasks].first
+    series = DB[:series].first
+    complete_path = "/series/#{series[:id]}/tasks/#{task[:id]}/complete"
+
+    get "/", {}, auth_headers
+    token = last_response.body[/action="#{Regexp.escape(complete_path)}".*?name="_csrf" value="([^"]+)"/m, 1]
+    post complete_path, { "_csrf" => token, "back_complete" => "1" }, auth_headers
+    assert last_response.redirect?
+
+    new_task = DB[:tasks].where(completed_at: nil).first
+    assert_equal due + 14, new_task[:due_date]
+  end
+
+  def test_back_complete_button_shown_for_overdue_tasks
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    get "/", {}, auth_headers
+    assert_includes last_response.body, "back-complete-btn"
+    assert_includes last_response.body, 'name="back_complete"'
+  end
+
+  def test_back_complete_button_not_shown_for_upcoming_tasks
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: Date.today.to_s)
+
+    get "/", {}, auth_headers
+    refute_includes last_response.body, "back-complete-btn"
+  end
+
   def test_delete_complete_restores_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
