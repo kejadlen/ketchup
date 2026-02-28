@@ -49,6 +49,7 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .site-name {
+  flex: 1;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-decoration: none;
@@ -79,9 +80,11 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 .header-user {
+  flex: 1;
   color: var(--color-text-secondary);
   text-decoration: none;
   letter-spacing: 0.03em;
+  text-align: end;
 }
 
 .header-user:hover {
