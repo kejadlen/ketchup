@@ -107,21 +107,24 @@ module Views
                   end
                 end
 
-                if active_task&.urgency&.positive?
+                if active_task
                   complete_path = "/series/#{@series.id}/tasks/#{active_task[:id]}/complete"
+                  overdue = active_task.urgency > 0
 
-                  form(method: "post", action: complete_path, class: "backdate-form") do
+                  form(method: "post", action: complete_path, class: "complete-task-form") do
                     input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
                     input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
-                    label(for: "backdate") { "Backdate" }
-                    div(class: "backdate-fields") do
-                      input(
-                        type: "date", name: "backdate", id: "backdate",
-                        value: active_task[:due_date].to_s,
-                        class: "detail-input detail-input-date"
-                      )
-                      button(type: "submit") { "Complete" }
+                    if overdue
+                      div(class: "complete-task-fields") do
+                        label(for: "backdate") { "Backdate" }
+                        input(
+                          type: "date", name: "backdate", id: "backdate",
+                          value: active_task[:due_date].to_s,
+                          class: "detail-input detail-input-date"
+                        )
+                      end
                     end
+                    button(type: "submit") { "Complete" }
                   end
                 end
 
