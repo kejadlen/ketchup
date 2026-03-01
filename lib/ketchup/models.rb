@@ -62,6 +62,23 @@ class Series < Sequel::Model
     { streak: streak, on_time_pct: (on_time * 100.0 / completed.size).round, total: completed.size }
   end
 
+  def next_due_date(completed_on)
+    case interval_unit
+    when "day"
+      completed_on + interval_count
+    when "week"
+      completed_on + (7 * interval_count)
+    when "month"
+      completed_on >> interval_count
+    when "quarter"
+      completed_on >> (3 * interval_count)
+    when "year"
+      completed_on >> (12 * interval_count)
+    else
+      fail
+    end
+  end
+
   def self.create_with_first_task(user:, note:, interval_unit:, interval_count:, first_due_date:)
     DB.transaction do
       series = create(
@@ -105,21 +122,7 @@ class Task < Sequel::Model
   def complete!(completed_on:)
     DB.transaction do
       update(completed_at: Time.new(completed_on.year, completed_on.month, completed_on.day))
-      next_date = case series.interval_unit
-                  when "day"
-                    completed_on + series.interval_count
-                  when "week"
-                    completed_on + (7 * series.interval_count)
-                  when "month"
-                    completed_on >> series.interval_count
-                  when "quarter"
-                    completed_on >> (3 * series.interval_count)
-                  when "year"
-                    completed_on >> (12 * series.interval_count)
-                  else
-                    fail
-                  end
-      Task.create(series_id: series.id, due_date: next_date)
+      Task.create(series_id: series.id, due_date: series.next_due_date(completed_on))
     end
   end
 

@@ -194,7 +194,19 @@ class Web < Roda
                 result["completed_at"] = completed_date.to_s
               end
 
-              Task.where(id: task_id).update(updates) unless updates.empty?
+              unless updates.empty?
+                DB.transaction do
+                  Task.where(id: task_id).update(updates)
+
+                  if completed_date
+                    latest = @series.completed_tasks.first
+                    if latest && latest[:id] == @task[:id]
+                      active = @series.active_task
+                      active.update(due_date: @series.next_due_date(completed_date)) if active
+                    end
+                  end
+                end
+              end
 
               response["content-type"] = "application/json"
               result.to_json

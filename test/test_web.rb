@@ -332,6 +332,25 @@ class TestWeb < Minitest::Test
     assert_equal Date.new(2026, 1, 15), DB[:tasks].first(id: completed_task[:id])[:completed_at].to_date
   end
 
+  def test_patch_latest_completed_task_updates_active_due_date
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = DB[:series].first
+    task = DB[:tasks].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    active_task = DB[:tasks].where(completed_at: nil).first
+    original_due = active_task[:due_date]
+
+    # Backdate completion by one week — active due date should shift accordingly
+    patch_task series[:id], task[:id], { completed_at: "2026-02-21" }
+    assert last_response.ok?
+
+    updated_active = DB[:tasks].first(id: active_task[:id])
+    assert_equal Date.new(2026, 3, 7), updated_active[:due_date]
+  end
+
   def test_patch_task_saves_both_note_and_completed_at
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: (Date.today - 3).to_s)
