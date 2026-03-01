@@ -743,7 +743,7 @@ textarea {
   gap: var(--space-3xs);
 }
 
-button[type="submit"]:not(.complete-btn):not(.section-edit-btn) {
+.btn-primary {
   padding: var(--space-3xs) var(--space-s);
   border: 1px solid #1a1a1a;
   border-radius: 4px;
@@ -754,7 +754,7 @@ button[type="submit"]:not(.complete-btn):not(.section-edit-btn) {
   cursor: pointer;
 }
 
-button[type="submit"]:not(.complete-btn):not(.section-edit-btn):hover {
+.btn-primary:hover {
   background: #333;
 }
 
