@@ -118,26 +118,10 @@ class Web < Roda
               updates[:interval_unit] = interval_unit
             end
 
-            if r.params.key?("due_date")
-              begin
-                due_date = Date.parse(r.params["due_date"].to_s)
-              rescue Date::Error
-                r.halt 422
-              end
-            end
-
-            DB.transaction do
-              @series.update(updates) unless updates.empty?
-              if due_date
-                active = @series.active_task
-                active.update(due_date: due_date) if active
-              end
-            end
+            @series.update(updates) unless updates.empty?
 
             response["content-type"] = "application/json"
-            result = updates.transform_keys(&:to_s)
-            result["due_date"] = due_date.to_s if due_date
-            result.to_json
+            updates.transform_keys(&:to_s).to_json
           end
         end
 
@@ -148,13 +132,7 @@ class Web < Roda
             r.post do
               r.halt 422 unless @task[:completed_at].nil?
 
-              completed_date = if (d = r.params["completed_date"]) && !d.empty?
-                Date.parse(d)
-              else
-                Date.today
-              end
-
-              @task.complete!(completed_on: completed_date)
+              @task.complete!(completed_on: Date.today)
 
               note_title = @series.note.lines.first&.strip || @series.note
               complete_path = "/series/#{series_id}/tasks/#{@task.id}/complete"
@@ -178,8 +156,6 @@ class Web < Roda
 
           r.is do
             r.patch do
-              r.halt 422 if @task[:completed_at].nil?
-
               begin
                 body = JSON.parse(r.body.read)
               rescue JSON::ParserError
@@ -189,13 +165,26 @@ class Web < Roda
               updates = {}
               result = {}
 
+              if body.key?("due_date")
+                r.halt 422 unless @task[:completed_at].nil?
+                begin
+                  due_date = Date.parse(body["due_date"].to_s)
+                rescue Date::Error
+                  r.halt 422
+                end
+                updates[:due_date] = due_date
+                result["due_date"] = due_date.to_s
+              end
+
               if body.key?("note")
+                r.halt 422 if @task[:completed_at].nil?
                 note = body["note"].to_s.strip
                 updates[:note] = note.empty? ? nil : note
                 result["note"] = note
               end
 
               if body.key?("completed_at")
+                r.halt 422 if @task[:completed_at].nil?
                 begin
                   completed_date = Date.parse(body["completed_at"].to_s)
                 rescue Date::Error

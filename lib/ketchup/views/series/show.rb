@@ -85,16 +85,18 @@ module Views
 
                 if active_task
                   complete_path = "/series/#{@series.id}/tasks/#{active_task.id}/complete"
-                  form(method: "post", action: complete_path, class: "current-task") do
-                    input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
-                    input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
+                  div(class: "current-task") do
                     div(class: "section-header") do
                       h2(class: "section-title") do
                         span(class: "section-title-text") { "Current task" }
                       end
-                      button(type: "submit", class: "section-edit-btn") { "Complete" }
+                      form(method: "post", action: complete_path, class: "complete-form") do
+                        input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
+                        input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
+                        button(type: "submit", class: "section-edit-btn") { "Complete" }
+                      end
                     end
-                    dl(class: "detail-fields", "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')") do
+                    dl(class: "detail-fields", "x-data": "dueDateEditor(#{@series.id}, #{active_task[:id]}, '#{active_task[:due_date]}')") do
                       dt { "Due date" }
                       dd do
                         span(
@@ -118,17 +120,6 @@ module Views
                       if active_task.urgency > 0
                         dt(class: "detail-overdue") { "Urgency" }
                         dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}x" }
-                      end
-
-                      dt { "Completed on" }
-                      dd do
-                        input(
-                          type: "date",
-                          name: "completed_date",
-                          class: "detail-input detail-input-date",
-                          "x-data": true,
-                          "x-init": "$el.value = new Date().toISOString().slice(0, 10)"
-                        )
                       end
                     end
                   end

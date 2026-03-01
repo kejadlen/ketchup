@@ -145,7 +145,7 @@ document.addEventListener("alpine:init", () => {
     },
   }))
 
-  Alpine.data("dueDateEditor", (seriesId, initialDate) => ({
+  Alpine.data("dueDateEditor", (seriesId, taskId, initialDate) => ({
     editingDate: false,
     dueDate: initialDate,
 
@@ -154,8 +154,11 @@ document.addEventListener("alpine:init", () => {
         this.editingDate = false
         return
       }
-      saveSeriesField(seriesId, "due_date", this.dueDate)
-        .then(() => location.reload())
+      fetch(`/series/${seriesId}/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ due_date: this.dueDate }),
+      }).then(() => location.reload())
     },
   }))
 

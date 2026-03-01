@@ -422,18 +422,35 @@ class TestWeb < Minitest::Test
     assert_equal "month", updated[:interval_unit]
   end
 
-  def test_patch_series_updates_due_date
+  def test_patch_task_updates_due_date
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
     series = DB[:series].first
     task = DB[:tasks].first(series_id: series[:id])
-    patch "/series/#{series[:id]}", { due_date: "2026-04-15" }, auth_headers
+    patch "/series/#{series[:id]}/tasks/#{task[:id]}",
+          JSON.generate(due_date: "2026-04-15"),
+          auth_headers.merge("CONTENT_TYPE" => "application/json")
     assert last_response.ok?
 
     body = JSON.parse(last_response.body)
     assert_equal "2026-04-15", body["due_date"]
     assert_equal Date.new(2026, 4, 15), DB[:tasks].first(id: task[:id])[:due_date]
+  end
+
+  def test_patch_task_due_date_rejects_completed_task
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = DB[:series].first
+    task = DB[:tasks].first(series_id: series[:id])
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    completed_task = DB[:tasks].first(id: task[:id])
+    refute_nil completed_task[:completed_at]
+
+    patch_task series[:id], task[:id], { due_date: "2026-04-15" }
+    assert_equal 422, last_response.status
   end
 
   def test_patch_series_rejects_invalid_interval_unit
