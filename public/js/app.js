@@ -146,9 +146,14 @@ document.addEventListener("alpine:init", () => {
   }))
 
   Alpine.data("dueDateEditor", (seriesId, initialDate) => ({
+    editingDate: false,
     dueDate: initialDate,
 
     save() {
+      if (this.dueDate === initialDate) {
+        this.editingDate = false
+        return
+      }
       saveSeriesField(seriesId, "due_date", this.dueDate)
         .then(() => location.reload())
     },

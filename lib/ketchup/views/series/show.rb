@@ -94,22 +94,24 @@ module Views
                       end
                       button(type: "submit", class: "section-edit-btn") { "Complete" }
                     end
-                    dl(class: "detail-fields") do
+                    dl(class: "detail-fields", "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')") do
                       dt { "Due date" }
-                      dd(
-                        "x-show": "!editing",
-                        "x-text": "new Date('#{active_task[:due_date]}T00:00').toLocaleDateString()"
-                      ) { active_task[:due_date].to_s }
-                      dd(
-                        "x-show": "editing",
-                        "x-cloak": true,
-                        "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')"
-                      ) do
+                      dd do
+                        span(
+                          class: "task-history-date",
+                          "x-show": "!editingDate",
+                          "x-on:click": "editingDate = true; $nextTick(() => $refs.dateInput.focus())",
+                          "x-text": "new Date(dueDate + 'T00:00').toLocaleDateString()"
+                        ) { active_task[:due_date].to_s }
                         input(
                           type: "date",
                           class: "detail-input detail-input-date",
+                          "x-show": "editingDate",
+                          "x-cloak": true,
                           "x-model": "dueDate",
-                          "x-on:change": "save()"
+                          "x-ref": "dateInput",
+                          "x-on:change": "save()",
+                          "x-on:keydown.escape": "dueDate = '#{active_task[:due_date]}'; editingDate = false"
                         )
                       end
 
