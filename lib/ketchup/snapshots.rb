@@ -73,7 +73,7 @@ module Ketchup
         baseline_file.close
         current_file.close
 
-        `diff -u #{baseline_file.path} #{current_file.path}`.lines.drop(2).filter_map do |line|
+        `diff -U9999 #{baseline_file.path} #{current_file.path}`.lines.drop(2).filter_map do |line|
           name = line[1..].chomp
           next if name.empty?
           case line[0]
@@ -141,6 +141,10 @@ module Ketchup
       #   series in editing mode
       #   series with task history
       #   adding a note to a completed task
+      #   editing an older completed date
+      #   after saving the older completed date
+      #   editing the most recent completed date
+      #   after saving (active due date updates)
       #
       # User settings (/users/:id)
       #   viewing
@@ -202,6 +206,34 @@ module Ketchup
         textarea.evaluate("this.value = #{note_text.to_json}")
         textarea.evaluate('this.dispatchEvent(new Event("input", { bubbles: true }))')
         entries << snap("series-add-note", selector: ".main-column")
+
+        # Edit an older completed date (not the most recent) — active due date should not change
+        entries << snap("series-edit-old-date", selector: ".main-column") do
+          goto "#{@base}/series/#{series_with_history.id}"
+          wait_for(".task-history")
+          @browser.execute('document.querySelectorAll(".task-history-date")[1].click()')
+          wait_for(".task-history-date-input")
+        end
+
+        old_date = (Date.today - 30).strftime("%Y-%m-%d")
+        set_date_and_save(".task-history-date-input", old_date)
+        entries << snap("series-old-date-saved", selector: ".main-column") do
+          goto "#{@base}/series/#{series_with_history.id}"
+          wait_for(".task-history")
+        end
+
+        # Edit the most recent completed date — active due date should update
+        entries << snap("series-edit-latest-date", selector: ".main-column") do
+          wait_for(".task-history-date").click
+          wait_for(".task-history-date-input")
+        end
+
+        latest_date = (Date.today - 14).strftime("%Y-%m-%d")
+        set_date_and_save(".task-history-date-input", latest_date)
+        entries << snap("series-latest-date-saved", selector: ".main-column") do
+          goto "#{@base}/series/#{series_with_history.id}"
+          wait_for(".task-history")
+        end
 
         # ── User settings ──
 
@@ -312,6 +344,32 @@ module Ketchup
 
         unit_select = @browser.at_css("select#interval_unit")
         unit_select.select(interval_unit)
+      end
+
+      # Set a date input's value via Alpine's x-model (dispatches input
+      # event so the reactive model updates) then blur to trigger save().
+      # Waits for the page to reload before returning.
+      def set_date_and_save(selector, date)
+        @browser.execute("document.body.dataset.snapshotMarker = '1'")
+        @browser.execute(<<~JS)
+          var input = document.querySelector('#{selector}');
+          var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeInputValueSetter.call(input, '#{date}');
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          input.dispatchEvent(new Event('blur', { bubbles: true }));
+        JS
+        wait_for_reload
+      end
+
+      def wait_for_reload(timeout: 5)
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        loop do
+          break unless @browser.evaluate("document.body.dataset.snapshotMarker")
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+          raise Ferrum::TimeoutError, "waiting for page reload" if elapsed > timeout
+          sleep 0.05
+        end
       end
 
       # Find a series that has both noted and un-noted completed tasks,

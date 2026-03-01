@@ -233,12 +233,7 @@ document.addEventListener("alpine:init", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed_at: this.completedDate }),
-      }).then((r) => {
-        if (r.ok) {
-          initialDate = this.completedDate
-          this.editingDate = false
-        }
-      })
+      }).then(() => location.reload())
     },
   }))
 
