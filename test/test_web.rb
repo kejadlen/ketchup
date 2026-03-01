@@ -616,9 +616,6 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
-
     # Simulate a flash with no undo_path (message only)
     env "rack.session", {"flash" => {"message" => "Something happened"}}
     get "/", {}, auth_headers

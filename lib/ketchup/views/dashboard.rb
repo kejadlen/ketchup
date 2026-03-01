@@ -45,8 +45,6 @@ module Views
       end
 
       task = overdue.first
-      name = task[:note].lines.first&.strip || task[:note]
-      complete_path = "/series/#{task[:series_id]}/tasks/#{task[:id]}/complete"
 
       section(class: "section section--focus") do
         div(class: "section-header") do
