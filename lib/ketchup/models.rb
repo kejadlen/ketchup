@@ -102,20 +102,20 @@ class Task < Sequel::Model
     days_overdue.to_f / interval
   end
 
-  def complete!(today:)
+  def complete!(completed_on:)
     DB.transaction do
-      update(completed_at: Time.now)
+      update(completed_at: Time.new(completed_on.year, completed_on.month, completed_on.day))
       next_date = case series.interval_unit
                   when "day"
-                    today + series.interval_count
+                    completed_on + series.interval_count
                   when "week"
-                    today + (7 * series.interval_count)
+                    completed_on + (7 * series.interval_count)
                   when "month"
-                    today >> series.interval_count
+                    completed_on >> series.interval_count
                   when "quarter"
-                    today >> (3 * series.interval_count)
+                    completed_on >> (3 * series.interval_count)
                   when "year"
-                    today >> (12 * series.interval_count)
+                    completed_on >> (12 * series.interval_count)
                   else
                     fail
                   end

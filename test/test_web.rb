@@ -207,7 +207,7 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = Task.first
-    task.complete!(today: Date.new(2026, 4, 1))
+    task.complete!(completed_on: Date.new(2026, 4, 1))
 
     new_task = Task.where(completed_at: nil).first
     assert_equal Date.new(2026, 4, 15), new_task.due_date

@@ -81,28 +81,53 @@ module Views
                     end
                   end
 
-                  if active_task
-                    dt { "Next due date" }
-                    dd(
-                      "x-show": "!editing",
-                      "x-text": "new Date('#{active_task[:due_date]}T00:00').toLocaleDateString()"
-                    ) { active_task[:due_date].to_s }
-                    dd(
-                      "x-show": "editing",
-                      "x-cloak": true,
-                      "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')"
-                    ) do
-                      input(
-                        type: "date",
-                        class: "detail-input detail-input-date",
-                        "x-model": "dueDate",
-                        "x-on:change": "save()"
-                      )
-                    end
+                end
 
-                    if active_task.urgency > 0
-                      dt(class: "detail-overdue") { "Urgency" }
-                      dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}x" }
+                if active_task
+                  complete_path = "/series/#{@series.id}/tasks/#{active_task.id}/complete"
+                  form(method: "post", action: complete_path, class: "current-task") do
+                    input(type: "hidden", name: "_csrf", value: @csrf.call(complete_path))
+                    input(type: "hidden", name: "return_to", value: "/series/#{@series.id}")
+                    div(class: "section-header") do
+                      h2(class: "section-title") do
+                        span(class: "section-title-text") { "Current task" }
+                      end
+                      button(type: "submit", class: "section-edit-btn") { "Complete" }
+                    end
+                    dl(class: "detail-fields") do
+                      dt { "Due date" }
+                      dd(
+                        "x-show": "!editing",
+                        "x-text": "new Date('#{active_task[:due_date]}T00:00').toLocaleDateString()"
+                      ) { active_task[:due_date].to_s }
+                      dd(
+                        "x-show": "editing",
+                        "x-cloak": true,
+                        "x-data": "dueDateEditor(#{@series.id}, '#{active_task[:due_date]}')"
+                      ) do
+                        input(
+                          type: "date",
+                          class: "detail-input detail-input-date",
+                          "x-model": "dueDate",
+                          "x-on:change": "save()"
+                        )
+                      end
+
+                      if active_task.urgency > 0
+                        dt(class: "detail-overdue") { "Urgency" }
+                        dd(class: "detail-overdue") { "#{format("%.1f", active_task.urgency)}x" }
+                      end
+
+                      dt { "Completed on" }
+                      dd do
+                        input(
+                          type: "date",
+                          name: "completed_date",
+                          class: "detail-input detail-input-date",
+                          "x-data": true,
+                          "x-init": "$el.value = new Date().toISOString().slice(0, 10)"
+                        )
+                      end
                     end
                   end
                 end

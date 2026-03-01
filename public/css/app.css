@@ -590,6 +590,14 @@ h2 { font-size: var(--step-0); font-weight: 600; }
 }
 
 /* -------------------- */
+/* Current task section */
+/* -------------------- */
+
+.current-task {
+  margin-block-start: var(--space-l);
+}
+
+/* -------------------- */
 /* Task history */
 /* -------------------- */
 
@@ -735,7 +743,7 @@ textarea {
   gap: var(--space-3xs);
 }
 
-button[type="submit"]:not(.complete-btn) {
+button[type="submit"]:not(.complete-btn):not(.section-edit-btn) {
   padding: var(--space-3xs) var(--space-s);
   border: 1px solid #1a1a1a;
   border-radius: 4px;
@@ -746,7 +754,7 @@ button[type="submit"]:not(.complete-btn) {
   cursor: pointer;
 }
 
-button[type="submit"]:not(.complete-btn):hover {
+button[type="submit"]:not(.complete-btn):not(.section-edit-btn):hover {
   background: #333;
 }
 
