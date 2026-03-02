@@ -10,7 +10,7 @@ end
 
 require_relative "lib/ketchup/config"
 
-if CONFIG.otel
+if Ketchup::CONFIG.otel
   require "opentelemetry/sdk"
   require "opentelemetry/exporter/otlp"
   require "opentelemetry/instrumentation/rack"
@@ -23,26 +23,26 @@ if CONFIG.otel
   use(*OpenTelemetry::Instrumentation::Rack::Instrumentation.instance.middleware_args)
 end
 
-$stderr.puts CONFIG
+$stderr.puts Ketchup::CONFIG
 
-if CONFIG.sentry
+if Ketchup::CONFIG.sentry
   require "sentry-ruby"
 
   Sentry.init do |config|
-    config.dsn = CONFIG.sentry.dsn
-    config.environment = CONFIG.sentry.env if CONFIG.sentry.env
+    config.dsn = Ketchup::CONFIG.sentry.dsn
+    config.environment = Ketchup::CONFIG.sentry.env if Ketchup::CONFIG.sentry.env
     config.send_default_pii = true
   end
 
   use Sentry::Rack::CaptureExceptions
 end
 
-if CONFIG.default_user
+if Ketchup::CONFIG.default_user
   require_relative "lib/ketchup/dev_auth"
-  use Ketchup::DevAuth, CONFIG.default_user
+  use Ketchup::DevAuth, Ketchup::CONFIG.default_user
 
   require_relative "lib/ketchup/seed"
-  user = User.find_or_create(login: CONFIG.default_user)
+  user = Ketchup::User.find_or_create(login: Ketchup::CONFIG.default_user)
   if user.series_dataset.empty?
     Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
     $stderr.puts "Seeded #{Ketchup::Seed::DATA.length} series for #{user.login}"
@@ -50,4 +50,4 @@ if CONFIG.default_user
 end
 
 require_relative "lib/ketchup/web"
-run Web.freeze.app
+run Ketchup::Web.freeze.app

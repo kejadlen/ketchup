@@ -10,12 +10,12 @@ require_relative "../lib/ketchup/web"
 class TestWeb < Minitest::Test
   include Rack::Test::Methods
 
-  def app = Web.app
+  def app = Ketchup::Web.app
 
   def setup
-    DB[:tasks].delete
-    DB[:series].delete
-    DB[:users].delete
+    Ketchup::DB[:tasks].delete
+    Ketchup::DB[:series].delete
+    Ketchup::DB[:users].delete
   end
 
   def test_new_series_page
@@ -79,7 +79,7 @@ class TestWeb < Minitest::Test
 
   def test_root_creates_user_record
     get "/", {}, auth_headers(login: "bob@example.com")
-    user = DB[:users].first(login: "bob@example.com")
+    user = Ketchup::DB[:users].first(login: "bob@example.com")
     assert user
   end
 
@@ -95,7 +95,7 @@ class TestWeb < Minitest::Test
     )
     assert last_response.redirect?
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     assert_equal "Call Mom", series[:note]
     assert_equal "week", series[:interval_unit]
     assert_equal 2, series[:interval_count]
@@ -108,8 +108,8 @@ class TestWeb < Minitest::Test
       first_due_date: "2026-03-01"
     )
 
-    series = DB[:series].first
-    task = DB[:tasks].first(series_id: series[:id])
+    series = Ketchup::DB[:series].first
+    task = Ketchup::DB[:tasks].first(series_id: series[:id])
     assert_equal Date.new(2026, 3, 1), task[:due_date]
     assert_nil task[:completed_at]
   end
@@ -121,8 +121,8 @@ class TestWeb < Minitest::Test
       headers: auth_headers(login: "dave@example.com")
     )
 
-    series = DB[:series].first
-    user = DB[:users].first(login: "dave@example.com")
+    series = Ketchup::DB[:series].first
+    user = Ketchup::DB[:users].first(login: "dave@example.com")
     assert_equal user[:id], series[:user_id]
   end
 
@@ -131,7 +131,7 @@ class TestWeb < Minitest::Test
       note: "  Trim me  ", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01"
     )
-    assert_equal "Trim me", DB[:series].first[:note]
+    assert_equal "Trim me", Ketchup::DB[:series].first[:note]
   end
 
   def test_create_series_rejects_empty_note
@@ -140,7 +140,7 @@ class TestWeb < Minitest::Test
       first_due_date: "2026-03-01"
     )
     assert_equal 422, last_response.status
-    assert_equal 0, DB[:series].count
+    assert_equal 0, Ketchup::DB[:series].count
   end
 
   def test_create_series_rejects_invalid_interval_unit
@@ -149,7 +149,7 @@ class TestWeb < Minitest::Test
       first_due_date: "2026-03-01"
     )
     assert_equal 422, last_response.status
-    assert_equal 0, DB[:series].count
+    assert_equal 0, Ketchup::DB[:series].count
   end
 
   def test_create_series_rejects_zero_interval_count
@@ -158,7 +158,7 @@ class TestWeb < Minitest::Test
       first_due_date: "2026-03-01"
     )
     assert_equal 422, last_response.status
-    assert_equal 0, DB[:series].count
+    assert_equal 0, Ketchup::DB[:series].count
   end
 
   def test_create_series_rejects_invalid_due_date
@@ -167,26 +167,26 @@ class TestWeb < Minitest::Test
       first_due_date: "not-a-date"
     )
     assert_equal 422, last_response.status
-    assert_equal 0, DB[:series].count
-    assert_equal 0, DB[:tasks].count
+    assert_equal 0, Ketchup::DB[:series].count
+    assert_equal 0, Ketchup::DB[:tasks].count
   end
 
   def test_complete_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     complete_path = "/series/#{series[:id]}/tasks/#{task[:id]}/complete"
     csrf_post complete_path, {}, auth_headers
     assert last_response.redirect?
 
     assert_equal "/", URI.parse(last_response["Location"]).path
 
-    old_task = DB[:tasks].first(id: task[:id])
+    old_task = Ketchup::DB[:tasks].first(id: task[:id])
     refute_nil old_task[:completed_at]
 
-    new_task = DB[:tasks].where(completed_at: nil).first
+    new_task = Ketchup::DB[:tasks].where(completed_at: nil).first
     assert_equal Date.today + 14, new_task[:due_date]
   end
 
@@ -194,11 +194,11 @@ class TestWeb < Minitest::Test
     create_series(note: "Dentist", interval_unit: "month", interval_count: "3",
                   first_due_date: "2026-01-31")
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    new_task = DB[:tasks].where(completed_at: nil).first
+    new_task = Ketchup::DB[:tasks].where(completed_at: nil).first
     assert_equal Date.today >> 3, new_task[:due_date]
   end
 
@@ -206,10 +206,10 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    task = Task.first
+    task = Ketchup::Task.first
     task.complete!(completed_on: Date.new(2026, 4, 1))
 
-    new_task = Task.where(completed_at: nil).first
+    new_task = Ketchup::Task.where(completed_at: nil).first
     assert_equal Date.new(2026, 4, 15), new_task.due_date
   end
 
@@ -220,8 +220,8 @@ class TestWeb < Minitest::Test
       headers: auth_headers(login: "alice@example.com")
     )
 
-    task = DB[:tasks].first
-    csrf_post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "bob@example.com")
+    task = Ketchup::DB[:tasks].first
+    csrf_post "/series/#{Ketchup::DB[:series].first[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "bob@example.com")
     assert_includes [403, 404], last_response.status
   end
 
@@ -229,8 +229,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "day", interval_count: "1",
                   first_due_date: "2026-03-01")
 
-    task = DB[:tasks].first
-    post "/series/#{DB[:series].first[:id]}/tasks/#{task[:id]}/complete"
+    task = Ketchup::DB[:tasks].first
+    post "/series/#{Ketchup::DB[:series].first[:id]}/tasks/#{task[:id]}/complete"
     assert_equal 403, last_response.status
   end
 
@@ -246,7 +246,7 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     get "/", {}, auth_headers
     assert_includes last_response.body, "href=\"/series/#{series[:id]}\""
     assert_includes last_response.body, "Call Mom"
@@ -256,8 +256,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     get "/", {}, auth_headers
     assert_includes last_response.body, "action=\"/series/#{series[:id]}/tasks/#{task[:id]}/complete\""
   end
@@ -274,7 +274,7 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     get "/series/#{series[:id]}", {}, auth_headers
     assert last_response.ok?
     assert_includes last_response.body, "Call Mom"
@@ -288,7 +288,7 @@ class TestWeb < Minitest::Test
       headers: auth_headers(login: "alice@example.com")
     )
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     get "/series/#{series[:id]}", {}, auth_headers(login: "bob@example.com")
     assert_equal 404, last_response.status
   end
@@ -302,52 +302,52 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    completed_task = DB[:tasks].first(id: task[:id])
+    completed_task = Ketchup::DB[:tasks].first(id: task[:id])
     patch_task series[:id], completed_task[:id], { note: "Called, all good" }
     assert last_response.ok?
 
     body = JSON.parse(last_response.body)
     assert_equal "Called, all good", body["note"]
-    assert_equal "Called, all good", DB[:tasks].first(id: completed_task[:id])[:note]
+    assert_equal "Called, all good", Ketchup::DB[:tasks].first(id: completed_task[:id])[:note]
   end
 
   def test_patch_task_saves_completed_at
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    completed_task = DB[:tasks].first(id: task[:id])
+    completed_task = Ketchup::DB[:tasks].first(id: task[:id])
     patch_task series[:id], completed_task[:id], { completed_at: "2026-01-15" }
     assert last_response.ok?
 
     body = JSON.parse(last_response.body)
     assert_equal "2026-01-15", body["completed_at"]
-    assert_equal Date.new(2026, 1, 15), DB[:tasks].first(id: completed_task[:id])[:completed_at].to_date
+    assert_equal Date.new(2026, 1, 15), Ketchup::DB[:tasks].first(id: completed_task[:id])[:completed_at].to_date
   end
 
   def test_patch_latest_completed_task_updates_active_due_date
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
-    task = DB[:tasks].first
+    series = Ketchup::DB[:series].first
+    task = Ketchup::DB[:tasks].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    active_task = DB[:tasks].where(completed_at: nil).first
+    active_task = Ketchup::DB[:tasks].where(completed_at: nil).first
     original_due = active_task[:due_date]
 
     # Backdate completion by one week — active due date should shift accordingly
     patch_task series[:id], task[:id], { completed_at: "2026-02-21" }
     assert last_response.ok?
 
-    updated_active = DB[:tasks].first(id: active_task[:id])
+    updated_active = Ketchup::DB[:tasks].first(id: active_task[:id])
     assert_equal Date.new(2026, 3, 7), updated_active[:due_date]
   end
 
@@ -355,11 +355,11 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    completed_task = DB[:tasks].first(id: task[:id])
+    completed_task = Ketchup::DB[:tasks].first(id: task[:id])
     patch_task series[:id], completed_task[:id], { note: "Backdated", completed_at: "2026-02-01" }
     assert last_response.ok?
 
@@ -367,7 +367,7 @@ class TestWeb < Minitest::Test
     assert_equal "Backdated", body["note"]
     assert_equal "2026-02-01", body["completed_at"]
 
-    updated = DB[:tasks].first(id: completed_task[:id])
+    updated = Ketchup::DB[:tasks].first(id: completed_task[:id])
     assert_equal "Backdated", updated[:note]
     assert_equal Date.new(2026, 2, 1), updated[:completed_at].to_date
   end
@@ -376,11 +376,11 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    completed_task = DB[:tasks].first(id: task[:id])
+    completed_task = Ketchup::DB[:tasks].first(id: task[:id])
     patch_task series[:id], completed_task[:id], { completed_at: "not-a-date" }
     assert_equal 422, last_response.status
   end
@@ -389,8 +389,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "1",
                   first_due_date: "2026-03-01")
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     patch_task series[:id], task[:id], { note: "nope" }
     assert_equal 422, last_response.status
   end
@@ -402,11 +402,11 @@ class TestWeb < Minitest::Test
       headers: auth_headers(login: "alice@example.com")
     )
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "alice@example.com")
 
-    completed_task = DB[:tasks].first(id: task[:id])
+    completed_task = Ketchup::DB[:tasks].first(id: task[:id])
     patch_task series[:id], completed_task[:id], { note: "hacked" }, login: "bob@example.com"
     assert_equal 404, last_response.status
   end
@@ -415,20 +415,20 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     patch "/series/#{series[:id]}", { note: "Call Dad" }, auth_headers
     assert last_response.ok?
 
     body = JSON.parse(last_response.body)
     assert_equal "Call Dad", body["note"]
-    assert_equal "Call Dad", DB[:series].first(id: series[:id])[:note]
+    assert_equal "Call Dad", Ketchup::DB[:series].first(id: series[:id])[:note]
   end
 
   def test_patch_series_updates_interval
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     patch "/series/#{series[:id]}", { interval_count: "3", interval_unit: "month" }, auth_headers
     assert last_response.ok?
 
@@ -436,7 +436,7 @@ class TestWeb < Minitest::Test
     assert_equal 3, body["interval_count"]
     assert_equal "month", body["interval_unit"]
 
-    updated = DB[:series].first(id: series[:id])
+    updated = Ketchup::DB[:series].first(id: series[:id])
     assert_equal 3, updated[:interval_count]
     assert_equal "month", updated[:interval_unit]
   end
@@ -445,8 +445,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
-    task = DB[:tasks].first(series_id: series[:id])
+    series = Ketchup::DB[:series].first
+    task = Ketchup::DB[:tasks].first(series_id: series[:id])
     patch "/series/#{series[:id]}/tasks/#{task[:id]}",
           JSON.generate(due_date: "2026-04-15"),
           auth_headers.merge("CONTENT_TYPE" => "application/json")
@@ -454,18 +454,18 @@ class TestWeb < Minitest::Test
 
     body = JSON.parse(last_response.body)
     assert_equal "2026-04-15", body["due_date"]
-    assert_equal Date.new(2026, 4, 15), DB[:tasks].first(id: task[:id])[:due_date]
+    assert_equal Date.new(2026, 4, 15), Ketchup::DB[:tasks].first(id: task[:id])[:due_date]
   end
 
   def test_patch_task_due_date_rejects_completed_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
-    task = DB[:tasks].first(series_id: series[:id])
+    series = Ketchup::DB[:series].first
+    task = Ketchup::DB[:tasks].first(series_id: series[:id])
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    completed_task = DB[:tasks].first(id: task[:id])
+    completed_task = Ketchup::DB[:tasks].first(id: task[:id])
     refute_nil completed_task[:completed_at]
 
     patch_task series[:id], task[:id], { due_date: "2026-04-15" }
@@ -476,7 +476,7 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     patch "/series/#{series[:id]}", { interval_unit: "fortnight" }, auth_headers
     assert_equal 422, last_response.status
   end
@@ -485,7 +485,7 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     patch "/series/#{series[:id]}", { interval_count: "0" }, auth_headers
     assert_equal 422, last_response.status
   end
@@ -497,7 +497,7 @@ class TestWeb < Minitest::Test
       headers: auth_headers(login: "alice@example.com")
     )
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     patch "/series/#{series[:id]}", { note: "hacked" }, auth_headers(login: "bob@example.com")
     assert_equal 404, last_response.status
   end
@@ -506,22 +506,22 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    series = DB[:series].first
+    series = Ketchup::DB[:series].first
     patch "/series/#{series[:id]}", { note: "Call Dad" }, auth_headers
     assert last_response.ok?
 
-    updated = DB[:series].first(id: series[:id])
+    updated = Ketchup::DB[:series].first(id: series[:id])
     assert_equal "Call Dad", updated[:note]
     assert_equal "week", updated[:interval_unit]
     assert_equal 2, updated[:interval_count]
 
-    task = DB[:tasks].first(series_id: series[:id])
+    task = Ketchup::DB[:tasks].first(series_id: series[:id])
     assert_equal Date.new(2026, 3, 1), task[:due_date]
   end
 
   def test_get_user_page_shows_settings
     get "/", {}, auth_headers  # create user
-    user_id = DB[:users].first(login: "alice@example.com")[:id]
+    user_id = Ketchup::DB[:users].first(login: "alice@example.com")[:id]
 
     get "/users/#{user_id}", {}, auth_headers
     assert last_response.ok?
@@ -532,33 +532,33 @@ class TestWeb < Minitest::Test
 
   def test_post_user_email
     get "/", {}, auth_headers  # create user
-    user_id = DB[:users].first(login: "alice@example.com")[:id]
+    user_id = Ketchup::DB[:users].first(login: "alice@example.com")[:id]
 
     get "/users/#{user_id}", {}, auth_headers
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/users/#{user_id}/email", { "_csrf" => token, email: "alice@example.org" }, auth_headers
     assert last_response.redirect?
 
-    user = DB[:users].first(id: user_id)
+    user = Ketchup::DB[:users].first(id: user_id)
     assert_equal "alice@example.org", user[:email]
   end
 
   def test_post_user_email_clears_empty
     get "/", {}, auth_headers
-    user_id = DB[:users].first(login: "alice@example.com")[:id]
+    user_id = Ketchup::DB[:users].first(login: "alice@example.com")[:id]
 
     get "/users/#{user_id}", {}, auth_headers
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/users/#{user_id}/email", { "_csrf" => token, email: "" }, auth_headers
 
-    user = DB[:users].first(id: user_id)
+    user = Ketchup::DB[:users].first(id: user_id)
     assert_nil user[:email]
   end
 
   def test_get_user_rejects_other_user
     get "/", {}, auth_headers  # create alice
     get "/", {}, auth_headers(login: "bob@example.com")  # create bob
-    bob_id = DB[:users].first(login: "bob@example.com")[:id]
+    bob_id = Ketchup::DB[:users].first(login: "bob@example.com")[:id]
 
     get "/users/#{bob_id}", {}, auth_headers
     assert_equal 404, last_response.status
@@ -611,8 +611,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
     assert last_response.redirect?
     assert_equal "/", URI.parse(last_response["Location"]).path
@@ -622,8 +622,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
     get "/", {}, auth_headers
@@ -667,8 +667,8 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
     get "/", {}, auth_headers
@@ -682,26 +682,26 @@ class TestWeb < Minitest::Test
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: (Date.today - 3).to_s)
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
 
-    assert_equal 2, DB[:tasks].where(series_id: series[:id]).count
-    refute_nil DB[:tasks].first(id: task[:id])[:completed_at]
+    assert_equal 2, Ketchup::DB[:tasks].where(series_id: series[:id]).count
+    refute_nil Ketchup::DB[:tasks].first(id: task[:id])[:completed_at]
 
     delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
     assert_equal 204, last_response.status
 
-    assert_nil DB[:tasks].first(id: task[:id])[:completed_at]
-    assert_equal 1, DB[:tasks].where(series_id: series[:id]).count
+    assert_nil Ketchup::DB[:tasks].first(id: task[:id])[:completed_at]
+    assert_equal 1, Ketchup::DB[:tasks].where(series_id: series[:id]).count
   end
 
   def test_delete_complete_rejects_active_task
     create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
                   first_due_date: "2026-03-01")
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
     assert_equal 422, last_response.status
   end
@@ -713,8 +713,8 @@ class TestWeb < Minitest::Test
       headers: auth_headers(login: "alice@example.com")
     )
 
-    task = DB[:tasks].first
-    series = DB[:series].first
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
     csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "alice@example.com")
 
     delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "bob@example.com")

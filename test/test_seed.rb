@@ -8,13 +8,13 @@ require_relative "../lib/ketchup/seed"
 
 class TestSeed < Minitest::Test
   def setup
-    DB[:tasks].delete
-    DB[:series].delete
-    DB[:users].delete
+    Ketchup::DB[:tasks].delete
+    Ketchup::DB[:series].delete
+    Ketchup::DB[:users].delete
   end
 
   def test_seed_creates_series_and_tasks
-    user = User.create(login: "test@example.com")
+    user = Ketchup::User.create(login: "test@example.com")
     series_data = [
       {
         note: "Call Mom",
@@ -27,17 +27,17 @@ class TestSeed < Minitest::Test
 
     Ketchup::Seed.call(user: user, series: series_data)
 
-    assert_equal 1, Series.count
-    assert_equal 1, Task.count
-    s = Series.first
+    assert_equal 1, Ketchup::Series.count
+    assert_equal 1, Ketchup::Task.count
+    s = Ketchup::Series.first
     assert_equal "Call Mom", s.note
     assert_equal "week", s.interval_unit
     assert_equal 2, s.interval_count
-    assert_equal Date.new(2026, 3, 1), Task.first.due_date
+    assert_equal Date.new(2026, 3, 1), Ketchup::Task.first.due_date
   end
 
   def test_seed_creates_completed_history
-    user = User.create(login: "test@example.com")
+    user = Ketchup::User.create(login: "test@example.com")
     series_data = [
       {
         note: "Water plants",
@@ -53,7 +53,7 @@ class TestSeed < Minitest::Test
 
     Ketchup::Seed.call(user: user, series: series_data)
 
-    assert_equal 3, Task.count
-    assert_equal 2, Task.exclude(completed_at: nil).count
+    assert_equal 3, Ketchup::Task.count
+    assert_equal 2, Ketchup::Task.exclude(completed_at: nil).count
   end
 end

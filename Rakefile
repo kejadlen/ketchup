@@ -25,10 +25,10 @@ desc "Seed database with sample series and tasks"
 task :seed do
   require "ketchup/seed"
 
-  DB[:tasks].delete
-  DB[:series].delete
+  Ketchup::DB[:tasks].delete
+  Ketchup::DB[:series].delete
 
-  user = User.first || abort("No users yet — visit the app first to create one")
+  user = Ketchup::User.first || abort("No users yet — visit the app first to create one")
 
   Ketchup::Seed.call(user: user, series: Ketchup::Seed::DATA)
   puts "Seeded #{Ketchup::Seed::DATA.length} series for #{user.login}"
