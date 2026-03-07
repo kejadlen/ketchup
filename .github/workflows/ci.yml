@@ -44,7 +44,7 @@ jobs:
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - id: change-id
         run: echo "id=$(git cat-file -p HEAD | grep '^change-id ' | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
