@@ -50,7 +50,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}-${{ steps.short-sha.outputs.sha }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: true
