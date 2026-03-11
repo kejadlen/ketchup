@@ -86,7 +86,10 @@ module Ketchup
             var undo = bar.querySelector('.flash-undo-btn');
             var close = bar.querySelector('.flash-close-btn');
             var path = bar.dataset.undoPath;
-            function dismiss() { bar.remove(); }
+            function dismiss() {
+              bar.classList.add('flash-bar--dismissing');
+              bar.addEventListener('transitionend', function() { bar.remove(); });
+            }
             if (undo && path) {
               undo.addEventListener('click', function() {
                 fetch(path, {method: 'DELETE'}).then(function() { location.reload(); });
