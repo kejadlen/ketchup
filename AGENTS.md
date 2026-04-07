@@ -2,25 +2,7 @@
 
 Read the README for project context, domain concepts, and design intent.
 
-The [project backlog](https://github.com/users/kejadlen/projects/5/views/1) tracks planned work.
-
-## GitHub references
-
-| Resource     | ID                       |
-|--------------|--------------------------|
-| Repository   | `R_kgDORQBlMg`           |
-| Project      | `PVT_kwHNIb_OAT0x9g`    |
-| Status field | `PVTSSF_lAHNIb_OAT0x9s4Pb9Ml` |
-
-Status options: Backlog (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`), Icebox (`82312985`).
-
-```sh
-gh issue list --repo kejadlen/ketchup                # list open issues
-gh issue view 22 --repo kejadlen/ketchup             # read an issue
-gh issue create --repo kejadlen/ketchup --title "…"  # create an issue
-gh project item-list 5 --owner kejadlen              # list backlog items
-gh project item-add 5 --owner kejadlen --url <url>   # add an issue to the board
-```
+The project backlog is managed with `ranger` (default backlog: `ketchup`). Use the `ranger` skill for commands and workflow.
 
 ## Layout
 

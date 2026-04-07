@@ -26,4 +26,6 @@ RUN bundle install
 
 WORKDIR /workspace
 
+ENV RANGER_DEFAULT_BACKLOG=ketchup
+
 ENTRYPOINT ["pi"]
