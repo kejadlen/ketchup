@@ -6,34 +6,45 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
-  id-token: write
-  packages: write
-  pages: write
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
       - run: bundle exec rake test check
 
   build:
+    name: Build
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # create GitHub release
+      packages: write # push container image to GHCR
     outputs:
       version: ${{ steps.meta.outputs.version }}
       image: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
-          bundler-cache: true
+          bundler-cache: false
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -64,14 +75,20 @@ jobs:
           cache-to: type=gha,mode=max
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ steps.meta.outputs.version }}" --generate-notes
+          STEPS_META_OUTPUTS_VERSION: ${{ steps.meta.outputs.version }}
+        run: gh release create "${STEPS_META_OUTPUTS_VERSION}" --generate-notes
 
   snapshots:
+    name: Snapshots
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: macos-latest
+    permissions:
+      contents: write # upload release assets
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
@@ -81,29 +98,39 @@ jobs:
           tar czf snapshots.tar.gz -C "$dir" .
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ needs.build.outputs.version }}" snapshots.tar.gz
+          NEEDS_BUILD_OUTPUTS_VERSION: ${{ needs.build.outputs.version }}
+        run: gh release upload "${NEEDS_BUILD_OUTPUTS_VERSION}" snapshots.tar.gz
 
   deploy:
     name: Deploy to Fly.io
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     environment: demo
     concurrency:
       group: fly-deploy
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
-      - run: flyctl deploy --image ${{ needs.build.outputs.image }}
+      - run: flyctl deploy --image ${NEEDS_BUILD_OUTPUTS_IMAGE}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          NEEDS_BUILD_OUTPUTS_IMAGE: ${{ needs.build.outputs.image }}
 
   pages:
     name: Deploy to Pages
     needs: [build, snapshots]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # download release assets
+      id-token: write # OIDC token for Pages deployment
+      pages: write # publish to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -112,14 +139,17 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEEDS_BUILD_OUTPUTS_VERSION: ${{ needs.build.outputs.version }}
         run: |
           mkdir -p gallery
-          gh release download "${{ needs.build.outputs.version }}" --pattern "snapshots.tar.gz" --output snapshots.tar.gz
+          gh release download "${NEEDS_BUILD_OUTPUTS_VERSION}" --pattern "snapshots.tar.gz" --output snapshots.tar.gz
           tar xzf snapshots.tar.gz -C gallery
           bundle exec rake "snapshots:gallery[gallery,gallery/index.html]"
           cp public/favicon.svg gallery/

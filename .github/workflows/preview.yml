@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}
+  cancel-in-progress: true
+
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
   FLY_REGION: sjc
@@ -11,10 +17,15 @@ env:
 
 jobs:
   snapshots:
+    name: Snapshots
     if: github.event.action != 'closed'
     runs-on: macos-latest
+    permissions:
+      contents: read # checkout and download baseline from release
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
@@ -31,9 +42,12 @@ jobs:
           path: snapshots.tar.gz
 
   preview:
+    name: Preview
     needs: snapshots
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout
     concurrency:
       group: pr-${{ github.event.number }}
     environment:
@@ -41,6 +55,8 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
 
       - if: github.event.action != 'closed'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
