@@ -193,9 +193,7 @@ module Ketchup
         wait_for(".section-edit-btn--cancel").click
         entries << snap("series-archive-button", selector: ".main-column")
 
-        @browser.execute("document.querySelector('form[action$=\"/archive\"] button').click()")
-        wait_for(".archive-confirm")
-        entries << snap("series-archive-confirm", selector: ".main-column")
+
 
         # ── Series detail (with history) ──
 

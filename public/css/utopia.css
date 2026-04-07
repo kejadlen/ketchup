@@ -76,8 +76,9 @@
   --color-border-light: #eee;
   --color-surface: #fcfcfc;
   --color-surface-hover: #f0f0f0;
-  --color-accent: #c00;
+  --color-danger: #c00;
+  --color-danger-hover: #a00;
+  --color-danger-bg: #ffe5e5;
   --color-success: #27ae60;
   --color-success-bg: #f0fff0;
-  --color-accent-bg: #ffe5e5;
 }

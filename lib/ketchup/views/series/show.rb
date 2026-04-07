@@ -50,17 +50,9 @@ module Ketchup
                       plain "Save"
                     end
                     form(method: "post", action: @archive_path, class: "complete-form",
-                         "x-show": "!editing", "x-data": "{ confirming: false }") do
+                         "x-show": "!editing") do
                       input(type: "hidden", name: "_csrf", value: @csrf.call(@archive_path))
-                      span("x-show": "!confirming") do
-                        button(type: "button", class: "section-edit-btn",
-                               "x-on:click": "confirming = true") { "Archive" }
-                      end
-                      span(class: "archive-confirm", "x-show": "confirming", "x-cloak": true) do
-                        button(type: "submit", class: "section-edit-btn") { "Archive" }
-                        button(type: "button", class: "section-edit-btn",
-                               "x-on:click": "confirming = false") { "Cancel" }
-                      end
+                      button(type: "submit", class: "section-edit-btn section-edit-btn--destructive") { "Archive" }
                     end
                   end
 
