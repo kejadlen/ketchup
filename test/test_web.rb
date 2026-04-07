@@ -741,6 +741,8 @@ class TestWeb < Minitest::Test
     series = Ketchup::DB[:series].first
     archive_series(series[:id])
 
+    # First request shows the flash; second request clears it.
+    get "/", {}, auth_headers
     get "/", {}, auth_headers
     refute_includes last_response.body, "Call Mom"
   end
@@ -780,6 +782,52 @@ class TestWeb < Minitest::Test
 
     series = Ketchup::DB[:series].first
     archive_series(series[:id], login: "bob@example.com")
+    assert_includes [403, 404], last_response.status
+  end
+
+  def test_archive_shows_flash_with_undo
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id])
+
+    get "/", {}, auth_headers
+    body = last_response.body
+    assert_includes body, "Archived"
+    assert_includes body, "Call Mom"
+    assert_includes body, "data-undo-path=\"/series/#{series[:id]}/archive\""
+  end
+
+  def test_unarchive_restores_series
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id])
+
+    refute_nil Ketchup::DB[:series].first(id: series[:id])[:archived_at]
+    assert_nil Ketchup::DB[:tasks].first(series_id: series[:id], completed_at: nil)
+
+    delete "/series/#{series[:id]}/archive", {}, auth_headers
+    assert_equal 204, last_response.status
+
+    assert_nil Ketchup::DB[:series].first(id: series[:id])[:archived_at]
+    active_task = Ketchup::DB[:tasks].first(series_id: series[:id], completed_at: nil)
+    refute_nil active_task
+  end
+
+  def test_unarchive_requires_own_series
+    create_series(
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com")
+    )
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id], login: "alice@example.com")
+
+    delete "/series/#{series[:id]}/archive", {}, auth_headers(login: "bob@example.com")
     assert_includes [403, 404], last_response.status
   end
 

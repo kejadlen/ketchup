@@ -96,12 +96,31 @@ module Ketchup
         r.on Integer do |series_id|
           @series = @user.series_dataset.where(id: series_id).sole
 
-          r.post "archive" do
-            DB.transaction do
-              @series.active_task&.destroy
-              @series.update(archived_at: Time.now)
+          r.on "archive" do
+            r.post do
+              DB.transaction do
+                @series.active_task&.destroy
+                @series.update(archived_at: Time.now)
+              end
+
+              note_title = @series.note.lines.first&.strip || @series.note
+              archive_path = "/series/#{series_id}/archive"
+              session["flash"] = { "message" => "Archived \u201c#{note_title}\u201d", "undo_path" => archive_path }
+              r.redirect "/"
             end
-            r.redirect "/"
+
+            r.delete do
+              DB.transaction do
+                @series.update(archived_at: nil)
+                unless @series.active_task
+                  last_completed = @series.completed_tasks.first
+                  due_date = last_completed ? @series.next_due_date(last_completed[:completed_at].to_date) : Date.today
+                  Task.create(series_id: @series.id, due_date: due_date)
+                end
+              end
+              response.status = 204
+              ""
+            end
           end
 
           r.is do
