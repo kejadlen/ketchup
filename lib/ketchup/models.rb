@@ -14,6 +14,7 @@ module Ketchup
     def active_tasks
       tasks_dataset
         .where(completed_at: nil)
+        .where(Sequel[:series][:archived_at] => nil)
         .select_all(:tasks)
         .select_append(
           Sequel[:series][:note],

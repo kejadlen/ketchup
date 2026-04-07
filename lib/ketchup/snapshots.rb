@@ -189,6 +189,14 @@ module Ketchup
         wait_for(".series-note--editable")
         entries << snap("series-editing", selector: ".main-column")
 
+        # Cancel editing, show archive button, then click to reveal confirmation
+        wait_for(".section-edit-btn--cancel").click
+        entries << snap("series-archive-button", selector: ".main-column")
+
+        @browser.execute("document.querySelector('form[action$=\"/archive\"] button').click()")
+        wait_for(".archive-confirm")
+        entries << snap("series-archive-confirm", selector: ".main-column")
+
         # ── Series detail (with history) ──
 
         series_with_history = find_series_with_mixed_history

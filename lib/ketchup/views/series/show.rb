@@ -12,6 +12,7 @@ module Ketchup
           @series = series
           @current_user = current_user
           @csrf = csrf
+          @archive_path = "/series/#{series.id}/archive"
         end
 
         def view_template
@@ -47,6 +48,19 @@ module Ketchup
                       "x-on:click": "editing = false; $dispatch('stop-editing')"
                     ) do
                       plain "Save"
+                    end
+                    form(method: "post", action: @archive_path, class: "complete-form",
+                         "x-show": "!editing", "x-data": "{ confirming: false }") do
+                      input(type: "hidden", name: "_csrf", value: @csrf.call(@archive_path))
+                      span("x-show": "!confirming") do
+                        button(type: "button", class: "section-edit-btn",
+                               "x-on:click": "confirming = true") { "Archive" }
+                      end
+                      span(class: "archive-confirm", "x-show": "confirming", "x-cloak": true) do
+                        button(type: "submit", class: "section-edit-btn") { "Archive" }
+                        button(type: "button", class: "section-edit-btn",
+                               "x-on:click": "confirming = false") { "Cancel" }
+                      end
                     end
                   end
 

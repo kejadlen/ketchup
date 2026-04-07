@@ -721,6 +721,77 @@ class TestWeb < Minitest::Test
     assert_includes [403, 404], last_response.status
   end
 
+  def test_archive_series
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id])
+    assert last_response.redirect?
+    assert_equal "/", URI.parse(last_response["Location"]).path
+
+    updated = Ketchup::DB[:series].first(id: series[:id])
+    refute_nil updated[:archived_at]
+  end
+
+  def test_archive_hides_from_dashboard
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id])
+
+    get "/", {}, auth_headers
+    refute_includes last_response.body, "Call Mom"
+  end
+
+  def test_archived_series_detail_still_accessible
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id])
+
+    get "/series/#{series[:id]}", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "Call Mom"
+  end
+
+  def test_archive_deletes_active_task
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    series = Ketchup::DB[:series].first
+    task = Ketchup::DB[:tasks].first(series_id: series[:id])
+    refute_nil task
+    assert_nil task[:completed_at]
+
+    archive_series(series[:id])
+
+    assert_nil Ketchup::DB[:tasks].first(id: task[:id])
+  end
+
+  def test_archive_requires_own_series
+    create_series(
+      note: "Alice task", interval_unit: "day", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com")
+    )
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id], login: "bob@example.com")
+    assert_includes [403, 404], last_response.status
+  end
+
+  def test_series_detail_has_archive_button
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = Ketchup::DB[:series].first
+    get "/series/#{series[:id]}", {}, auth_headers
+    assert_includes last_response.body, "/series/#{series[:id]}/archive"
+  end
+
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
@@ -744,6 +815,15 @@ class TestWeb < Minitest::Test
     patch "/series/#{series_id}/tasks/#{task_id}",
       data.to_json,
       auth_headers(login: login).merge("CONTENT_TYPE" => "application/json")
+  end
+
+  def archive_series(series_id, login: "alice@example.com")
+    headers = auth_headers(login: login)
+    get "/series/#{series_id}", {}, headers
+    archive_path = "/series/#{series_id}/archive"
+    escaped = Regexp.escape(archive_path)
+    token = last_response.body[/action="#{escaped}".*?name="_csrf" value="([^"]+)"/m, 1]
+    post archive_path, { "_csrf" => token }, headers
   end
 
   def auth_headers(login: "alice@example.com")

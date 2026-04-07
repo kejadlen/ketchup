@@ -96,6 +96,14 @@ module Ketchup
         r.on Integer do |series_id|
           @series = @user.series_dataset.where(id: series_id).sole
 
+          r.post "archive" do
+            DB.transaction do
+              @series.active_task&.destroy
+              @series.update(archived_at: Time.now)
+            end
+            r.redirect "/"
+          end
+
           r.is do
             r.get do
               Views::Series::Show.new(series: @series, current_user: @user, csrf: method(:csrf_token)).call

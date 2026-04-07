@@ -370,6 +370,21 @@ h2 { font-size: var(--step-0); font-weight: 600; }
   color: var(--color-text-secondary);
 }
 
+.archive-confirm,
+form[action$="/archive"] > span {
+  display: inline-flex;
+  gap: 0.5em;
+  order: 1;
+}
+
+.archive-confirm [type="submit"] {
+  color: #c04040;
+}
+
+.archive-confirm [type="submit"]:hover {
+  color: #a02020;
+}
+
 .section-edit-btn:disabled {
   color: #ccc;
   cursor: default;
