@@ -14,8 +14,8 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
       - name: Capture snapshot diff
@@ -25,7 +25,7 @@ jobs:
           tar czf snapshots.tar.gz -C "$snapshot_dir" .
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: snapshots
           path: snapshots.tar.gz
@@ -40,10 +40,10 @@ jobs:
       name: pr-${{ github.event.number }}
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - if: github.event.action != 'closed'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: snapshots
 
@@ -54,11 +54,11 @@ jobs:
           tar xzf snapshots.tar.gz -C public/snapshots
           cp public/favicon.svg public/snapshots/
 
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
 
       - name: Deploy preview
         id: deploy
-        uses: superfly/fly-pr-review-apps@1.5.0
+        uses: superfly/fly-pr-review-apps@f5d85309215d5700e7a42faf9aa5e9a718aaef7c # 1.5.0
         with:
           config: fly.preview.toml
           memory: 256

@@ -16,8 +16,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
       - run: bundle exec rake test check
@@ -30,12 +30,12 @@ jobs:
       version: ${{ steps.meta.outputs.version }}
       image: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -44,13 +44,13 @@ jobs:
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - id: change-id
         run: echo "id=$(git cat-file -p HEAD | grep '^change-id ' | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}-${{ steps.short-sha.outputs.sha }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           push: true
@@ -71,8 +71,8 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
       - run: |
@@ -93,8 +93,8 @@ jobs:
       group: fly-deploy
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v6
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
       - run: flyctl deploy --image ${{ needs.build.outputs.image }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -111,8 +111,8 @@ jobs:
       group: pages
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1
         with:
           bundler-cache: true
       - env:
@@ -123,8 +123,8 @@ jobs:
           tar xzf snapshots.tar.gz -C gallery
           bundle exec rake "snapshots:gallery[gallery,gallery/index.html]"
           cp public/favicon.svg gallery/
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: gallery
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
