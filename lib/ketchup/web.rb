@@ -118,8 +118,7 @@ module Ketchup
                   Task.create(series_id: @series.id, due_date: due_date)
                 end
               end
-              response.status = 204
-              ""
+              r.halt 204
             end
           end
 
@@ -177,8 +176,7 @@ module Ketchup
               r.delete do
                 r.halt 422 if @task[:completed_at].nil?
                 @task.undo_complete!
-                response.status = 204
-                ""
+                r.halt 204
               end
             end
 
