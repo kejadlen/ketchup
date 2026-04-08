@@ -14,7 +14,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["lib/ketchup/views/layout\\.rb$"],
+      "managerFilePatterns": [
+        "/lib/ketchup/views/layout\.rb$/"
+      ],
       "matchStrings": [
         "src:\\s*\"https://unpkg\\.com/(?<depName>[^@]+)@(?<currentValue>[^/]+)/",
         "src:\\s*\"https://cdn\\.jsdelivr\\.net/npm/(?<depName>[^@]+)@(?<currentValue>[^/]+)/"
