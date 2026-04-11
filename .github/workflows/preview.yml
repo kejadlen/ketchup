@@ -70,7 +70,7 @@ jobs:
           tar xzf snapshots.tar.gz -C public/snapshots
           cp public/favicon.svg public/snapshots/
 
-      - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
 
       - name: Deploy preview
         id: deploy
