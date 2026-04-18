@@ -40,11 +40,11 @@ module Ketchup
             link(rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: true)
             link(rel: "stylesheet",
                  href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap")
-            script(src: "https://unpkg.com/overtype@2.3.4/dist/overtype.min.js",
+            script(src: "https://unpkg.com/overtype@2.3.5/dist/overtype.min.js",
                    integrity: "sha384-oO6wSYxEDXeZSOcEf28Yv/b18PqYxmhTbhc9Qfn8PSQJxv82nH/6Awq3eCof6VcA",
                    crossorigin: "anonymous")
             script(src: asset_path("/js/app.js"), defer: true)
-            script(src: "https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js",
+            script(src: "https://cdn.jsdelivr.net/npm/alpinejs@3.15.11/dist/cdn.min.js",
                    integrity: "sha384-LXWjKwDZz29o7TduNe+r/UxaolHh5FsSvy2W7bDHSZ8jJeGgDeuNnsDNHoxpSgDi",
                    crossorigin: "anonymous", defer: true)
           end
