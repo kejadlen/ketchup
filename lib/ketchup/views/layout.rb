@@ -70,10 +70,23 @@ module Ketchup
 
       def render_flash
         undo_path = @flash["undo_path"]
+        title = @flash["title"]
+        path = @flash["path"]
 
         div(class: "flash-bar", data: { undo_path: undo_path }.compact) do
           button(class: "flash-undo-btn", hidden: !undo_path) { "Undo" }
-          span(class: "flash-message") { @flash["message"] }
+          span(class: "flash-message") do
+            plain @flash["message"]
+            if title
+              plain " \u201c"
+              if path
+                a(href: path, class: "flash-link") { title }
+              else
+                plain title
+              end
+              plain "\u201d"
+            end
+          end
           button(class: "flash-close-btn", **{ "aria-label": "Dismiss" }) { "\u00d7" }
           script { raw safe(flash_script) }
         end
