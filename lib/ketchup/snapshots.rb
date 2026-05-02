@@ -85,11 +85,24 @@ module Ketchup
       end
     end
 
+    # Raised when a snapshot page logs console errors/warnings or throws
+    # uncaught JavaScript exceptions.
+    class PageCheckError < StandardError
+      def initialize(snap_name:, console_errors:, page_errors:)
+        lines = ["Page errors during snap #{snap_name.inspect}:"]
+        console_errors.each { |e| lines << "  console.#{e[:type]}: #{e[:text]}" }
+        page_errors.each { |e| lines << "  page error: #{e}" }
+        super(lines.join("\n"))
+      end
+    end
+
     class Capture
       def initialize(output_dir:, logger: Logger.new($stderr), &server)
         @output_dir = Pathname(output_dir)
         @logger = logger
         @server = server || method(:default_server)
+        @console_messages = []
+        @page_errors = []
       end
 
       def call
@@ -104,6 +117,8 @@ module Ketchup
           window_size: VIEWPORTS.fetch("desktop"),
           browser_options: browser_options
         )
+
+        subscribe_page_errors
 
         @server.call(@browser) do |url|
           @base = url
@@ -312,7 +327,7 @@ module Ketchup
       end
 
       def snap(name, selector: nil)
-        yield if block_given?
+        check_page_errors(name) { yield if block_given? }
 
         file = @viewport_dir / "#{name}.png"
         if selector && element_visible?(selector)
@@ -386,7 +401,39 @@ module Ketchup
         Series.first(Sequel.&({ id: noted_ids }, { id: unnoted_ids })) || Series.first
       end
 
+      # Subscribe to CDP events for console messages and uncaught exceptions.
+      # Ferrum subscribes to these internally for its own js_errors/logger
+      # features, but the subscriber supports multiple callbacks.
+      def subscribe_page_errors
+        @browser.on("Runtime.consoleAPICalled") do |params|
+          type = params["type"]
+          text = params["args"].map { |a| a["value"].to_s }.join(" ")
+          @console_messages << { type: type, text: text }
+        end
 
+        @browser.on("Runtime.exceptionThrown") do |params|
+          detail = params.dig("exceptionDetails", "exception", "description")
+          detail ||= params.dig("exceptionDetails", "text")
+          @page_errors << detail.to_s
+        end
+      end
+
+      # Clears error buffers, yields, then raises PageCheckError if the page
+      # logged any console errors/warnings or threw uncaught exceptions.
+      def check_page_errors(snap_name)
+        @console_messages.clear
+        @page_errors.clear
+
+        yield
+
+        console_errors = @console_messages.select { |m| %(error warning).include?(m[:type]) }
+
+        unless console_errors.empty? && @page_errors.empty?
+          raise PageCheckError.new(
+            snap_name:, console_errors:, page_errors: @page_errors.dup
+          )
+        end
+      end
     end
   end
 end
