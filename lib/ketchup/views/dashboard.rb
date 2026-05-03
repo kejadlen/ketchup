@@ -124,7 +124,13 @@ module Ketchup
                     button(type: "submit", title: "Complete", class: "complete-btn",
                            **{ "aria-label": "Complete #{task_name}" }) { "\u2713" }
                   end
-                  a(href: "/series/#{task[:series_id]}", class: "agenda-day-pill") { task_name }
+                  a(href: "/series/#{task[:series_id]}", class: "agenda-day-pill") do
+                    plain task_name
+                    if task[:shared]
+                      whitespace
+                      render SharedIcon.new
+                    end
+                  end
                 end
               end
             end

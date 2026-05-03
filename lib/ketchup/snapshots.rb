@@ -267,6 +267,15 @@ module Ketchup
           shared: true
         )
 
+        Series.create_with_first_task(
+          user: User.first(login: "snapshot@example.com"),
+          note: "Family dinner",
+          interval_unit: "week",
+          interval_count: 2,
+          first_due_date: Date.today + 2,
+          shared: true
+        )
+
         entries << snap("dashboard-shared") do
           goto @base
           wait_for(".dashboard")
