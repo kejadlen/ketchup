@@ -81,12 +81,15 @@ module Ketchup
               r.halt 422
             end
 
+            shared = r.params["shared"] == "1"
+
             series = Series.create_with_first_task(
               user: @user,
               note: note,
               interval_unit: interval_unit,
               interval_count: interval_count,
-              first_due_date: due_date
+              first_due_date: due_date,
+              shared: shared
             )
 
             r.redirect "/series/#{series.id}"
@@ -94,7 +97,7 @@ module Ketchup
         end
 
         r.on Integer do |series_id|
-          @series = @user.series_dataset.where(id: series_id).sole
+          @series = @user.visible_series_dataset.where(id: series_id).sole
 
           r.on "archive" do
             r.post do
@@ -150,6 +153,10 @@ module Ketchup
                 updates[:interval_unit] = interval_unit
               end
 
+              if r.params.key?("shared")
+                updates[:shared] = r.params["shared"] == "1"
+              end
+
               @series.update(updates) unless updates.empty?
 
               response["content-type"] = "application/json"
@@ -164,7 +171,7 @@ module Ketchup
               r.post do
                 r.halt 422 unless @task[:completed_at].nil?
 
-                @task.complete!(completed_on: Date.today)
+                @task.complete!(completed_on: Date.today, by: @user)
 
                 note_title = @series.note.lines.first&.strip || @series.note
                 complete_path = "/series/#{series_id}/tasks/#{@task.id}/complete"

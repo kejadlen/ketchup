@@ -251,6 +251,18 @@ document.addEventListener("alpine:init", () => {
     },
   }))
 
+  Alpine.data("sharedEditor", (seriesId, initialShared) => ({
+    shared: initialShared,
+
+    save() {
+      fetch(`/series/${seriesId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `shared=${encodeURIComponent(this.shared ? "1" : "0")}`,
+      }).then((r) => { if (r.ok) location.reload() })
+    },
+  }))
+
   // Series detail page editor
   initPanelEditors(document)
 

@@ -28,7 +28,7 @@ class TestDB < Minitest::Test
   def test_completed_task_allows_new_active_task
     series_id = create_series
 
-    Ketchup::DB[:tasks].where(series_id: series_id).update(completed_at: @now)
+    Ketchup::DB[:tasks].where(series_id: series_id).update(completed_at: @now, completed_by_user_id: @user_id)
 
     Ketchup::DB[:tasks].insert(series_id: series_id, due_date: Date.new(2026, 3, 15), created_at: @now, updated_at: @now)
 

@@ -256,6 +256,22 @@ module Ketchup
           wait_for(".task-history")
         end
 
+        # ── Dashboard with shared series ──
+
+        shared_series = Series.create_with_first_task(
+          user: User.first(login: "snapshot@example.com"),
+          note: "Team standup\n\n*Monday* at **10am**",
+          interval_unit: "week",
+          interval_count: 1,
+          first_due_date: Date.today - 1,
+          shared: true
+        )
+
+        entries << snap("dashboard-shared") do
+          goto @base
+          wait_for(".dashboard")
+        end
+
         # ── User settings ──
 
         user = User.first(login: "snapshot@example.com")

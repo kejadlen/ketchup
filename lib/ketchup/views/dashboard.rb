@@ -3,6 +3,7 @@
 require "phlex"
 
 require_relative "layout"
+require_relative "shared_icon"
 require_relative "task_card"
 
 module Ketchup
@@ -53,7 +54,7 @@ module Ketchup
               span(class: "section-title-text") { "Next up" }
             end
           end
-          render TaskCard.new(task: task, csrf: @csrf, overdue: true)
+          render TaskCard.new(task: task, csrf: @csrf, overdue: true, shared: task[:shared])
         end
       end
 
@@ -70,7 +71,7 @@ module Ketchup
           ul(class: "task-list") do
             tasks.each do |task|
               li(class: "task-item") do
-                render TaskCard.new(task: task, csrf: @csrf, overdue: true)
+                render TaskCard.new(task: task, csrf: @csrf, overdue: true, shared: task[:shared])
               end
             end
           end

@@ -3,6 +3,7 @@
 require "phlex"
 
 require_relative "../layout"
+require_relative "../shared_icon"
 
 module Ketchup
   module Views
@@ -88,6 +89,30 @@ module Ketchup
                       end
                     end
 
+                    dt { "Shared" }
+                    dd("x-show": "!editing") do
+                      if @series.shared
+                        plain "Yes"
+                        render SharedIcon.new
+                      else
+                        plain "No"
+                      end
+                    end
+                    dd(
+                      "x-show": "editing",
+                      "x-cloak": true,
+                      "x-data": "sharedEditor(#{@series.id}, #{@series.shared})"
+                    ) do
+                      label(class: "detail-checkbox-label") do
+                        input(
+                          type: "checkbox",
+                          class: "detail-checkbox",
+                          "x-model": "shared",
+                          "x-on:change": "save()"
+                        )
+                        plain "Shared with everyone"
+                      end
+                    end
                   end
 
                   if active_task

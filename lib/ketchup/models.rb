@@ -11,15 +11,20 @@ module Ketchup
     one_to_many :series
     many_through_many :tasks, [[:series, :user_id, :id]], right_primary_key: :series_id
 
+    def visible_series_dataset
+      Series.where(user_id: id).or(shared: true)
+    end
+
     def active_tasks
-      tasks_dataset
+      visible_tasks
         .where(completed_at: nil)
         .where(Sequel[:series][:archived_at] => nil)
         .select_all(:tasks)
         .select_append(
           Sequel[:series][:note],
           Sequel[:series][:interval_unit],
-          Sequel[:series][:interval_count]
+          Sequel[:series][:interval_count],
+          Sequel[:series][:shared]
         )
     end
 
@@ -29,6 +34,14 @@ module Ketchup
 
     def upcoming_tasks
       active_tasks.where { due_date >= Date.today }.order(:due_date)
+    end
+
+    private
+
+    def visible_tasks
+      Task.join(:series, id: :series_id).where(
+        Sequel[:series][:user_id] => id
+      ).or(Sequel[:series][:shared] => true)
     end
   end
 
@@ -81,13 +94,14 @@ module Ketchup
       end
     end
 
-    def self.create_with_first_task(user:, note:, interval_unit:, interval_count:, first_due_date:)
+    def self.create_with_first_task(user:, note:, interval_unit:, interval_count:, first_due_date:, shared: false)
       DB.transaction do
         series = create(
           user_id: user.id,
           note: note,
           interval_unit: interval_unit,
-          interval_count: interval_count
+          interval_count: interval_count,
+          shared: shared
         )
 
         Task.create(
@@ -121,9 +135,14 @@ module Ketchup
       days_overdue.to_f / interval
     end
 
-    def complete!(completed_on:)
+    many_to_one :completed_by, class: :User, key: :completed_by_user_id
+
+    def complete!(completed_on:, by:)
       DB.transaction do
-        update(completed_at: Time.new(completed_on.year, completed_on.month, completed_on.day))
+        update(
+          completed_at: Time.new(completed_on.year, completed_on.month, completed_on.day),
+          completed_by_user_id: by.id
+        )
         Task.create(series_id: series.id, due_date: series.next_due_date(completed_on))
       end
     end
@@ -132,7 +151,7 @@ module Ketchup
       DB.transaction do
         next_task = series.active_task
         next_task.destroy if next_task
-        update(completed_at: nil)
+        update(completed_at: nil, completed_by_user_id: nil)
       end
     end
   end

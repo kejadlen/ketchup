@@ -207,7 +207,7 @@ class TestWeb < Minitest::Test
                   first_due_date: "2026-03-01")
 
     task = Ketchup::Task.first
-    task.complete!(completed_on: Date.new(2026, 4, 1))
+    task.complete!(completed_on: Date.new(2026, 4, 1), by: Ketchup::User.first)
 
     new_task = Ketchup::Task.where(completed_at: nil).first
     assert_equal Date.new(2026, 4, 15), new_task.due_date
@@ -840,6 +840,241 @@ class TestWeb < Minitest::Test
     assert_includes last_response.body, "/series/#{series[:id]}/archive"
   end
 
+  # --- Shared series tests ---
+
+  def test_create_shared_series
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01", shared: true
+    )
+    assert last_response.redirect?
+
+    series = Ketchup::DB[:series].first
+    assert_equal true, series[:shared]
+  end
+
+  def test_create_private_series_by_default
+    create_series(
+      note: "Call Mom", interval_unit: "week", interval_count: "2",
+      first_due_date: "2026-03-01"
+    )
+
+    series = Ketchup::DB[:series].first
+    assert_equal false, series[:shared]
+  end
+
+  def test_shared_series_visible_on_other_users_dashboard
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: (Date.today - 1).to_s,
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    get "/", {}, auth_headers(login: "bob@example.com")
+    assert_includes last_response.body, "Team standup"
+  end
+
+  def test_private_series_invisible_to_other_users
+    create_series(
+      note: "Secret task", interval_unit: "week", interval_count: "1",
+      first_due_date: (Date.today - 1).to_s,
+      headers: auth_headers(login: "alice@example.com")
+    )
+
+    get "/", {}, auth_headers(login: "bob@example.com")
+    refute_includes last_response.body, "Secret task"
+  end
+
+  def test_non_creator_can_complete_shared_series_task
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: (Date.today - 1).to_s,
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers(login: "bob@example.com")
+    assert last_response.redirect?
+
+    completed = Ketchup::DB[:tasks].first(id: task[:id])
+    refute_nil completed[:completed_at]
+    bob = Ketchup::DB[:users].first(login: "bob@example.com")
+    assert_equal bob[:id], completed[:completed_by_user_id]
+  end
+
+  def test_non_creator_can_edit_shared_series
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    series = Ketchup::DB[:series].first
+    patch "/series/#{series[:id]}", { note: "Updated standup" }, auth_headers(login: "bob@example.com")
+    assert last_response.ok?
+
+    assert_equal "Updated standup", Ketchup::DB[:series].first(id: series[:id])[:note]
+  end
+
+  def test_non_creator_can_archive_shared_series
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id], login: "bob@example.com")
+    assert last_response.redirect?
+
+    refute_nil Ketchup::DB[:series].first(id: series[:id])[:archived_at]
+  end
+
+  def test_non_creator_can_unarchive_shared_series
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    series = Ketchup::DB[:series].first
+    archive_series(series[:id], login: "bob@example.com")
+
+    delete "/series/#{series[:id]}/archive", {}, auth_headers(login: "bob@example.com")
+    assert_equal 204, last_response.status
+
+    assert_nil Ketchup::DB[:series].first(id: series[:id])[:archived_at]
+  end
+
+  def test_non_creator_can_toggle_shared_off
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    series = Ketchup::DB[:series].first
+    patch "/series/#{series[:id]}", { shared: "0" }, auth_headers(login: "bob@example.com")
+    assert last_response.ok?
+
+    assert_equal false, Ketchup::DB[:series].first(id: series[:id])[:shared]
+  end
+
+  def test_non_creator_can_view_shared_series_detail
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com"),
+      shared: true
+    )
+
+    series = Ketchup::DB[:series].first
+    get "/series/#{series[:id]}", {}, auth_headers(login: "bob@example.com")
+    assert last_response.ok?
+    assert_includes last_response.body, "Team standup"
+  end
+
+  def test_non_creator_cannot_view_private_series
+    create_series(
+      note: "Private", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      headers: auth_headers(login: "alice@example.com")
+    )
+
+    series = Ketchup::DB[:series].first
+    get "/series/#{series[:id]}", {}, auth_headers(login: "bob@example.com")
+    assert_equal 404, last_response.status
+  end
+
+  def test_task_card_shows_shared_icon_for_shared_series
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: (Date.today - 1).to_s,
+      shared: true
+    )
+
+    get "/", {}, auth_headers
+    assert_includes last_response.body, "aria-label=\"Shared\""
+  end
+
+  def test_task_card_no_shared_icon_for_private_series
+    create_series(
+      note: "Private task", interval_unit: "week", interval_count: "1",
+      first_due_date: (Date.today - 1).to_s
+    )
+
+    get "/", {}, auth_headers
+    refute_includes last_response.body, "aria-label=\"Shared\""
+  end
+
+  def test_series_detail_shows_shared_status
+    create_series(
+      note: "Team standup", interval_unit: "week", interval_count: "1",
+      first_due_date: "2026-03-01",
+      shared: true
+    )
+
+    series = Ketchup::DB[:series].first
+    get "/series/#{series[:id]}", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, "Shared"
+  end
+
+  def test_complete_task_records_completed_by
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    completed = Ketchup::DB[:tasks].first(id: task[:id])
+    user = Ketchup::DB[:users].first(login: "alice@example.com")
+    refute_nil completed[:completed_at]
+    assert_equal user[:id], completed[:completed_by_user_id]
+  end
+
+  def test_undo_complete_clears_completed_by
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: (Date.today - 3).to_s)
+
+    task = Ketchup::DB[:tasks].first
+    series = Ketchup::DB[:series].first
+    csrf_post "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+
+    delete "/series/#{series[:id]}/tasks/#{task[:id]}/complete", {}, auth_headers
+    assert_equal 204, last_response.status
+
+    restored = Ketchup::DB[:tasks].first(id: task[:id])
+    assert_nil restored[:completed_at]
+    assert_nil restored[:completed_by_user_id]
+  end
+
+  def test_new_series_page_has_shared_checkbox
+    get "/series/new", {}, auth_headers
+    assert last_response.ok?
+    assert_includes last_response.body, 'name="shared"'
+    assert_includes last_response.body, "Shared with everyone"
+  end
+
+  def test_patch_series_updates_shared
+    create_series(note: "Call Mom", interval_unit: "week", interval_count: "2",
+                  first_due_date: "2026-03-01")
+
+    series = Ketchup::DB[:series].first
+    patch "/series/#{series[:id]}", { shared: "1" }, auth_headers
+    assert last_response.ok?
+
+    assert_equal true, Ketchup::DB[:series].first(id: series[:id])[:shared]
+  end
+
   private
 
   def csrf_post(path, params = {}, headers = auth_headers)
@@ -849,14 +1084,15 @@ class TestWeb < Minitest::Test
     post path, params.merge("_csrf" => token), headers
   end
 
-  def create_series(note:, interval_unit:, interval_count:, first_due_date:, headers: auth_headers)
+  def create_series(note:, interval_unit:, interval_count:, first_due_date:, headers: auth_headers, shared: false)
     get "/series/new", {}, headers  # establish session and get CSRF token
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     post "/series", {
       _csrf: token,
       note: note, interval_unit: interval_unit, interval_count: interval_count,
-      first_due_date: first_due_date
-    }, headers
+      first_due_date: first_due_date,
+      shared: shared ? "1" : nil
+    }.compact, headers
   end
 
   def patch_task(series_id, task_id, data, login: "alice@example.com")

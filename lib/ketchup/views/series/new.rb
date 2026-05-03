@@ -56,6 +56,13 @@ module Ketchup
                         value: Date.today.to_s, required: true
                       )
                     end
+
+                    div(class: "field") do
+                      label(class: "detail-checkbox-label") do
+                        input(type: "checkbox", name: "shared", value: "1")
+                        plain "Shared with everyone"
+                      end
+                    end
                   end
                 end
               end

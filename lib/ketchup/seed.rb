@@ -11,6 +11,7 @@ module Ketchup
         interval_unit: "day",
         interval_count: 3,
         due_date: Date.today - 6,
+        shared: true,
         history: [
           { due_date: Date.today - 9, completed_at: (Date.today - 9).to_time, note: "Done, no issues" },
           { due_date: Date.today - 12, completed_at: (Date.today - 11).to_time, note: nil },
@@ -22,6 +23,7 @@ module Ketchup
         interval_unit: "week",
         interval_count: 1,
         due_date: Date.today - 4,
+        shared: true,
         history: []
       },
       # Overdue — low urgency (long interval, many days past)
@@ -70,6 +72,7 @@ module Ketchup
         interval_unit: "quarter",
         interval_count: 1,
         due_date: Date.today + 18,
+        shared: true,
         history: [
           { due_date: Date.today - 73, completed_at: (Date.today - 73).to_time, note: "All good\n\n- Changed filter\n- Reset thermostat" },
         ]
@@ -91,6 +94,7 @@ module Ketchup
         interval_unit: "year",
         interval_count: 1,
         due_date: Date.today + 140,
+        shared: true,
         history: [
           { due_date: Date.today - 225, completed_at: (Date.today - 225).to_time, note: "Replaced batteries in **hallway** unit" },
           { due_date: Date.today - 590, completed_at: (Date.today - 589).to_time, note: nil },
@@ -113,7 +117,8 @@ module Ketchup
           note: s[:note],
           interval_unit: s[:interval_unit],
           interval_count: s[:interval_count],
-          first_due_date: s[:due_date]
+          first_due_date: s[:due_date],
+          shared: s[:shared] || false
         )
 
         s[:history].each do |h|
@@ -121,6 +126,7 @@ module Ketchup
             series_id: created.id,
             due_date: h[:due_date],
             completed_at: h[:completed_at],
+            completed_by_user_id: h[:completed_at] ? user.id : nil,
             note: h[:note]
           )
         end

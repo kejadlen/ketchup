@@ -2,13 +2,16 @@
 
 require "phlex"
 
+require_relative "shared_icon"
+
 module Ketchup
   module Views
     class TaskCard < Phlex::HTML
-      def initialize(task:, csrf:, overdue: false)
+      def initialize(task:, csrf:, overdue: false, shared: false)
         @task = task
         @csrf = csrf
         @overdue = overdue
+        @shared = shared
       end
 
       def view_template
@@ -29,9 +32,10 @@ module Ketchup
               href: "/series/#{@task[:series_id]}",
               class: "task-name stretched-link"
             ) { name }
-            if @overdue
-              span(class: "task-meta") do
-                plain meta_text
+            if @shared || @overdue
+              div(class: "task-meta") do
+                render SharedIcon.new if @shared
+                plain meta_text if @overdue
               end
             end
           end
