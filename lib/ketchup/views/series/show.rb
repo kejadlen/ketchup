@@ -3,7 +3,6 @@
 require "phlex"
 
 require_relative "../layout"
-require_relative "../shared_icon"
 
 module Ketchup
   module Views
@@ -22,7 +21,10 @@ module Ketchup
           render Layout.new(current_user: @current_user, title: "#{note_title} — Ketchup", active_view: nil) do
             div(class: "dashboard") do
               div(class: "main-column") do
-                section(class: "section", "x-data": "{ editing: false }") do
+                section(
+                  class: "section",
+                  "x-data": "seriesEditor(#{@series.id}, #{@series.interval_count}, '#{@series.interval_unit}', #{@series.shared})"
+                ) do
                   div(class: "section-header") do
                     h2(class: "section-title") do
                       span(class: "section-title-text") { "Series" }
@@ -30,7 +32,7 @@ module Ketchup
                     button(
                       class: "section-edit-btn",
                       "x-show": "!editing",
-                      "x-on:click": "editing = true; $dispatch('start-editing')"
+                      "x-on:click": "startEditing()"
                     ) do
                       plain "Edit"
                     end
@@ -38,7 +40,7 @@ module Ketchup
                       class: "section-edit-btn section-edit-btn--cancel",
                       "x-show": "editing",
                       "x-cloak": true,
-                      "x-on:click": "editing = false; location.reload()"
+                      "x-on:click": "cancel()"
                     ) do
                       plain "Cancel"
                     end
@@ -46,7 +48,7 @@ module Ketchup
                       class: "section-edit-btn",
                       "x-show": "editing",
                       "x-cloak": true,
-                      "x-on:click": "editing = false; $dispatch('stop-editing')"
+                      "x-on:click": "save()"
                     ) do
                       plain "Save"
                     end
@@ -59,8 +61,7 @@ module Ketchup
 
                   div(class: "series-note", id: "series-note-detail",
                       "x-bind:class": "{ 'series-note--editable': editing }",
-                      "data-value": @series.note || "",
-                      "data-series-id": @series.id.to_s)
+                      "data-value": @series.note || "")
 
                   dl(class: "detail-fields") do
                     dt { "Repeat every" }
@@ -70,45 +71,33 @@ module Ketchup
                     dd(
                       class: "detail-edit-interval",
                       "x-show": "editing",
-                      "x-cloak": true,
-                      "x-data": "intervalEditor(#{@series.id}, #{@series.interval_count}, '#{@series.interval_unit}')"
+                      "x-cloak": true
                     ) do
                       input(
                         type: "number",
                         class: "detail-input detail-input-count",
                         min: 1,
-                        "x-model.number": "count",
-                        "x-on:change": "save()"
+                        "x-model.number": "count"
                       )
                       select(
                         class: "detail-input detail-input-unit",
-                        "x-model": "unit",
-                        "x-on:change": "save()"
+                        "x-model": "unit"
                       ) do
                         INTERVAL_OPTIONS.each { |val, label| option(value: val) { label } }
                       end
                     end
 
                     dt { "Shared" }
-                    dd("x-show": "!editing") do
-                      if @series.shared
-                        plain "Yes"
-                        render SharedIcon.new
-                      else
-                        plain "No"
-                      end
-                    end
+                    dd("x-show": "!editing") { @series.shared ? "Yes" : "No" }
                     dd(
                       "x-show": "editing",
-                      "x-cloak": true,
-                      "x-data": "sharedEditor(#{@series.id}, #{@series.shared})"
+                      "x-cloak": true
                     ) do
                       label(class: "detail-checkbox-label") do
                         input(
                           type: "checkbox",
                           class: "detail-checkbox",
-                          "x-model": "shared",
-                          "x-on:change": "save()"
+                          "x-model": "shared"
                         )
                         plain "Shared with everyone"
                       end

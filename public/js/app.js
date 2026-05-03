@@ -48,14 +48,6 @@ function compactOverType(el) {
   return resize
 }
 
-function saveSeriesField(seriesId, field, value) {
-  return fetch(`/series/${seriesId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `${encodeURIComponent(field)}=${encodeURIComponent(value)}`,
-  })
-}
-
 OverType.setTheme({
   name: "ketchup",
   colors: {
@@ -86,7 +78,6 @@ OverType.setTheme({
 function initPanelEditors(container) {
   const noteDetail = container.querySelector("#series-note-detail")
   if (noteDetail) {
-    const seriesId = noteDetail.dataset.seriesId
     const initialNote = noteDetail.dataset.value || ""
 
     const [editor] = new OverType(noteDetail, {
@@ -99,16 +90,13 @@ function initPanelEditors(container) {
 
     const resizeNote = compactOverType(noteDetail)
 
+    noteDetail._overtype = editor
+    noteDetail._initialNote = initialNote
+
     const ta = noteDetail.querySelector("textarea")
     if (ta) {
       ta.style.pointerEvents = "none"
       ta.readOnly = true
-
-      ta.addEventListener("blur", () => {
-        const note = editor.getValue().trim()
-        if (note === (initialNote || "").trim()) return
-        saveSeriesField(seriesId, "note", note).then((r) => { if (r.ok) location.reload() })
-      })
 
       container.addEventListener("start-editing", () => {
         ta.style.pointerEvents = ""
@@ -118,11 +106,6 @@ function initPanelEditors(container) {
       })
 
       container.addEventListener("stop-editing", () => {
-        const note = editor.getValue().trim()
-        if (note !== (initialNote || "").trim()) {
-          saveSeriesField(seriesId, "note", note).then((r) => { if (r.ok) location.reload() })
-          return
-        }
         ta.style.pointerEvents = "none"
         ta.readOnly = true
         if (resizeNote) requestAnimationFrame(resizeNote)
@@ -132,15 +115,45 @@ function initPanelEditors(container) {
 }
 
 document.addEventListener("alpine:init", () => {
-  Alpine.data("intervalEditor", (seriesId, initialCount, initialUnit) => ({
+  Alpine.data("seriesEditor", (seriesId, initialCount, initialUnit, initialShared) => ({
+    editing: false,
     count: initialCount,
     unit: initialUnit,
+    shared: initialShared,
+
+    startEditing() {
+      this.editing = true
+      this.$dispatch("start-editing")
+    },
+
+    cancel() {
+      this.editing = false
+      location.reload()
+    },
 
     save() {
+      this.editing = false
+      this.$dispatch("stop-editing")
+
+      const params = new URLSearchParams()
+      if (this.count !== initialCount) params.set("interval_count", this.count)
+      if (this.unit !== initialUnit) params.set("interval_unit", this.unit)
+      if (this.shared !== initialShared) params.set("shared", this.shared ? "1" : "0")
+
+      const noteEl = this.$el.querySelector("#series-note-detail")
+      if (noteEl?._overtype) {
+        const note = noteEl._overtype.getValue().trim()
+        if (note && note !== (noteEl._initialNote || "").trim()) {
+          params.set("note", note)
+        }
+      }
+
+      if (params.toString() === "") return
+
       fetch(`/series/${seriesId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `interval_count=${encodeURIComponent(this.count)}&interval_unit=${encodeURIComponent(this.unit)}`,
+        body: params.toString(),
       }).then((r) => { if (r.ok) location.reload() })
     },
   }))
@@ -247,18 +260,6 @@ document.addEventListener("alpine:init", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed_at: this.completedDate }),
-      }).then((r) => { if (r.ok) location.reload() })
-    },
-  }))
-
-  Alpine.data("sharedEditor", (seriesId, initialShared) => ({
-    shared: initialShared,
-
-    save() {
-      fetch(`/series/${seriesId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `shared=${encodeURIComponent(this.shared ? "1" : "0")}`,
       }).then((r) => { if (r.ok) location.reload() })
     },
   }))
