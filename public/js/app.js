@@ -132,21 +132,21 @@ document.addEventListener("alpine:init", () => {
     },
 
     save() {
-      this.editing = false
-      this.$dispatch("stop-editing")
-
       const params = new URLSearchParams()
       if (this.count !== initialCount) params.set("interval_count", this.count)
       if (this.unit !== initialUnit) params.set("interval_unit", this.unit)
       if (this.shared !== initialShared) params.set("shared", this.shared ? "1" : "0")
 
-      const noteEl = this.$el.querySelector("#series-note-detail")
+      const noteEl = document.querySelector("#series-note-detail")
       if (noteEl?._overtype) {
         const note = noteEl._overtype.getValue().trim()
         if (note && note !== (noteEl._initialNote || "").trim()) {
           params.set("note", note)
         }
       }
+
+      this.editing = false
+      this.$dispatch("stop-editing")
 
       if (params.toString() === "") return
 
