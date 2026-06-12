@@ -48,7 +48,7 @@ namespace :snapshots do
     require "ketchup/snapshots"
 
     output_dir = File.join(cache_dir, "current")
-    Ketchup::Snapshots::Capture.new(output_dir: output_dir).call
+    Ketchup::Snapshots.capture(output_dir: output_dir).call
 
     if ENV["CI"]
       require "json"

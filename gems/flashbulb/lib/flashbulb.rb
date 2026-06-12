@@ -92,10 +92,13 @@ module Flashbulb
     end
 
     class Capture
-      def initialize(output_dir:, logger: Logger.new($stderr), &server)
+      attr_reader :base, :browser
+
+      def initialize(output_dir:, logger: Logger.new($stderr), server:, &capture_script)
         @output_dir = Pathname(output_dir)
         @logger = logger
-        @server = server || method(:default_server)
+        @server = server
+        @capture_script = capture_script
         @console_messages = []
         @page_errors = []
       end
@@ -126,18 +129,12 @@ module Flashbulb
             @browser.resize(width: width, height: height)
             @logger.info("Capturing #{viewport_name} (#{width}x#{height})")
 
-            entries = run_capture(width: width, height: height)
+            entries = @capture_script.call(self, width: width, height: height)
             (@viewport_dir / "manifest.json").write(JSON.pretty_generate(entries.map(&:to_h)))
           end
         end
       ensure
         @browser&.quit
-      end
-
-      private
-
-      def run_capture(width:, height:)
-        raise NotImplementedError, "#{self.class}#run_capture"
       end
 
       def snap(name, selector: nil)
@@ -188,6 +185,8 @@ module Flashbulb
           sleep 0.05
         end
       end
+
+      private
 
       def subscribe_page_errors
         @browser.on("Runtime.consoleAPICalled") do |params|
