@@ -4,14 +4,14 @@ require "puma"
 require "puma/configuration"
 require "rack/builder"
 
-require "ketchup-snapshots"
+require "flashbulb"
 
 require_relative "seed"
 require_relative "web"
 
 module Ketchup
   module Snapshots
-    class Capture
+    class Capture < Flashbulb::Capture
       private
 
       def run_capture(width:, height:)

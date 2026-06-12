@@ -8,8 +8,7 @@ require "pathname"
 
 require "ferrum"
 
-module Ketchup
-  module Snapshots
+module Flashbulb
     VIEWPORTS = {
       "desktop" => [1280, 900],
       "mobile" => [375, 812],
@@ -217,5 +216,4 @@ module Ketchup
         end
       end
     end
-  end
 end

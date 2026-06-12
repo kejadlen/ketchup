@@ -17,7 +17,7 @@ gem "opentelemetry-exporter-otlp"
 gem "opentelemetry-instrumentation-rack"
 
 group :development do
-  gem "ketchup-snapshots", path: "gems/ketchup-snapshots"
+  gem "flashbulb", path: "gems/flashbulb"
   gem "ferrum"
   gem "minitest"
   gem "rack-test"

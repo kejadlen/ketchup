@@ -98,7 +98,7 @@ namespace :snapshots do
       puts "Downloaded baseline from release #{latest_tag}"
     end
 
-    snapshots_by_viewport = Ketchup::Snapshots::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons_by_viewport
+    snapshots_by_viewport = Flashbulb::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons_by_viewport
 
     template = (Pathname(__dir__) / "templates/snapshot_diff.erb").read
     output_path = base_dir / "diff.html"
@@ -122,9 +122,9 @@ namespace :snapshots do
     css_sources.each_key { |src| cp src, output_path.dirname.to_s }
 
     title = "Ketchup Snapshots"
-    images_by_viewport = Ketchup::Snapshots::VIEWPORTS.keys.each_with_object({}) do |viewport, result|
+    images_by_viewport = Flashbulb::VIEWPORTS.keys.each_with_object({}) do |viewport, result|
       viewport_dir = images_dir / viewport
-      entries = Ketchup::Snapshots::Entry.read_manifest(viewport_dir)
+      entries = Flashbulb::Entry.read_manifest(viewport_dir)
       images_rel = viewport_dir.relative_path_from(output_path.dirname)
       result[viewport] = entries.map do |entry|
         { entry: entry, filename: (images_rel / "#{entry.name}.png").to_s }
