@@ -2,11 +2,563 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Ketchup Snapshot Diff</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="reset.css">
-  <link rel="stylesheet" href="utopia.css">
-  <link rel="stylesheet" href="snapshots.css">
+  <title><%= title %></title>
+  <style>
+    /* A (more) Modern Reset — https://piccalil.li/blog/a-more-modern-css-reset/ */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -moz-text-size-adjust: none; -webkit-text-size-adjust: none; text-size-adjust: none; }
+    body, h1, h2, h3, h4, p, figure, blockquote, dl, dd { margin-block-end: 0; }
+    ul[role='list'], ol[role='list'] { list-style: none; }
+    body { min-height: 100vh; line-height: 1.5; }
+    h1, h2, h3, h4, button, input, label { line-height: 1.1; }
+    h1, h2, h3, h4 { text-wrap: balance; }
+    a:not([class]) { text-decoration-skip-ink: auto; color: currentColor; }
+    img, picture { max-width: 100%; display: block; }
+    input, button, textarea, select { font-family: inherit; font-size: inherit; }
+    textarea:not([rows]) { min-height: 10em; }
+    :target { scroll-margin-block: 5ex; }
+
+    /* Utopia fluid type — https://utopia.fyi/type/calculator?c=360,18,1.2,1240,20,1.25,5,2 */
+    :root {
+      --step--2: clamp(0.7813rem, 0.7736rem + 0.0341vw, 0.8rem);
+      --step--1: clamp(0.9375rem, 0.9119rem + 0.1136vw, 1rem);
+      --step-0: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+      --step-1: clamp(1.35rem, 1.2631rem + 0.3864vw, 1.5625rem);
+      --step-2: clamp(1.62rem, 1.4837rem + 0.6057vw, 1.9531rem);
+    }
+
+    /* Utopia fluid space — https://utopia.fyi/space/calculator?c=360,18,1.2,1240,20,1.25,5,2 */
+    :root {
+      --space-3xs: clamp(0.3125rem, 0.3125rem + 0vw, 0.3125rem);
+      --space-xs: clamp(0.875rem, 0.8494rem + 0.1136vw, 0.9375rem);
+      --space-s: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+      --space-l: clamp(2.25rem, 2.1477rem + 0.4545vw, 2.5rem);
+      --space-xl: clamp(3.375rem, 3.2216rem + 0.6818vw, 3.75rem);
+    }
+
+    /* ── Layout ── */
+
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: system-ui, sans-serif;
+      font-size: var(--step-0);
+      padding: 0;
+    }
+
+    /* ── Sidebar ── */
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 14rem;
+      background: #151525;
+      border-inline-end: 1px solid #2a2a44;
+      overflow-y: auto;
+      z-index: 100;
+      padding: var(--space-s) 0;
+    }
+
+    .sidebar-header {
+      padding: var(--space-xs) var(--space-s);
+      font-size: var(--step--1);
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-list.hidden { display: none; }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3xs);
+      padding: var(--space-3xs) var(--space-s);
+      color: #888;
+      text-decoration: none;
+      font-size: var(--step--2);
+      border-inline-start: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      text-transform: capitalize;
+    }
+
+    .sidebar-link:hover {
+      color: #ccc;
+      background: #1e1e36;
+    }
+
+    .sidebar-link.active {
+      color: #fff;
+      border-inline-start-color: #5e81ac;
+      background: #1e1e36;
+    }
+
+    .sidebar-badge {
+      width: 1rem;
+      height: 1rem;
+      display: inline-grid;
+      place-content: center;
+      border-radius: 50%;
+      margin-inline-start: auto;
+      flex-shrink: 0;
+    }
+
+    .sidebar-badge.new { background: #2d6a4f; color: #b7e4c7; }
+    .sidebar-badge.removed { background: #6a2d2d; color: #e4b7b7; }
+
+    /* ── Content ── */
+
+    .content {
+      margin-inline-start: 14rem;
+      padding: var(--space-l);
+    }
+
+    /* ── Toolbar ── */
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #1a1a2e;
+      padding-block-end: var(--space-s);
+      margin-block-end: var(--space-l);
+      border-bottom: 1px solid #2a2a44;
+    }
+
+    .toolbar h1 {
+      color: #fff;
+      margin-block-end: var(--space-s);
+      font-size: var(--step-2);
+    }
+
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-l);
+      flex-wrap: wrap;
+    }
+
+    /* ── Tabs ── */
+
+    .tab-bar {
+      display: flex;
+      gap: var(--space-3xs);
+    }
+
+    .tab {
+      background: none;
+      border: 1px solid #333;
+      color: #888;
+      font-size: var(--step--1);
+      padding: var(--space-3xs) var(--space-s);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .tab:hover { color: #ccc; border-color: #555; }
+    .tab.active { color: #fff; background: #2a2a44; border-color: #5e81ac; }
+    .viewport-group.hidden { display: none; }
+
+    /* ── Mode bar ── */
+
+    .mode-bar {
+      display: flex;
+      gap: var(--space-3xs);
+    }
+
+    .mode {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3xs);
+      background: none;
+      border: 1px solid #333;
+      color: #888;
+      font-size: var(--step--2);
+      padding: var(--space-3xs) var(--space-xs);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .mode:hover { color: #ccc; border-color: #555; }
+    .mode.active { color: #fff; background: #2a2a44; border-color: #5e81ac; }
+
+    .mode svg { flex-shrink: 0; }
+
+    /* ── Snapshot cards ── */
+
+    .snapshot {
+      margin-block-end: var(--space-xl);
+      scroll-margin-top: 7rem;
+    }
+
+    .snapshot-header {
+      margin-block-end: var(--space-xs);
+    }
+
+    .snapshot h2 {
+      margin-block-end: 0;
+      color: #ccc;
+      font-size: var(--step-1);
+      text-transform: capitalize;
+    }
+
+    .snapshot .path {
+      display: block;
+      margin-block-start: var(--space-3xs);
+      margin-block-end: var(--space-s);
+      font-size: var(--step--2);
+      color: #666;
+    }
+
+    .snapshot img {
+      max-width: 100%;
+      border: 1px solid #333;
+      border-radius: 4px;
+      display: block;
+      margin-inline: auto;
+      cursor: zoom-in;
+    }
+
+    /* ── Labels (new/removed) ── */
+
+    .label {
+      font-size: var(--step--2);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      vertical-align: middle;
+      font-weight: 600;
+    }
+
+    .label.new { background: #2d6a4f; color: #b7e4c7; }
+    .label.removed { background: #6a2d2d; color: #e4b7b7; }
+
+    /* ── Side-by-side mode ── */
+
+    .pair {
+      display: flex;
+      gap: var(--space-s);
+    }
+
+    .side {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .side h3 {
+      margin-block-end: var(--space-xs);
+      color: #999;
+      font-size: var(--step--1);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .side img {
+      max-width: 100%;
+      border: 1px solid #333;
+      border-radius: 4px;
+      display: block;
+      margin-inline: auto;
+    }
+
+    .placeholder {
+      padding: var(--space-xl);
+      text-align: center;
+      color: #555;
+      border: 1px dashed #333;
+      border-radius: 4px;
+      font-style: italic;
+    }
+
+    /* ── Slider mode ── */
+
+    .slider-container {
+      display: grid;
+      overflow: hidden;
+      border-radius: 4px;
+      border: 1px solid #333;
+      cursor: ew-resize;
+      user-select: none;
+      position: relative;
+      margin-inline: auto;
+    }
+
+    .slider-baseline,
+    .slider-current {
+      grid-area: 1 / 1;
+    }
+
+    .slider-baseline img,
+    .slider-current img {
+      display: block;
+      width: 100%;
+      border: none;
+      border-radius: 0;
+      cursor: ew-resize;
+    }
+
+    .slider-current {
+      clip-path: inset(0 0 0 50%);
+    }
+
+    .slider-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 3px;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .slider-line {
+      position: absolute;
+      inset: 0;
+      background: #5e81ac;
+      opacity: 0.8;
+    }
+
+    .slider-grip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 40px;
+      background: #2a2a44;
+      border: 2px solid #5e81ac;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8faabe;
+      cursor: ew-resize;
+      pointer-events: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .slider-labels {
+      position: absolute;
+      bottom: var(--space-xs);
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 var(--space-s);
+      pointer-events: none;
+    }
+
+    .slider-labels span {
+      font-size: var(--step--2);
+      color: #999;
+      text-transform: uppercase;
+      font-weight: 500;
+      background: rgba(26, 26, 46, 0.7);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+    }
+
+    /* ── Toggle mode ── */
+
+    .toggle-container {
+      display: grid;
+      position: relative;
+      margin-inline: auto;
+      border-radius: 4px;
+      border: 1px solid #333;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .toggle-container img {
+      grid-area: 1 / 1;
+      display: block;
+      max-width: 100%;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+    }
+
+    .toggle-container[data-showing="baseline"] .toggle-baseline { visibility: visible; }
+    .toggle-container[data-showing="baseline"] .toggle-current { visibility: hidden; }
+    .toggle-container[data-showing="current"] .toggle-baseline { visibility: hidden; }
+    .toggle-container[data-showing="current"] .toggle-current { visibility: visible; }
+
+    .toggle-label {
+      position: absolute;
+      top: var(--space-xs);
+      right: var(--space-xs);
+      font-size: var(--step--2);
+      color: #ccc;
+      text-transform: uppercase;
+      font-weight: 600;
+      background: rgba(26, 26, 46, 0.8);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #444;
+      pointer-events: none;
+    }
+
+    /* ── Single image fallback (new/removed in slider/toggle) ── */
+
+    .single-image {
+      position: relative;
+      border-radius: 4px;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+
+    .single-image img {
+      display: block;
+      width: 100%;
+      border: none;
+      border-radius: 0;
+    }
+
+    .single-label {
+      position: absolute;
+      top: var(--space-xs);
+      right: var(--space-xs);
+      font-size: var(--step--2);
+      color: #999;
+      font-style: italic;
+      background: rgba(26, 26, 46, 0.8);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* ── Selector snapshots (component captures at 2x) ── */
+
+    .snapshot--selector .slider-container,
+    .snapshot--selector .toggle-container,
+    .snapshot--selector .single-image {
+      max-width: 640px;
+    }
+
+    /* ── Lightbox ── */
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.92);
+      flex-direction: column;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-xs) var(--space-s);
+      flex-shrink: 0;
+    }
+
+    .lightbox-title {
+      color: #aaa;
+      font-size: var(--step--1);
+      text-transform: capitalize;
+    }
+
+    .lightbox-close {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: var(--step-2);
+      cursor: pointer;
+      padding: 0 var(--space-3xs);
+      line-height: 1;
+    }
+
+    .lightbox-close:hover { color: #fff; }
+
+    .lightbox-body {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-s);
+      cursor: zoom-out;
+      min-height: 0;
+    }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    /* ── Keyboard shortcuts hint ── */
+
+    .shortcuts-hint {
+      position: fixed;
+      bottom: var(--space-s);
+      right: var(--space-s);
+      background: #2a2a44;
+      border: 1px solid #3a3a5a;
+      border-radius: 6px;
+      padding: var(--space-3xs) var(--space-xs);
+      font-size: var(--step--2);
+      color: #888;
+      z-index: 200;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .shortcuts-hint:hover,
+    .shortcuts-hint.expanded {
+      opacity: 1;
+    }
+
+    .shortcuts-hint kbd {
+      display: inline-block;
+      background: #1a1a2e;
+      border: 1px solid #444;
+      border-radius: 3px;
+      padding: 0 0.3rem;
+      font-family: inherit;
+      font-size: var(--step--2);
+      color: #ccc;
+      margin: 0 0.1rem;
+      min-width: 1.2rem;
+      text-align: center;
+    }
+
+    /* ── Mobile viewport constraints ── */
+
+    .viewport-group[data-viewport="mobile"] .pair,
+    .viewport-group[data-viewport="mobile"] .view-slider,
+    .viewport-group[data-viewport="mobile"] .view-toggle {
+      max-width: 50rem;
+      margin-inline: auto;
+    }
+
+    .viewport-group[data-viewport="mobile"] .side img,
+    .viewport-group[data-viewport="mobile"] .slider-container,
+    .viewport-group[data-viewport="mobile"] .toggle-container,
+    .viewport-group[data-viewport="mobile"] .single-image {
+      max-width: 375px;
+      margin-inline: auto;
+    }
+
+    /* ── Hidden utility ── */
+
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
   <nav class="sidebar" id="sidebar">
@@ -28,7 +580,7 @@
 
   <main class="content">
     <header class="toolbar">
-      <h1>Snapshot Diff</h1>
+      <h1><%= title %></h1>
       <div class="toolbar-controls">
         <div class="tab-bar">
           <% snapshots_by_viewport.each_with_index do |(viewport, _), i| -%>
@@ -113,7 +665,6 @@
           </div>
           <% else %>
           <div class="single-image">
-            <% img = snap.current || snap.baseline -%>
             <img src="<%= snap.current ? "current" : "baseline" %>/<%= viewport %>/<%= snap.name %>.png" alt="<%= snap.name %>" loading="lazy">
             <div class="single-label"><%= snap.current ? "New — no baseline" : "Removed — no current" %></div>
           </div>
@@ -130,7 +681,6 @@
           </div>
           <% else %>
           <div class="single-image">
-            <% img = snap.current || snap.baseline -%>
             <img src="<%= snap.current ? "current" : "baseline" %>/<%= viewport %>/<%= snap.name %>.png" alt="<%= snap.name %>" loading="lazy">
             <div class="single-label"><%= snap.current ? "New — no baseline" : "Removed — no current" %></div>
           </div>
@@ -210,8 +760,7 @@
           handle.style.left = pct + "%";
         }
 
-        update(0); // start at 0% — showing full baseline
-        // Then set to 50%
+        update(0);
         setTimeout(function() {
           var rect = container.getBoundingClientRect();
           update(rect.left + rect.width * 0.5);
@@ -228,7 +777,6 @@
         document.addEventListener("mousemove", function(e) { if (dragging) update(e.clientX); });
         document.addEventListener("mouseup", function() { dragging = false; });
 
-        // Touch support
         handle.addEventListener("touchstart", function(e) { dragging = true; e.preventDefault(); }, { passive: false });
         container.addEventListener("touchstart", function(e) {
           if (e.target === handle || handle.contains(e.target)) return;
@@ -265,7 +813,7 @@
     }
 
     document.addEventListener("click", function(e) {
-      if (e.target.closest(".toggle-container")) return; // toggle clicks don't open lightbox
+      if (e.target.closest(".toggle-container")) return;
 
       var img = e.target.closest(".snapshot img");
       if (img) {
@@ -327,7 +875,6 @@
         case "2": setMode("slider"); break;
         case "3": setMode("toggle"); break;
         case "t":
-          // Toggle visible toggle-containers
           document.querySelectorAll('.viewport-group:not(.hidden) .toggle-container').forEach(function(c) {
             var next = c.dataset.showing === "current" ? "baseline" : "current";
             c.dataset.showing = next;
@@ -361,7 +908,6 @@
       }
     });
 
-    // Sidebar link clicks
     document.getElementById("sidebar").addEventListener("click", function(e) {
       var link = e.target.closest(".sidebar-link");
       if (!link) return;

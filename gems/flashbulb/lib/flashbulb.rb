@@ -8,6 +8,8 @@ require "pathname"
 
 require "ferrum"
 
+require_relative "flashbulb/viewer"
+
 module Flashbulb
     VIEWPORTS = {
       "desktop" => [1280, 900],

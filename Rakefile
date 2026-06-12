@@ -36,21 +36,8 @@ end
 
 namespace :snapshots do
   cache_dir = File.join(ENV.fetch("XDG_CACHE_HOME", File.expand_path("~/.cache")), "ketchup", "snapshots")
-  css_sources = {
-    "public/css/reset.css" => "reset.css",
-    "public/css/utopia.css" => "utopia.css",
-    "templates/snapshots.css" => "snapshots.css",
-  }
 
   directory cache_dir
-
-  css_targets = css_sources.map do |src, basename|
-    target = File.join(cache_dir, basename)
-    file target => [cache_dir, src] do
-      cp src, target
-    end
-    target
-  end
 
   desc "Capture screenshots of the app in key states"
   task :capture do
@@ -70,9 +57,9 @@ namespace :snapshots do
   end
 
   desc "Compare current screenshots against baseline from latest release"
-  task diff: [:capture, *css_targets] do
-    require "erb"
+  task diff: :capture do
     require "ketchup/snapshots"
+    require "flashbulb/viewer"
 
     base_dir = Pathname(cache_dir)
     baseline_dir = base_dir / "baseline"
@@ -100,9 +87,8 @@ namespace :snapshots do
 
     snapshots_by_viewport = Flashbulb::Diff.new(baseline_dir: baseline_dir, current_dir: current_dir).comparisons_by_viewport
 
-    template = (Pathname(__dir__) / "templates/snapshot_diff.erb").read
     output_path = base_dir / "diff.html"
-    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(snapshots_by_viewport: snapshots_by_viewport))
+    output_path.write(Flashbulb::Viewer.render_diff(snapshots_by_viewport: snapshots_by_viewport, title: "Ketchup Snapshot Diff"))
     puts "Diff viewer: #{output_path}"
   end
 
@@ -113,15 +99,12 @@ namespace :snapshots do
 
   desc "Generate gallery HTML from images in a directory"
   task :gallery, [:images_dir, :output_path] do |_t, args|
-    require "erb"
     require "ketchup/snapshots"
+    require "flashbulb/viewer"
 
     images_dir = Pathname(args.fetch(:images_dir) { File.join(cache_dir, "current") })
     output_path = Pathname(args.fetch(:output_path) { File.join(cache_dir, "gallery.html") })
 
-    css_sources.each_key { |src| cp src, output_path.dirname.to_s }
-
-    title = "Ketchup Snapshots"
     images_by_viewport = Flashbulb::VIEWPORTS.keys.each_with_object({}) do |viewport, result|
       viewport_dir = images_dir / viewport
       entries = Flashbulb::Entry.read_manifest(viewport_dir)
@@ -131,8 +114,7 @@ namespace :snapshots do
       end
     end
 
-    template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read
-    output_path.write(ERB.new(template, trim_mode: "-").result_with_hash(title: title, images_by_viewport: images_by_viewport))
+    output_path.write(Flashbulb::Viewer.render_gallery(title: "Ketchup Snapshots", images_by_viewport: images_by_viewport))
     puts output_path
   end
 end

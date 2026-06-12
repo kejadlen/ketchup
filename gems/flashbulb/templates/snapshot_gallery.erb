@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title><%= title %></title>
+  <style>
+    /* A (more) Modern Reset — https://piccalil.li/blog/a-more-modern-css-reset/ */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -moz-text-size-adjust: none; -webkit-text-size-adjust: none; text-size-adjust: none; }
+    body, h1, h2, h3, h4, p, figure, blockquote, dl, dd { margin-block-end: 0; }
+    ul[role='list'], ol[role='list'] { list-style: none; }
+    body { min-height: 100vh; line-height: 1.5; }
+    h1, h2, h3, h4, button, input, label { line-height: 1.1; }
+    h1, h2, h3, h4 { text-wrap: balance; }
+    a:not([class]) { text-decoration-skip-ink: auto; color: currentColor; }
+    img, picture { max-width: 100%; display: block; }
+    input, button, textarea, select { font-family: inherit; font-size: inherit; }
+    :target { scroll-margin-block: 5ex; }
+
+    /* Utopia fluid type — https://utopia.fyi/type/calculator?c=360,18,1.2,1240,20,1.25,5,2 */
+    :root {
+      --step--2: clamp(0.7813rem, 0.7736rem + 0.0341vw, 0.8rem);
+      --step--1: clamp(0.9375rem, 0.9119rem + 0.1136vw, 1rem);
+      --step-0: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+      --step-1: clamp(1.35rem, 1.2631rem + 0.3864vw, 1.5625rem);
+      --step-2: clamp(1.62rem, 1.4837rem + 0.6057vw, 1.9531rem);
+    }
+
+    /* Utopia fluid space — https://utopia.fyi/space/calculator?c=360,18,1.2,1240,20,1.25,5,2 */
+    :root {
+      --space-3xs: clamp(0.3125rem, 0.3125rem + 0vw, 0.3125rem);
+      --space-xs: clamp(0.875rem, 0.8494rem + 0.1136vw, 0.9375rem);
+      --space-s: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+      --space-l: clamp(2.25rem, 2.1477rem + 0.4545vw, 2.5rem);
+      --space-xl: clamp(3.375rem, 3.2216rem + 0.6818vw, 3.75rem);
+    }
+
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: system-ui, sans-serif;
+      font-size: var(--step-0);
+      padding: var(--space-l);
+    }
+
+    h1 {
+      color: #fff;
+      margin-block-end: var(--space-l);
+      font-size: var(--step-2);
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: var(--space-3xs);
+      margin-block-end: var(--space-l);
+      border-bottom: 1px solid #333;
+      padding-block-end: var(--space-xs);
+    }
+
+    .tab {
+      background: none;
+      border: 1px solid #333;
+      color: #888;
+      font-size: var(--step--1);
+      padding: var(--space-3xs) var(--space-s);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .tab:hover { color: #ccc; border-color: #555; }
+    .tab.active { color: #fff; background: #2a2a44; border-color: #5e81ac; }
+    .viewport-group.hidden { display: none; }
+
+    .snapshot {
+      margin-block-end: var(--space-xl);
+    }
+
+    .snapshot h2 {
+      color: #ccc;
+      font-size: var(--step-1);
+      text-transform: capitalize;
+      margin-block-end: var(--space-3xs);
+    }
+
+    .snapshot .path {
+      display: block;
+      margin-block-end: var(--space-s);
+      font-size: var(--step--2);
+      color: #666;
+    }
+
+    .snapshot img {
+      max-width: min(100%, 640px);
+      border: 1px solid #333;
+      border-radius: 4px;
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .viewport-group[data-viewport="mobile"] .snapshot img {
+      max-width: min(100%, 375px);
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.92);
+      justify-content: center;
+      align-items: center;
+      cursor: zoom-out;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1><%= title %></h1>
+  <div class="tab-bar">
+    <% images_by_viewport.each_with_index do |(viewport, _), i| -%>
+    <button class="tab<%= " active" if i == 0 %>" data-viewport="<%= viewport %>"><%= viewport.capitalize %></button>
+    <% end -%>
+  </div>
+  <% images_by_viewport.each_with_index do |(viewport, images), i| -%>
+  <div class="viewport-group<%= " hidden" unless i == 0 %>" data-viewport="<%= viewport %>">
+    <% images.each do |image| %>
+    <div class="snapshot">
+      <h2><%= image[:entry].name %></h2>
+      <code class="path"><%= image[:entry].path %><%= " #{image[:entry].selector}" if image[:entry].selector %></code>
+      <img src="<%= image[:filename] %>" alt="<%= image[:entry].name %>">
+    </div>
+    <% end %>
+  </div>
+  <% end -%>
+  <div class="lightbox" id="lightbox"><img></div>
+  <script>
+    document.querySelector(".tab-bar").addEventListener("click", function(e) {
+      if (!e.target.matches(".tab")) return;
+      var viewport = e.target.dataset.viewport;
+      document.querySelectorAll(".tab").forEach(function(t) { t.classList.toggle("active", t.dataset.viewport === viewport); });
+      document.querySelectorAll(".viewport-group").forEach(function(g) { g.classList.toggle("hidden", g.dataset.viewport !== viewport); });
+    });
+
+    var lightbox = document.getElementById("lightbox");
+    document.addEventListener("click", function(e) {
+      if (e.target.matches(".snapshot img")) {
+        lightbox.querySelector("img").src = e.target.src;
+        lightbox.classList.add("open");
+      } else if (lightbox.classList.contains("open")) {
+        lightbox.classList.remove("open");
+      }
+    });
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") lightbox.classList.remove("open");
+    });
+  </script>
+</body>
+</html>
