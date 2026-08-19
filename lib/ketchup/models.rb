@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "db"
 
 module Ketchup
@@ -24,7 +22,7 @@ module Ketchup
           Sequel[:series][:note],
           Sequel[:series][:interval_unit],
           Sequel[:series][:interval_count],
-          Sequel[:series][:shared]
+          Sequel[:series][:shared],
         )
     end
 
@@ -69,7 +67,7 @@ module Ketchup
 
       streak = 0
       on_time = 0
-      completed.each_with_index do |t, i|
+      completed.each.with_index do |t, i|
         on_time += 1 if t[:completed_at].to_date <= t[:due_date]
         streak += 1 if i == streak && t[:completed_at].to_date <= t[:due_date]
       end
@@ -101,12 +99,12 @@ module Ketchup
           note: note,
           interval_unit: interval_unit,
           interval_count: interval_count,
-          shared: shared
+          shared: shared,
         )
 
         Task.create(
           series_id: series.id,
-          due_date: first_due_date
+          due_date: first_due_date,
         )
 
         series
@@ -122,7 +120,7 @@ module Ketchup
     # same day-of-month. Urgency only needs a rough ratio, so fixed counts
     # are fine and avoid coupling to a specific start date.
     INTERVAL_DAYS = {
-      "day" => 1, "week" => 7, "month" => 30, "quarter" => 91, "year" => 365
+      "day" => 1, "week" => 7, "month" => 30, "quarter" => 91, "year" => 365,
     }.freeze
 
     def urgency
@@ -141,7 +139,7 @@ module Ketchup
       DB.transaction do
         update(
           completed_at: Time.new(completed_on.year, completed_on.month, completed_on.day),
-          completed_by_user_id: by.id
+          completed_by_user_id: by.id,
         )
         Task.create(series_id: series.id, due_date: series.next_due_date(completed_on))
       end

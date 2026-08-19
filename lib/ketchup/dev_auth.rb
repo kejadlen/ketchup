@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module Ketchup
   class DevAuth
     def initialize(app, login)

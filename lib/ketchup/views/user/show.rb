@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "phlex"
 
 require_relative "../layout"
@@ -28,7 +26,7 @@ module Ketchup
                     button(
                       class: "section-edit-btn",
                       "x-show": "!editing",
-                      "x-on:click": "editing = true"
+                      "x-on:click": "editing = true",
                     ) do
                       plain "Edit"
                     end
@@ -36,7 +34,7 @@ module Ketchup
                       class: "section-edit-btn section-edit-btn--cancel",
                       "x-show": "editing",
                       "x-cloak": true,
-                      "x-on:click": "editing = false; location.reload()"
+                      "x-on:click": "editing = false; location.reload()",
                     ) do
                       plain "Cancel"
                     end
@@ -44,7 +42,7 @@ module Ketchup
                       class: "section-edit-btn",
                       "x-show": "editing",
                       "x-cloak": true,
-                      "x-on:click": "editing = false; document.getElementById('user-form').requestSubmit()"
+                      "x-on:click": "editing = false; document.getElementById('user-form').requestSubmit()",
                     ) do
                       plain "Save"
                     end
@@ -72,7 +70,7 @@ module Ketchup
                         form: "user-form",
                         class: "detail-input",
                         value: email,
-                        placeholder: "for notifications"
+                        placeholder: "for notifications",
                       )
                     end
                   end

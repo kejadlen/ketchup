@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "phlex"
 
 require_relative "../layout"
@@ -25,7 +23,7 @@ module Ketchup
                     button(
                       class: "section-edit-btn",
                       id: "create-series-btn",
-                      disabled: true
+                      disabled: true,
                     ) { "Create" }
                   end
 
@@ -41,10 +39,12 @@ module Ketchup
                       div(class: "interval") do
                         input(
                           type: "number", id: "interval_count", name: "interval_count",
-                          min: 1, value: 1, required: true
+                          min: 1, value: 1, required: true,
                         )
                         select(id: "interval_unit", name: "interval_unit", required: true) do
-                          Views::INTERVAL_OPTIONS.each { |val, label| option(value: val) { label } }
+                          Views::INTERVAL_OPTIONS.each do |val, label|
+                            option(value: val) { label }
+                          end
                         end
                       end
                     end
@@ -53,7 +53,7 @@ module Ketchup
                       label(for: "first_due_date") { "First due date" }
                       input(
                         type: "date", id: "first_due_date", name: "first_due_date",
-                        value: Date.today.to_s, required: true
+                        value: Date.today.to_s, required: true,
                       )
                     end
 

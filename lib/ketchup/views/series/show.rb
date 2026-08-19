@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "phlex"
 
 require_relative "../layout"
@@ -32,7 +30,7 @@ module Ketchup
                     button(
                       class: "section-edit-btn",
                       "x-show": "!editing",
-                      "x-on:click": "startEditing()"
+                      "x-on:click": "startEditing()",
                     ) do
                       plain "Edit"
                     end
@@ -40,7 +38,7 @@ module Ketchup
                       class: "section-edit-btn section-edit-btn--cancel",
                       "x-show": "editing",
                       "x-cloak": true,
-                      "x-on:click": "cancel()"
+                      "x-on:click": "cancel()",
                     ) do
                       plain "Cancel"
                     end
@@ -48,7 +46,7 @@ module Ketchup
                       class: "section-edit-btn",
                       "x-show": "editing",
                       "x-cloak": true,
-                      "x-on:click": "save()"
+                      "x-on:click": "save()",
                     ) do
                       plain "Save"
                     end
@@ -71,7 +69,7 @@ module Ketchup
                     dd(
                       class: "detail-edit-interval",
                       "x-show": "editing",
-                      "x-cloak": true
+                      "x-cloak": true,
                     ) do
                       input(
                         type: "number",
@@ -83,7 +81,9 @@ module Ketchup
                         class: "detail-input detail-input-unit",
                         "x-model": "unit"
                       ) do
-                        INTERVAL_OPTIONS.each { |val, label| option(value: val) { label } }
+                        INTERVAL_OPTIONS.each do |val, label|
+                          option(value: val) { label }
+                        end
                       end
                     end
 
@@ -91,7 +91,7 @@ module Ketchup
                     dd("x-show": "!editing") { @series.shared ? "Yes" : "No" }
                     dd(
                       "x-show": "editing",
-                      "x-cloak": true
+                      "x-cloak": true,
                     ) do
                       label(class: "detail-checkbox-label") do
                         input(
@@ -124,7 +124,7 @@ module Ketchup
                             class: "task-history-date",
                             "x-show": "!editingDate",
                             "x-on:click": "editingDate = true; $nextTick(() => $refs.dateInput.focus())",
-                            "x-text": "new Date(dueDate + 'T00:00').toLocaleDateString()"
+                            "x-text": "new Date(dueDate + 'T00:00').toLocaleDateString()",
                           ) { active_task[:due_date].to_s }
                           input(
                             type: "date",
@@ -134,7 +134,7 @@ module Ketchup
                             "x-model": "dueDate",
                             "x-ref": "dateInput",
                             "x-on:change": "save()",
-                            "x-on:keydown.escape": "dueDate = '#{active_task[:due_date]}'; editingDate = false"
+                            "x-on:keydown.escape": "dueDate = '#{active_task[:due_date]}'; editingDate = false",
                           )
                         end
 
@@ -158,7 +158,7 @@ module Ketchup
                           completed_date = ct[:completed_at].strftime("%Y-%m-%d")
                           li(
                             class: "task-history-item",
-                            "x-data": "{ ...historyNote(#{@series.id}, #{ct[:id]}, #{ct[:note] ? "true" : "false"}), ...completedDateEditor(#{@series.id}, #{ct[:id]}, '#{completed_date}') }"
+                            "x-data": "{ ...historyNote(#{@series.id}, #{ct[:id]}, #{ct[:note] ? "true" : "false"}), ...completedDateEditor(#{@series.id}, #{ct[:id]}, '#{completed_date}') }",
                           ) do
                             div(class: "task-history-row") do
                               span(class: "task-history-check") { "✓" }
@@ -166,7 +166,7 @@ module Ketchup
                                 class: "task-history-date",
                                 "x-show": "!editingDate",
                                 "x-on:click": "editingDate = true; $nextTick(() => $refs.dateInput.focus())",
-                                "x-text": "new Date(completedDate + 'T00:00').toLocaleDateString()"
+                                "x-text": "new Date(completedDate + 'T00:00').toLocaleDateString()",
                               ) { completed_date }
                               input(
                                 type: "date",
@@ -177,7 +177,7 @@ module Ketchup
                                 "x-ref": "dateInput",
                                 "x-on:blur": "save()",
                                 "x-on:keydown.enter": "$el.blur()",
-                                "x-on:keydown.escape": "cancel()"
+                                "x-on:keydown.escape": "cancel()",
                               )
                               span(
                                 class: "task-history-add-note",
@@ -189,7 +189,7 @@ module Ketchup
                               class: "task-history-note-editor",
                               "data-value": ct[:note] || "",
                               "x-show": "hasNote || editing",
-                              "x-ref": "editor"
+                              "x-ref": "editor",
                             )
                           end
                         end

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "phlex"
 
 require_relative "shared_icon"
@@ -24,13 +22,13 @@ module Ketchup
             button(
               type: "submit", title: "Complete",
               class: "complete-btn",
-              **{ "aria-label": "Complete #{name}" }
+              **{ "aria-label": "Complete #{name}" },
             ) { "✓" }
           end
           div(class: "task-body") do
             a(
               href: "/series/#{@task[:series_id]}",
-              class: "task-name stretched-link"
+              class: "task-name stretched-link",
             ) { name }
             if @shared || @overdue
               div(class: "task-meta") do

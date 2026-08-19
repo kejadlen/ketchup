@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "test_helper"
 
 require "minitest/autorun"
@@ -58,13 +56,13 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "week", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     create_series(
       note: "Bob task", interval_unit: "day", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      headers: auth_headers(login: "bob@example.com")
+      headers: auth_headers(login: "bob@example.com"),
     )
 
     get "/", {}, auth_headers(login: "alice@example.com")
@@ -91,7 +89,7 @@ class TestWeb < Minitest::Test
   def test_create_series
     create_series(
       note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
     assert last_response.redirect?
 
@@ -105,7 +103,7 @@ class TestWeb < Minitest::Test
   def test_create_series_creates_first_task
     create_series(
       note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
 
     series = Ketchup::DB[:series].first
@@ -118,7 +116,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Dentist", interval_unit: "quarter", interval_count: "1",
       first_due_date: "2026-06-01",
-      headers: auth_headers(login: "dave@example.com")
+      headers: auth_headers(login: "dave@example.com"),
     )
 
     series = Ketchup::DB[:series].first
@@ -129,7 +127,7 @@ class TestWeb < Minitest::Test
   def test_create_series_strips_whitespace
     create_series(
       note: "  Trim me  ", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
     assert_equal "Trim me", Ketchup::DB[:series].first[:note]
   end
@@ -137,7 +135,7 @@ class TestWeb < Minitest::Test
   def test_create_series_rejects_empty_note
     create_series(
       note: "  ", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
     assert_equal 422, last_response.status
     assert_equal 0, Ketchup::DB[:series].count
@@ -146,7 +144,7 @@ class TestWeb < Minitest::Test
   def test_create_series_rejects_invalid_interval_unit
     create_series(
       note: "Nope", interval_unit: "fortnight", interval_count: "1",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
     assert_equal 422, last_response.status
     assert_equal 0, Ketchup::DB[:series].count
@@ -155,7 +153,7 @@ class TestWeb < Minitest::Test
   def test_create_series_rejects_zero_interval_count
     create_series(
       note: "Nope", interval_unit: "day", interval_count: "0",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
     assert_equal 422, last_response.status
     assert_equal 0, Ketchup::DB[:series].count
@@ -164,7 +162,7 @@ class TestWeb < Minitest::Test
   def test_create_series_rejects_invalid_due_date
     create_series(
       note: "Nope", interval_unit: "day", interval_count: "1",
-      first_due_date: "not-a-date"
+      first_due_date: "not-a-date",
     )
     assert_equal 422, last_response.status
     assert_equal 0, Ketchup::DB[:series].count
@@ -217,7 +215,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     task = Ketchup::DB[:tasks].first
@@ -237,7 +235,7 @@ class TestWeb < Minitest::Test
   def test_create_series_requires_auth
     post "/series", {
       note: "Nope", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     }
     assert_equal 403, last_response.status
   end
@@ -285,7 +283,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01",
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     series = Ketchup::DB[:series].first
@@ -399,7 +397,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     task = Ketchup::DB[:tasks].first
@@ -494,7 +492,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01",
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     series = Ketchup::DB[:series].first
@@ -579,7 +577,7 @@ class TestWeb < Minitest::Test
     get "/", {}, auth_headers  # establish session
     post "/series", {
       note: "No token", interval_unit: "day", interval_count: "1",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     }, auth_headers
     assert_equal 403, last_response.status
   end
@@ -710,7 +708,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     task = Ketchup::DB[:tasks].first
@@ -777,7 +775,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01",
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     series = Ketchup::DB[:series].first
@@ -821,7 +819,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Alice task", interval_unit: "day", interval_count: "1",
       first_due_date: "2026-03-01",
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     series = Ketchup::DB[:series].first
@@ -845,7 +843,7 @@ class TestWeb < Minitest::Test
   def test_create_shared_series
     create_series(
       note: "Team standup", interval_unit: "week", interval_count: "1",
-      first_due_date: "2026-03-01", shared: true
+      first_due_date: "2026-03-01", shared: true,
     )
     assert last_response.redirect?
 
@@ -856,7 +854,7 @@ class TestWeb < Minitest::Test
   def test_create_private_series_by_default
     create_series(
       note: "Call Mom", interval_unit: "week", interval_count: "2",
-      first_due_date: "2026-03-01"
+      first_due_date: "2026-03-01",
     )
 
     series = Ketchup::DB[:series].first
@@ -868,7 +866,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     get "/", {}, auth_headers(login: "bob@example.com")
@@ -879,7 +877,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Secret task", interval_unit: "week", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     get "/", {}, auth_headers(login: "bob@example.com")
@@ -891,7 +889,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     task = Ketchup::DB[:tasks].first
@@ -910,7 +908,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     series = Ketchup::DB[:series].first
@@ -925,7 +923,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     series = Ketchup::DB[:series].first
@@ -940,7 +938,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     series = Ketchup::DB[:series].first
@@ -957,7 +955,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     series = Ketchup::DB[:series].first
@@ -972,7 +970,7 @@ class TestWeb < Minitest::Test
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
       headers: auth_headers(login: "alice@example.com"),
-      shared: true
+      shared: true,
     )
 
     series = Ketchup::DB[:series].first
@@ -985,7 +983,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Private", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
-      headers: auth_headers(login: "alice@example.com")
+      headers: auth_headers(login: "alice@example.com"),
     )
 
     series = Ketchup::DB[:series].first
@@ -997,7 +995,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: (Date.today - 1).to_s,
-      shared: true
+      shared: true,
     )
 
     get "/", {}, auth_headers
@@ -1007,7 +1005,7 @@ class TestWeb < Minitest::Test
   def test_task_card_no_shared_icon_for_private_series
     create_series(
       note: "Private task", interval_unit: "week", interval_count: "1",
-      first_due_date: (Date.today - 1).to_s
+      first_due_date: (Date.today - 1).to_s,
     )
 
     get "/", {}, auth_headers
@@ -1018,7 +1016,7 @@ class TestWeb < Minitest::Test
     create_series(
       note: "Team standup", interval_unit: "week", interval_count: "1",
       first_due_date: "2026-03-01",
-      shared: true
+      shared: true,
     )
 
     series = Ketchup::DB[:series].first
@@ -1091,7 +1089,7 @@ class TestWeb < Minitest::Test
       _csrf: token,
       note: note, interval_unit: interval_unit, interval_count: interval_count,
       first_due_date: first_due_date,
-      shared: shared ? "1" : nil
+      shared: shared ? "1" : nil,
     }.compact, headers
   end
 

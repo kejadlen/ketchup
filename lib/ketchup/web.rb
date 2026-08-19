@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "json"
 require "roda"
 
@@ -112,7 +110,7 @@ module Ketchup
                 "message" => "Archived",
                 "title" => note_title,
                 "path" => "/series/#{series_id}",
-                "undo_path" => archive_path
+                "undo_path" => archive_path,
               }
               r.redirect "/"
             end
@@ -179,7 +177,7 @@ module Ketchup
                   "message" => "Completed",
                   "title" => note_title,
                   "path" => "/series/#{series_id}",
-                  "undo_path" => complete_path
+                  "undo_path" => complete_path,
                 }
 
                 return_to = r.params["return_to"]

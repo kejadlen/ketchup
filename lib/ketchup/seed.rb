@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "models"
 
 module Ketchup
@@ -15,7 +13,7 @@ module Ketchup
         history: [
           { due_date: Date.today - 9, completed_at: (Date.today - 9).to_time, note: "Done, no issues" },
           { due_date: Date.today - 12, completed_at: (Date.today - 11).to_time, note: nil },
-        ]
+        ],
       },
       # Overdue — moderate urgency
       {
@@ -34,7 +32,7 @@ module Ketchup
         due_date: Date.today - 7,
         history: [
           { due_date: Date.today - 37, completed_at: (Date.today - 36).to_time, note: "All good\n\n- Checked statements\n- Updated budget" },
-        ]
+        ],
       },
       # Overdue — quarterly, just past due
       {
@@ -45,7 +43,7 @@ module Ketchup
         history: [
           { due_date: Date.today - 92, completed_at: (Date.today - 92).to_time, note: "Rescheduled from **last week**" },
           { due_date: Date.today - 183, completed_at: (Date.today - 182).to_time, note: nil },
-        ]
+        ],
       },
       # Upcoming — soon
       {
@@ -56,7 +54,7 @@ module Ketchup
         history: [
           { due_date: Date.today - 12, completed_at: (Date.today - 12).to_time, note: "Had to call back *twice*" },
           { due_date: Date.today - 26, completed_at: (Date.today - 25).to_time, note: nil },
-        ]
+        ],
       },
       # Upcoming — next week
       {
@@ -75,7 +73,7 @@ module Ketchup
         shared: true,
         history: [
           { due_date: Date.today - 73, completed_at: (Date.today - 73).to_time, note: "All good\n\n- Changed filter\n- Reset thermostat" },
-        ]
+        ],
       },
       # Upcoming — far out
       {
@@ -86,7 +84,7 @@ module Ketchup
         history: [
           { due_date: Date.today - 6, completed_at: (Date.today - 6).to_time, note: "Took longer than expected — **2 hours** instead of 1" },
           { due_date: Date.today - 36, completed_at: (Date.today - 35).to_time, note: nil },
-        ]
+        ],
       },
       # Completed history only — daily
       {
@@ -98,7 +96,7 @@ module Ketchup
         history: [
           { due_date: Date.today - 225, completed_at: (Date.today - 225).to_time, note: "Replaced batteries in **hallway** unit" },
           { due_date: Date.today - 590, completed_at: (Date.today - 589).to_time, note: nil },
-        ]
+        ],
       },
       # Simple upcoming with no history
       {

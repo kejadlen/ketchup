@@ -1,21 +1,18 @@
-# frozen_string_literal: true
-
 require "digest"
+require "pathname"
 require "phlex"
 
 module Ketchup
   module Views
     class Layout < Phlex::HTML
       ASSET_VERSIONS = begin
-        root = File.expand_path("../../../public", __dir__)
+        root = Pathname(__dir__) / "../../../public"
         %w[
           /css/reset.css
           /css/utopia.css
           /css/app.css
           /js/app.js
-        ].to_h {|path|
-          [path, Digest::MD5.file(File.join(root, path)).hexdigest[0, 10]]
-        }.freeze
+        ].to_h { [it, Digest::MD5.file(root / it.delete_prefix("/")).hexdigest[0, 10]] }.freeze
       end
 
       def initialize(current_user:, title: "Ketchup", active_view: nil, flash: nil)

@@ -35,7 +35,7 @@ task :seed do
 end
 
 namespace :snapshots do
-  cache_dir = File.join(ENV.fetch("XDG_CACHE_HOME", File.expand_path("~/.cache")), "ketchup", "snapshots")
+  cache_dir = Pathname(ENV.fetch("XDG_CACHE_HOME", "~/.cache")).expand_path / "ketchup" / "snapshots"
   css_sources = {
     "public/css/reset.css" => "reset.css",
     "public/css/utopia.css" => "utopia.css",
@@ -44,13 +44,13 @@ namespace :snapshots do
 
   directory cache_dir
 
-  css_targets = css_sources.map do |src, basename|
-    target = File.join(cache_dir, basename)
+  css_targets = css_sources.map { |src, basename|
+    target = cache_dir / basename
     file target => [cache_dir, src] do
       cp src, target
     end
     target
-  end
+  }
 
   desc "Capture screenshots of the app in key states"
   task :capture do
@@ -60,7 +60,7 @@ namespace :snapshots do
     ENV["BUILD_DATE"] ||= "2025-01-01"
     require "ketchup/snapshots"
 
-    output_dir = File.join(cache_dir, "current")
+    output_dir = cache_dir / "current"
     Ketchup::Snapshots::Capture.new(output_dir: output_dir).call
 
     if ENV["CI"]
@@ -74,7 +74,7 @@ namespace :snapshots do
     require "erb"
     require "ketchup/snapshots"
 
-    base_dir = Pathname(cache_dir)
+    base_dir = cache_dir
     baseline_dir = base_dir / "baseline"
     current_dir = base_dir / "current"
 
@@ -108,7 +108,7 @@ namespace :snapshots do
 
   desc "Capture, diff, and open the viewer"
   task review: :diff do
-    system("open", (Pathname(cache_dir) / "diff.html").to_s)
+    system("open", (cache_dir / "diff.html").to_s)
   end
 
   desc "Generate gallery HTML from images in a directory"
@@ -116,19 +116,19 @@ namespace :snapshots do
     require "erb"
     require "ketchup/snapshots"
 
-    images_dir = Pathname(args.fetch(:images_dir) { File.join(cache_dir, "current") })
-    output_path = Pathname(args.fetch(:output_path) { File.join(cache_dir, "gallery.html") })
+    images_dir = Pathname(args.fetch(:images_dir) { cache_dir / "current" })
+    output_path = Pathname(args.fetch(:output_path) { cache_dir / "gallery.html" })
 
-    css_sources.each_key { |src| cp src, output_path.dirname.to_s }
+    css_sources.each do |src, _basename|
+      cp src, output_path.dirname.to_s
+    end
 
     title = "Ketchup Snapshots"
-    images_by_viewport = Ketchup::Snapshots::VIEWPORTS.keys.each_with_object({}) do |viewport, result|
+    images_by_viewport = Ketchup::Snapshots::VIEWPORTS.to_h do |viewport, _size|
       viewport_dir = images_dir / viewport
       entries = Ketchup::Snapshots::Entry.read_manifest(viewport_dir)
       images_rel = viewport_dir.relative_path_from(output_path.dirname)
-      result[viewport] = entries.map do |entry|
-        { entry: entry, filename: (images_rel / "#{entry.name}.png").to_s }
-      end
+      [viewport, entries.map { |entry| { entry: entry, filename: (images_rel / "#{entry.name}.png").to_s } }]
     end
 
     template = (Pathname(__dir__) / "templates/snapshot_gallery.erb").read

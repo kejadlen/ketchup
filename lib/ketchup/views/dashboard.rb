@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require "phlex"
 
 require_relative "layout"
@@ -8,7 +6,7 @@ require_relative "task_card"
 
 module Ketchup
   module Views
-    INTERVAL_OPTIONS = Series::INTERVAL_UNITS.map { |u| [u, "#{u}(s)"] }.freeze
+    INTERVAL_OPTIONS = Series::INTERVAL_UNITS.map { [it, "#{it}(s)"] }.freeze
 
     AGENDA_DAYS = 7
 
@@ -20,7 +18,7 @@ module Ketchup
       end
 
       def view_template
-        overdue = @current_user.overdue_tasks.all.sort_by { |t| -t.urgency }
+        overdue = @current_user.overdue_tasks.all.sort_by { -it.urgency }
         upcoming = @current_user.upcoming_tasks.all
 
         render Layout.new(current_user: @current_user, flash: @flash) do
@@ -79,8 +77,7 @@ module Ketchup
       end
 
       def render_agenda(upcoming, overdue_count: 0)
-        tasks_by_date = {}
-        upcoming.each { |t| (tasks_by_date[t[:due_date]] ||= []) << t }
+        tasks_by_date = upcoming.group_by { it[:due_date] }
 
         today = Date.today
 

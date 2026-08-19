@@ -1,5 +1,4 @@
 # rbs_inline: enabled
-# frozen_string_literal: true
 
 require "securerandom"
 
@@ -52,7 +51,7 @@ module Ketchup
         default_user: env["DEFAULT_USER"],
         commit_sha: env["COMMIT_SHA"],
         change_id: env["CHANGE_ID"]&.slice(0, 8),
-        build_date: env["BUILD_DATE"]
+        build_date: env["BUILD_DATE"],
       )
     end
   end

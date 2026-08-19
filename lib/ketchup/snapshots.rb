@@ -1,8 +1,7 @@
-# frozen_string_literal: true
-
 require "fileutils"
 require "json"
 require "logger"
+require "tempfile"
 require "uri"
 require "pathname"
 
@@ -11,6 +10,7 @@ require "puma"
 require "puma/configuration"
 require "rack/builder"
 
+require_relative "dev_auth"
 require_relative "seed"
 require_relative "web"
 
@@ -28,9 +28,9 @@ module Ketchup
         manifest = dir / "manifest.json"
         return [] unless manifest.exist?
 
-        JSON.parse(manifest.read).map do |e|
+        JSON.parse(manifest.read).map { |e|
           new(name: e.fetch("name"), path: e.fetch("path"), selector: e["selector"], viewport: e.fetch("viewport", "desktop"))
-        end
+        }
       end
     end
 
@@ -44,10 +44,10 @@ module Ketchup
 
       # Returns { "desktop" => [Comparison, ...], "mobile" => [Comparison, ...] }
       def comparisons_by_viewport
-        VIEWPORTS.keys.each_with_object({}) do |viewport, result|
+        VIEWPORTS.to_h do |viewport, _size|
           baseline = read_entries(@baseline_dir / viewport)
           current = read_entries(@current_dir / viewport)
-          result[viewport] = compare(baseline, current)
+          [viewport, compare(baseline, current)]
         end
       end
 
@@ -59,13 +59,12 @@ module Ketchup
       private
 
       def read_entries(dir)
-        Entry.read_manifest(dir).each_with_object({}) { |e, h| h[e.name] = e }
+        Entry.read_manifest(dir).to_h { [it.name, it] }
       end
 
       def compare(baseline, current)
         return current.map { |name, entry| Comparison.new(name: name, baseline: baseline[name], current: entry) } if baseline.keys == current.keys
 
-        require "tempfile"
         baseline_file = Tempfile.new("baseline")
         current_file = Tempfile.new("current")
         baseline_file.write(baseline.keys.join("\n") + "\n")
@@ -73,7 +72,7 @@ module Ketchup
         baseline_file.close
         current_file.close
 
-        `diff -U9999 #{baseline_file.path} #{current_file.path}`.lines.drop(2).filter_map do |line|
+        `diff -U9999 #{baseline_file.path} #{current_file.path}`.lines.drop(2).filter_map { |line|
           name = line[1..].chomp
           next if name.empty?
           case line[0]
@@ -81,7 +80,7 @@ module Ketchup
           when "-" then Comparison.new(name: name, baseline: baseline.fetch(name), current: nil)
           when "+" then Comparison.new(name: name, baseline: nil, current: current.fetch(name))
           end
-        end
+        }
       end
     end
 
@@ -90,8 +89,12 @@ module Ketchup
     class PageCheckError < StandardError
       def initialize(snap_name:, console_errors:, page_errors:)
         lines = ["Page errors during snap #{snap_name.inspect}:"]
-        console_errors.each { |e| lines << "  console.#{e[:type]}: #{e[:text]}" }
-        page_errors.each { |e| lines << "  page error: #{e}" }
+        console_errors.each do |e|
+          lines << "  console.#{e[:type]}: #{e[:text]}"
+        end
+        page_errors.each do |e|
+          lines << "  page error: #{e}"
+        end
         super(lines.join("\n"))
       end
     end
@@ -115,7 +118,7 @@ module Ketchup
         @browser = Ferrum::Browser.new(
           headless: true,
           window_size: VIEWPORTS.fetch("desktop"),
-          browser_options: browser_options
+          browser_options: browser_options,
         )
 
         subscribe_page_errors
@@ -264,7 +267,7 @@ module Ketchup
           interval_unit: "week",
           interval_count: 1,
           first_due_date: Date.today - 1,
-          shared: true
+          shared: true,
         )
 
         Series.create_with_first_task(
@@ -273,7 +276,7 @@ module Ketchup
           interval_unit: "week",
           interval_count: 2,
           first_due_date: Date.today + 2,
-          shared: true
+          shared: true,
         )
 
         entries << snap("dashboard-shared") do
@@ -297,8 +300,6 @@ module Ketchup
       end
 
       def default_server(browser)
-        require_relative "dev_auth"
-
         app = Rack::Builder.app do
           use Ketchup::DevAuth, "snapshot@example.com"
           run Web.freeze.app
@@ -378,7 +379,7 @@ module Ketchup
       def fill_new_series_form(note:, interval_count: 1, interval_unit: "day")
         textarea = wait_for("#series-note-editor textarea")
         textarea.focus
-        note.each_line(chomp: true).with_index do |line, i|
+        note.lines(chomp: true).each.with_index do |line, i|
           @browser.keyboard.type(:Enter) if i > 0
           @browser.keyboard.type(line) unless line.empty?
         end
@@ -432,7 +433,7 @@ module Ketchup
       def subscribe_page_errors
         @browser.on("Runtime.consoleAPICalled") do |params|
           type = params["type"]
-          text = params["args"].map { |a| a["value"].to_s }.join(" ")
+          text = params["args"].map { it["value"].to_s }.join(" ")
           @console_messages << { type: type, text: text }
         end
 
@@ -451,11 +452,11 @@ module Ketchup
 
         yield
 
-        console_errors = @console_messages.select { |m| %(error warning).include?(m[:type]) }
+        console_errors = @console_messages.select { %(error warning).include?(it[:type]) }
 
         unless console_errors.empty? && @page_errors.empty?
           raise PageCheckError.new(
-            snap_name:, console_errors:, page_errors: @page_errors.dup
+            snap_name:, console_errors:, page_errors: @page_errors.dup,
           )
         end
       end

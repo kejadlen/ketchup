@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "test_helper"
 
 require "minitest/autorun"
@@ -41,7 +39,7 @@ class TestDB < Minitest::Test
     series_id = Ketchup::DB[:series].insert(
       user_id: @user_id, note: "Call Mom",
       interval_unit: "week", interval_count: 2,
-      created_at: @now, updated_at: @now
+      created_at: @now, updated_at: @now,
     )
     Ketchup::DB[:tasks].insert(series_id: series_id, due_date: Date.new(2026, 3, 1), created_at: @now, updated_at: @now)
     series_id

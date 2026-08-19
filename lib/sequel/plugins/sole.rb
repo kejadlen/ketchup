@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module Sequel
   module Plugins
     # The sole plugin adds a +sole+ dataset method that returns the

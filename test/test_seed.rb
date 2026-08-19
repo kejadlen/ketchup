@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "test_helper"
 
 require "minitest/autorun"
@@ -21,8 +19,8 @@ class TestSeed < Minitest::Test
         interval_unit: "week",
         interval_count: 2,
         due_date: Date.new(2026, 3, 1),
-        history: []
-      }
+        history: [],
+      },
     ]
 
     Ketchup::Seed.call(user: user, series: series_data)
@@ -46,9 +44,9 @@ class TestSeed < Minitest::Test
         due_date: Date.new(2026, 3, 1),
         history: [
           { due_date: Date.new(2026, 2, 26), completed_at: Time.new(2026, 2, 26, 10, 0, 0), note: "Done" },
-          { due_date: Date.new(2026, 2, 23), completed_at: Time.new(2026, 2, 23, 10, 0, 0), note: nil }
-        ]
-      }
+          { due_date: Date.new(2026, 2, 23), completed_at: Time.new(2026, 2, 23, 10, 0, 0), note: nil },
+        ],
+      },
     ]
 
     Ketchup::Seed.call(user: user, series: series_data)
