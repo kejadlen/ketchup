@@ -452,7 +452,7 @@ module Ketchup
 
         yield
 
-        console_errors = @console_messages.select { %(error warning).include?(it[:type]) }
+        console_errors = @console_messages.select { %w[error warning].include?(it[:type]) }
 
         unless console_errors.empty? && @page_errors.empty?
           raise PageCheckError.new(
