@@ -1,0 +1,146 @@
+name: Reap previews
+
+on:
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Report what would be destroyed without destroying it
+        type: boolean
+        default: false
+      stale_days:
+        description: Also reap previews for open PRs untouched this many days (0 disables)
+        type: string
+        default: "30"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  reap:
+    name: Reap previews
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read # read PR state to decide which previews are finished
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
+
+      - name: Destroy previews for finished pull requests
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_ORG: personal
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          STALE_DAYS: ${{ inputs.stale_days || '30' }}
+        run: |
+          set -euo pipefail
+
+          # Preview apps are named by superfly/fly-pr-review-apps as
+          # pr-<number>-<owner>-<repo>, with underscores turned into hyphens.
+          repo_name="${REPO#"${OWNER}/"}"
+          suffix="-$(printf '%s' "${OWNER}-${repo_name}" | tr '_' '-')"
+
+          # Prove the token can read this repo before trusting any 404 below to
+          # mean "that pull request is gone" rather than "the token is broken".
+          gh api "repos/${REPO}" --jq .full_name > /dev/null
+
+          cutoff=""
+          if [ "${STALE_DAYS}" != "0" ]; then
+            cutoff=$(date -u -d "${STALE_DAYS} days ago" +%s)
+          fi
+
+          destroyed=0
+          kept=0
+          {
+            echo "| Preview | Pull request | Outcome |"
+            echo "| --- | --- | --- |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          apps=$(flyctl apps list --org "${FLY_ORG}" --json | jq -r '.[] | (.Name // .name)')
+
+          while IFS= read -r app; do
+            [ -n "${app}" ] || continue
+            case "${app}" in
+              pr-*"${suffix}") ;;
+              *) continue ;;
+            esac
+
+            pr="${app#pr-}"
+            pr="${pr%"${suffix}"}"
+            case "${pr}" in
+              "" | *[!0-9]*) continue ;;
+            esac
+
+            if body=$(gh api "repos/${REPO}/pulls/${pr}" 2> "${RUNNER_TEMP}/gh-err"); then
+              state=$(printf '%s' "${body}" | jq -r .state)
+              merged=$(printf '%s' "${body}" | jq -r '.merged_at != null')
+              updated=$(printf '%s' "${body}" | jq -r .updated_at)
+            elif grep -q 'HTTP 404' "${RUNNER_TEMP}/gh-err"; then
+              state="missing"
+              merged="false"
+              updated=""
+            else
+              echo "::warning::Could not read PR #${pr}; leaving ${app} alone."
+              cat "${RUNNER_TEMP}/gh-err"
+              kept=$((kept + 1))
+              echo "| ${app} | #${pr} | kept (lookup failed) |" >> "${GITHUB_STEP_SUMMARY}"
+              continue
+            fi
+
+            reason=""
+            case "${state}" in
+              closed)
+                if [ "${merged}" = "true" ]; then
+                  reason="PR merged"
+                else
+                  reason="PR closed"
+                fi
+                ;;
+              missing)
+                reason="PR no longer exists"
+                ;;
+              open)
+                if [ -n "${cutoff}" ] && [ "$(date -u -d "${updated}" +%s)" -lt "${cutoff}" ]; then
+                  reason="PR open but untouched since ${updated%T*}"
+                fi
+                ;;
+            esac
+
+            if [ -z "${reason}" ]; then
+              kept=$((kept + 1))
+              echo "| ${app} | #${pr} | kept (${state}) |" >> "${GITHUB_STEP_SUMMARY}"
+              continue
+            fi
+
+            # Same guard the deploy action uses: never destroy an app whose name
+            # does not carry the PR number we looked up.
+            case "${app}" in
+              *"${pr}"*) ;;
+              *)
+                echo "::error::Refusing to destroy ${app}: name does not contain PR #${pr}."
+                exit 1
+                ;;
+            esac
+
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "Would destroy ${app} (${reason})."
+              echo "| ${app} | #${pr} | would destroy (${reason}) |" >> "${GITHUB_STEP_SUMMARY}"
+              continue
+            fi
+
+            echo "Destroying ${app} (${reason})."
+            flyctl apps destroy "${app}" --yes
+            destroyed=$((destroyed + 1))
+            echo "| ${app} | #${pr} | destroyed (${reason}) |" >> "${GITHUB_STEP_SUMMARY}"
+          done <<EOF
+          ${apps}
+          EOF
+
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Destroyed ${destroyed}, kept ${kept}." >> "${GITHUB_STEP_SUMMARY}"
