@@ -12,7 +12,7 @@ on:
       stale_days:
         description: Also reap previews for open PRs untouched this many days (0 disables)
         type: string
-        default: "30"
+        default: "7"
 
 permissions: {}
 
@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read # read PR state to decide which previews are finished
+    environment: preview-reaper # holds FLY_API_TOKEN access, as demo/pr-* do
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
 
@@ -37,7 +38,7 @@ jobs:
           REPO: ${{ github.repository }}
           OWNER: ${{ github.repository_owner }}
           DRY_RUN: ${{ inputs.dry_run }}
-          STALE_DAYS: ${{ inputs.stale_days || '30' }}
+          STALE_DAYS: ${{ inputs.stale_days || '7' }}
         run: |
           set -euo pipefail
 
