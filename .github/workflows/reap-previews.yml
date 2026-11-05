@@ -28,7 +28,7 @@ jobs:
       pull-requests: read # read PR state to decide which previews are finished
     environment: preview-reaper # holds FLY_API_TOKEN access, as demo/pr-* do
     steps:
-      - uses: superfly/flyctl-actions/setup-flyctl@63da3ecc5e2793b98a3f2519b3d75d4f4c11cec2 # master
+      - uses: superfly/flyctl-actions/setup-flyctl@98172f70657cb3e15db199af139be99bd3e61200 # master
 
       - name: Destroy previews for finished pull requests
         env:
