@@ -14,8 +14,6 @@
           default = pkgs.mkShell {
             # fd and entr, for `rake dev`.
             packages = [ pkgs.ruby_4_0 pkgs.fd pkgs.entr ];
-
-            RUBYOPT = "--enable-frozen-string-literal";
           };
         });
 
