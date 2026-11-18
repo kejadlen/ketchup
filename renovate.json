@@ -7,6 +7,16 @@
       "schedule": ["every weekend"]
     },
     {
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Ruby gems"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "GitHub Actions"
+    },
+    {
       "matchManagers": ["custom.regex"],
       "groupName": "CDN dependencies"
     }
