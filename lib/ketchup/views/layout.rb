@@ -38,11 +38,11 @@ module Ketchup
             link(rel: "stylesheet",
                  href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap")
             script(src: "https://unpkg.com/overtype@2.9.0/dist/overtype.min.js",
-                   integrity: "sha384-oO6wSYxEDXeZSOcEf28Yv/b18PqYxmhTbhc9Qfn8PSQJxv82nH/6Awq3eCof6VcA",
+                   integrity: "sha384-7hgUW1BkCwNIDr3+f0hP+8hquM7MgcycoQUNZVoWpwpivCU7XUiN9jnCr42WayNv",
                    crossorigin: "anonymous")
             script(src: asset_path("/js/app.js"), defer: true)
             script(src: "https://cdn.jsdelivr.net/npm/alpinejs@3.17.5/dist/cdn.min.js",
-                   integrity: "sha384-LXWjKwDZz29o7TduNe+r/UxaolHh5FsSvy2W7bDHSZ8jJeGgDeuNnsDNHoxpSgDi",
+                   integrity: "sha384-FYLKjwG3aohNhNZoVG8sY/5ntunm+MqylL90Q+rT3OM7AwV9/BKFjk/RjoIpIgsI",
                    crossorigin: "anonymous", defer: true)
           end
           body do
