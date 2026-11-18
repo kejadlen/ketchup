@@ -27,6 +27,23 @@ jobs:
           bundler-cache: true
       - run: bundle exec rake test check
 
+  gemset:
+    name: Check gemset.nix
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - run: |
+          nix run --inputs-from . nixpkgs#bundix -- --gemset="$RUNNER_TEMP/gemset.nix"
+          if ! diff -u gemset.nix "$RUNNER_TEMP/gemset.nix"; then
+            echo "::error file=gemset.nix::gemset.nix doesn't match Gemfile.lock. Run 'nix run --inputs-from . nixpkgs#bundix' and commit the result."
+            exit 1
+          fi
+
   zizmor:
     name: Audit workflows
     runs-on: ubuntu-latest
