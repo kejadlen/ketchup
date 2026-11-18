@@ -85,6 +85,9 @@ jobs:
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - id: change-id
         run: echo "id=$(git cat-file -p HEAD | grep '^change-id ' | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      # Same YYYY-MM-DD (commit date, UTC) that the Nix image stamps from the flake's lastModifiedDate.
+      - id: build-date
+        run: echo "date=$(TZ=UTC git show -s --format=%cd --date=format-local:%Y-%m-%d HEAD)" >> "$GITHUB_OUTPUT"
       - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         id: meta
         with:
@@ -100,7 +103,7 @@ jobs:
           build-args: |
             COMMIT_SHA=${{ steps.short-sha.outputs.sha }}
             CHANGE_ID=${{ steps.change-id.outputs.id }}
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            BUILD_DATE=${{ steps.build-date.outputs.date }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - env:
