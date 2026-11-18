@@ -40,6 +40,9 @@
           buildDate =
             let d = self.lastModifiedDate;
             in "${lib.substring 0 4 d}-${lib.substring 4 2 d}-${lib.substring 6 2 d}";
+
+          # Flakes can't see jj change IDs, so CI passes one in with `--impure`; pure builds get "".
+          changeId = builtins.getEnv "CHANGE_ID";
         in
         {
           inherit gems;
@@ -53,7 +56,8 @@
               WorkingDir = "${app}";
               ExposedPorts."9292/tcp" = { };
               Env = [ "COMMIT_SHA=${self.shortRev or "dirty"}" ]
-                ++ lib.optional (self ? lastModifiedDate) "BUILD_DATE=${buildDate}";
+                ++ lib.optional (self ? lastModifiedDate) "BUILD_DATE=${buildDate}"
+                ++ lib.optional (changeId != "") "CHANGE_ID=${changeId}";
             };
           };
         });

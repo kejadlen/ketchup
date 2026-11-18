@@ -50,6 +50,7 @@ jobs:
     outputs:
       version: ${{ steps.meta.outputs.version }}
       image: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
+      change-id: ${{ steps.change-id.outputs.id }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -108,7 +109,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix build .#docker -L
+      - env:
+          CHANGE_ID: ${{ needs.build.outputs.change-id }}
+        run: nix build --impure .#docker -L
       # A -nix suffix keeps this image alongside the Dockerfile build without replacing what deploys.
       - env:
           NEEDS_BUILD_OUTPUTS_IMAGE: ${{ needs.build.outputs.image }}
