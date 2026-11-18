@@ -90,6 +90,30 @@ jobs:
           STEPS_META_OUTPUTS_VERSION: ${{ steps.meta.outputs.version }}
         run: gh release create "${STEPS_META_OUTPUTS_VERSION}" --generate-notes
 
+  nix-build:
+    name: Build (Nix)
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout
+      packages: write # push container image to GHCR
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix build .#docker -L
+      # A -nix suffix keeps this image alongside the Dockerfile build without replacing what deploys.
+      - env:
+          NEEDS_BUILD_OUTPUTS_IMAGE: ${{ needs.build.outputs.image }}
+        run: skopeo copy docker-archive:result "docker://${NEEDS_BUILD_OUTPUTS_IMAGE}-nix"
+
   snapshots:
     name: Snapshots
     needs: build
