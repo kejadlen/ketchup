@@ -104,18 +104,24 @@ jobs:
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
-      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock', 'gemset.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          gc-max-store-size-linux: 2G
       - env:
           CHANGE_ID: ${{ needs.build.outputs.change-id }}
         run: nix build --impure .#docker -L
       # A -nix suffix keeps this image alongside the Dockerfile build without replacing what deploys.
       - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEEDS_BUILD_OUTPUTS_IMAGE: ${{ needs.build.outputs.image }}
-        run: skopeo copy docker-archive:result "docker://${NEEDS_BUILD_OUTPUTS_IMAGE}-nix"
+        run: |
+          skopeo=$(nix build --inputs-from . 'nixpkgs#skopeo^out' --no-link --print-out-paths)
+          auth="$RUNNER_TEMP/auth.json"
+          "$skopeo/bin/skopeo" login ghcr.io --authfile "$auth" --username "$GITHUB_ACTOR" --password-stdin <<< "$GITHUB_TOKEN"
+          "$skopeo/bin/skopeo" --policy "$skopeo/etc/containers/default-policy.json" \
+            copy --dest-authfile "$auth" docker-archive:result "docker://${NEEDS_BUILD_OUTPUTS_IMAGE}-nix"
 
   snapshots:
     name: Snapshots
