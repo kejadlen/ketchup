@@ -54,9 +54,16 @@
             fileset = lib.fileset.unions [ ./config.ru ./lib ./db/migrate ./public ];
           };
 
+          # CI passes the push's head commit timestamp with `--impure`, the same value the Dockerfile
+          # build gets. Pure builds fall back to the commit time in UTC, in the same ISO 8601 shape.
           buildDate =
-            let d = self.lastModifiedDate;
-            in "${lib.substring 0 4 d}-${lib.substring 4 2 d}-${lib.substring 6 2 d}";
+            let
+              env = builtins.getEnv "BUILD_DATE";
+              d = self.lastModifiedDate;
+              s = lib.substring;
+            in
+            if env != "" then env
+            else "${s 0 4 d}-${s 4 2 d}-${s 6 2 d}T${s 8 2 d}:${s 10 2 d}:${s 12 2 d}Z";
 
           # Flakes can't see jj change IDs, so CI passes one in with `--impure`; pure builds get "".
           changeId = builtins.getEnv "CHANGE_ID";
