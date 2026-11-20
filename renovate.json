@@ -19,6 +19,13 @@
     {
       "matchManagers": ["custom.regex"],
       "groupName": "CDN dependencies"
+    },
+    {
+      "description": "Ruby itself: minor updates only; .ruby-version and the Docker tags float on the latest patch",
+      "matchDepNames": ["ruby"],
+      "matchManagers": ["ruby-version", "dockerfile"],
+      "matchUpdateTypes": ["patch"],
+      "enabled": false
     }
   ],
   "customManagers": [
